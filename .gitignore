@@ -1,0 +1,7 @@
+.backup/
+.cache/
+eln-cache/
+elpa/
+# Some flycheck checkers generate files in source dir with prefix `flycheck_`,
+# we can't change this behavior, so prevent it from adding into git commit here.
+flycheck_*
