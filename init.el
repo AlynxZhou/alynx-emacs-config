@@ -143,22 +143,6 @@
 (global-set-key (kbd "C-z b") 'windmove-left)
 ;; Shift+Arrow to move between windows.
 (windmove-default-keybindings)
-;; (global-unset-key (kbd "C-x 0"))
-;; (global-set-key (kbd "C-x C-0") 'delete-windows)
-;; (global-unset-key (kbd "C-x 1"))
-;; (global-set-key (kbd "C-x C-1") 'delete-other-windows)
-;; (global-unset-key (kbd "C-x 1"))
-;; (global-set-key (kbd "C-x C-2") 'split-window-below)
-;; (global-unset-key (kbd "C-x 2"))
-;; (global-set-key (kbd "C-x C-3") 'split-window-right)
-;; (global-unset-key (kbd "C-x o"))
-;; (global-set-key (kbd "C-x C-o") 'other-window)
-;; (global-unset-key (kbd "C-x h"))
-;; (global-set-key (kbd "C-x C-h") 'mark-whole-buffer)
-;; (global-unset-key (kbd "C-x b"))
-;; (global-set-key (kbd "C-x C-b") 'ivy-switch-buffer)
-;; (global-unset-key (kbd "C-x k"))
-;; (global-set-key (kbd "C-x C-k") 'kill-buffer)
 
 ;; Indentations.
 
@@ -223,7 +207,7 @@
 ;; There are also other projects like GTK using 2 as indent-offset, and they
 ;; actually also assume tab-width is 8 and use tabs to indent. If you set
 ;; tab-width to 2, you'll find some 4-level code become 1-level, which is wrong.
-;; You should call `(indent-tabs 2) for those projects.
+;; You should call `(indent-tabs 2)` for those projects.
 ;;
 ;; So most of time you should not change tab-width,
 ;; but maybe some crazy projects use tabs for indent and they don't want
