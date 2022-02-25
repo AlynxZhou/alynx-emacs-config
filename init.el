@@ -78,7 +78,7 @@
 
 ;; (setq font-use-system-font t)
 ;; Set default font.
-;; Emacs's fill-column-indicator and highlight-indent-guide uses box drawing
+;; Emacs's fill-column-indicator and highlight-indent-guide uses box-drawing
 ;; characters to draw bars, but the default characters in Monaco is not so good,
 ;; it has padding before and after it. To fix this I used my patched Monaco
 ;; which merges Menlo's characters into it.
@@ -99,6 +99,11 @@
                                          :weight 'normal)))
 
 ;; Make Monaco and Noto Sans CJK SC the same line height.
+;; This is not perfect, since font size is always integer,
+;; same line height makes Chinese too small.
+;; Better way is to custom Monaco's ascent and descent in its OS/2 table,
+;; to make it have the same ratio as Noto Sans Mono CJK SC.
+;; However it will break box-drawing characters, which needs to be stretched.
 (setq face-font-rescale-alist '(("Noto Sans Mono CJK SC" . 0.85)))
 
 ;; Keymaps.
