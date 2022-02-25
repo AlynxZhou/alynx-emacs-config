@@ -36,9 +36,9 @@
 ;; Set column ruler at 80 columns.
 (setq-default display-fill-column-indicator-column 80)
 ;; Display it globally.
-(global-display-fill-column-indicator-mode t)
+;; (global-display-fill-column-indicator-mode t)
 ;; Or maybe only display it in prog-mode.
-;; (add-hook 'prog-mode-hook #'display-fill-column-indicator-mode)
+(add-hook 'prog-mode-hook #'display-fill-column-indicator-mode)
 
 ;; Built in minor mode to open files at last-edited position.
 (save-place-mode t)
