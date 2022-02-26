@@ -78,7 +78,7 @@
 
 ;; (setq font-use-system-font t)
 ;; Set default font.
-;; Emacs's fill-column-indicator and highlight-indent-guide uses box-drawing
+;; `fill-column-indicator` and `highlight-indent-guide` uses box-drawing
 ;; characters to draw bars, but the default characters in Monaco is not so good,
 ;; it has padding before and after it. To fix this I used my patched Monaco
 ;; which merges Menlo's characters into it.
@@ -104,6 +104,7 @@
 ;; Better way is to custom Monaco's ascent and descent in its OS/2 table,
 ;; to make it have the same ratio as Noto Sans Mono CJK SC.
 ;; However it will break box-drawing characters, which needs to be stretched.
+;; If Emacs allows user to set a custom min line height, this will be solved.
 (setq face-font-rescale-alist '(("Noto Sans Mono CJK SC" . 0.85)))
 
 ;; Keymaps.
@@ -111,36 +112,57 @@
 ;; I probably need to make those functions handle region.
 ;; Atom will handle region for those, and if no region,
 ;; region should be current line.
-(defmacro save-column (&rest body)
-  "I am not sure what this is, copied from Internet BODY."
-  `(let ((column (current-column)))
-     (unwind-protect
-         (progn ,@body)
-       (move-to-column column))))
-(put 'save-column 'lisp-indent-function 0)
-(defun move-line-up ()
-  "Move current line up."
-  (interactive)
-  (save-column
-    (transpose-lines 1)
-    (forward-line -2)))
-(defun move-line-down ()
-  "Move current line down."
-  (interactive)
-  (save-column
-    (forward-line 1)
-    (transpose-lines 1)
-    (forward-line -1)))
-(global-set-key (kbd "M-p") 'move-line-up)
-(global-set-key (kbd "M-n") 'move-line-down)
 ;; Atom style indent left or right.
 ;; See <https://dougie.io/emacs/indent-selection/>.
 (global-set-key (kbd "M-[") 'indent-rigidly-left-to-tab-stop)
 (global-set-key (kbd "M-]") 'indent-rigidly-right-to-tab-stop)
+
+;; I use this in Atom, but by default `M-;` is used in Emacs.
+;; So I may use this keybinding for others in future.
+(global-set-key (kbd "C-;") 'comment-dwim)
+
 ;; Need a better key for help, `C-h` is backspace and `C-?` is undo-tree-redo.
+;; Seems counsel use `<F1>` as prefix.
 ;; (global-set-key (kbd "C-?") 'help-command)
+(global-unset-key (kbd "C-h"))
 (global-set-key (kbd "C-h")  'delete-backward-char)
-(global-set-key (kbd "C-j") 'join-line)
+
+;; By default, `join-line` will join current line into previous line.
+;; In Atom, I typically join next line into current line.
+;; See <https://emacsredux.com/blog/2013/05/30/joining-lines/>.
+(defun join-next-line ()
+  "Join the current line with the next line."
+  (interactive)
+  (join-line t))
+(global-set-key (kbd "C-j") 'join-next-line)
+
+;; See <https://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/>.
+(defun smarter-move-beginning-of-line (arg)
+  "Move point back to indentation of beginning of line.
+
+Move point to the first non-whitespace character on this line.
+If point is already there, move to the beginning of the line.
+Effectively toggle between the first non-whitespace character and
+the beginning of the line.
+
+If ARG is not nil or 1, move forward ARG - 1 lines first.  If
+point reaches the beginning or end of the buffer, stop there."
+  (interactive "^p")
+  (setq arg (or arg 1))
+
+  ;; Move lines first
+  (when (/= arg 1)
+    (let ((line-move-visual nil))
+      (forward-line (1- arg))))
+
+  (let ((orig-point (point)))
+    (back-to-indentation)
+    (when (= orig-point (point))
+      (move-beginning-of-line 1))))
+;; remap `C-a`, `Home` to `smarter-move-beginning-of-line'
+(global-set-key [remap move-beginning-of-line]
+                'smarter-move-beginning-of-line)
+
 (global-unset-key (kbd "C-z"))
 (global-set-key (kbd "C-z n") 'windmove-down)
 (global-set-key (kbd "C-z p") 'windmove-up)
@@ -148,6 +170,13 @@
 (global-set-key (kbd "C-z b") 'windmove-left)
 ;; Shift+Arrow to move between windows.
 (windmove-default-keybindings)
+
+;; Cannot find a keybinding for this.
+;; Just call it.
+(defun show-file-path ()
+  "Show the full file path of current buffer in the minibuffer."
+  (interactive)
+  (message "%s" buffer-file-name))
 
 ;; Indentations.
 
@@ -280,32 +309,29 @@
 
 ;; Install packages.
 
-;; Used by doom-modeline.
-;; Don't forget to run `M-x all-the-icons-install-fonts`.
-;; (use-package all-the-icons
-;;   :ensure t
-;;   :if (display-graphic-p))
-
 ;; My favorite theme.
 (use-package atom-one-dark-theme
   :ensure t
-  :config (load-theme 'atom-one-dark t))
+  :config
+  (load-theme 'atom-one-dark t))
 
 (use-package avy
   :ensure t
-  :bind ("M-s" . avy-goto-char))
+  :bind (("M-g a" . avy-goto-char)))
 
 (use-package better-shell
-    :ensure t
-    :bind (("C-\"" . better-shell-shell)
-           ("C-:" . better-shell-remote-open)))
+  :ensure t
+  :bind (("C-\"" . better-shell-shell)
+         ("C-:" . better-shell-remote-open)))
 
 (use-package company
   :ensure t
-  :config (global-company-mode t)
-  :custom (debug-on-error nil)
-  (lsp-completion-provider :capf)
-  :hook (js2-mode . company-mode))
+  :config
+  (global-company-mode t)
+  :hook ((js2-mode . company-mode))
+  :custom
+  (debug-on-error nil)
+  (lsp-completion-provider :capf))
 
 (use-package counsel
   :ensure t
@@ -320,16 +346,9 @@
 	 ("C-c j" . counsel-git-grep)
 	 ("C-c k" . counsel-ag)
 	 ("C-x l" . counsel-locate)
-	 ("C-S-o" . counsel-rhythmbox))
-  :bind (:map minibuffer-local-map
-	    ("C-r" . counsel-minibuffer-history)))
-
-;; (use-package doom-modeline
-;;   :ensure t
-;;   :config (doom-modeline-mode t)
-;;   ;; I don't use this,
-;;   ;; I have a custom one that can show both indent-offset and tab-width.
-;;   :custom (doom-modeline-indent-info nil))
+	 ("C-S-o" . counsel-rhythmbox)
+         :map minibuffer-local-map
+         ("C-r" . counsel-minibuffer-history)))
 
 (use-package flycheck
   :ensure t
@@ -337,40 +356,29 @@
          (markdown-mode . flycheck-mode)
          (org-mode . flycheck-mode)))
 
-;; Not sure if I need this.
-;; (use-package ggtags
-;;   :ensure t
-;;   :hook ((c-mode c++-mode java-mode) . ggtags-mode))
-
 (use-package highlight-indent-guides
   :ensure t
-  :hook (prog-mode . highlight-indent-guides-mode)
+  :hook ((prog-mode . highlight-indent-guides-mode))
   :custom
   (highlight-indent-guides-method 'character)
   ;; (highlight-indent-guides-character ?│)
-  (highlight-indent-guides-bitmap-function 'highlight-indent-guides--bitmap-line))
+  (highlight-indent-guides-bitmap-function
+   'highlight-indent-guides--bitmap-line))
 
 ;; Highlight FIXME or TODO.
 (use-package hl-todo
   :ensure t
-  :hook (prog-mode . hl-todo-mode))
-
-;; Not so useful.
-;; (use-package hungry-delete
-;;   :ensure t
-;;   :config (global-hungry-delete-mode t))
-
-;; I even hardly use this in Atom.
-;; (use-package iedit
-;;   :ensure t)
+  :hook ((prog-mode . hl-todo-mode)))
 
 (use-package ivy
   :ensure t
   :diminish (ivy-mode)
+  :config
+  (ivy-mode t)
   :bind (("C-x b" . ivy-switch-buffer)
 	 ("C-c C-r" . ivy-resume))
-  :config (ivy-mode t)
-  :custom (ivy-use-virtual-buffers t)
+  :custom
+  (ivy-use-virtual-buffers t)
   (ivy-display-style 'fancy)
   (enable-recursive-minibuffers t)
   (ivy-count-format "(%d/%d) ")
@@ -380,23 +388,23 @@
 
 (use-package js2-mode
   :ensure t
-  :mode ("\\.js\\'" . js2-mode)
-  :hook (js2-mode . js2-imenu-extras-mode))
+  :hook ((js2-mode . js2-imenu-extras-mode))
+  :mode (("\\.js\\'" . js2-mode)))
 
 (use-package js2-refactor
   :ensure t
-  :config (js2r-add-keybindings-with-prefix "C-c C-r")
-  :hook (js2-mode . js2-refactor-mode)
+  :config
+  (js2r-add-keybindings-with-prefix "C-c C-r")
+  :hook ((js2-mode . js2-refactor-mode))
   :bind (:map js2-mode-map ("C-k" . js2r-kill)))
 
 (use-package json-mode
   :ensure t
-;;  :custom (json-reformat:indent-width 2)
+  :bind (:map json-mode-map ("C-c <tab>" . json-mode-beautify))
   :mode (("\\.bowerrc\\'" . json-mode)
          ("\\.jshintrc\\'" . json-mode)
          ("\\.json_schema\\'" . json-mode)
-         ("\\.json\\'" . json-mode))
-  :bind (:map json-mode-map ("C-c <tab>" . json-mode-beautify)))
+         ("\\.json\\'" . json-mode)))
 
 (use-package lsp-ivy
   :ensure t
@@ -405,28 +413,28 @@
 (use-package lsp-mode
   :ensure t
   :commands lsp
-  :custom (lsp-keymap-prefix "C-c l")
+  :hook ((c-mode . lsp-deferred)
+         (c++-mode . lsp-deferred)
+         (c-or-c++-mode . lsp-deferred)
+         (css-mode . lsp-deferred)
+         (cuda-mode . lsp-deferred)
+	 (objc-mode . lsp-deferred)
+         (html-mode . lsp-deferred)
+         (java-mode . lsp-deferred)
+         (js-mode . lsp-deferred)
+	 (js2-mode . lsp-deferred)
+         (python-mode . lsp-deferred)
+	 ;; Don't enable lsp for web-mode, I only use this for templates,
+	 ;; lsp cannot understand nunjucks.
+         ;; (web-mode . lsp-deferred)
+	 (lsp-mode . lsp-enable-which-key-integration))
   :bind (:map lsp-mode-map
               ("M-." . lsp-find-definition)
               ("M-n" . lsp-find-references))
-  :hook (((c-mode
-           c++-mode
-           c-or-c++-mode
-           css-mode
-           cuda-mode
-	   objc-mode
-           html-mode
-           java-mode
-           js-mode
-	   js2-mode
-           python-mode
-	   ;; Don't enable lsp for web-mode, I only use this for templates,
-	   ;; lsp cannot understand nunjucks.
-           ;; web-mode
-           ) . lsp-deferred)
-	 (lsp-mode . lsp-enable-which-key-integration))
   ;; Move lsp session file into cache dir.
-  :custom (lsp-session-file (locate-user-emacs-file ".cache/lsp-session")))
+  :custom
+  (lsp-session-file (locate-user-emacs-file ".cache/lsp-session"))
+  (lsp-keymap-prefix "C-c l"))
 
 (use-package lsp-treemacs
   :ensure t
@@ -439,6 +447,7 @@
 (use-package lua-mode
   :ensure t
   :mode (("\\.lua\\'" . lua-mode)
+         ;; DaVinci Resolve's fuse scripts, it uses lua.
          ("\\.fuse\\'" . lua-mode)))
 
 (use-package markdown-mode
@@ -456,31 +465,41 @@
 ;; https://github.com/jandamm/doom-emacs-minimap/blob/master/blockfont.ttf
 ;; (use-package minimap
 ;;   :ensure t
+;;   :config
+;;   (add-to-list 'minimap-major-modes 'markdown-mode)
+;;   (minimap-mode t)
 ;;   :custom
 ;;   (minimap-window-location 'right)
 ;;   ;; Enlarge breaks BlockFont.
 ;;   (minimap-enlarge-certain-faces nil)
 ;;   :custom-face
-;;   (minimap-font-face ((t (:height 30 :family "BlockFont"))))
-;;   :config (progn (add-to-list 'minimap-major-modes 'markdown-mode)
-;; 		 (minimap-mode t)))
+;;   (minimap-font-face ((t (:height 30 :family "BlockFont")))))
 
 ;; doom-modeline is good, but mood-line is enough for me.
 (use-package mood-line
   :ensure t
-  :config (mood-line-mode t)
-  :custom (mood-line-show-encoding-information t) (mood-line-show-eol-style t))
+  :config
+  (mood-line-mode t)
+  :custom
+  (mood-line-show-encoding-information t)
+  (mood-line-show-eol-style t))
+
+;; Atom-like move regine/current line up and down.
+(use-package move-text
+  :ensure t
+  :bind (("M-p" . move-text-up) ("M-n" . move-text-down)))
 
 (use-package org-bullets
   :ensure t
-  :hook (org-mode . org-bullets-mode))
+  :hook ((org-mode . org-bullets-mode)))
 
 (use-package projectile
   :ensure t
-  :config (projectile-mode t)
+  :config
+  (projectile-mode t)
   :bind (:map projectile-mode-map
 	      ("C-c p" . projectile-command-map)
-	      ("C-c p s" . projectile-ripgrep))
+	      ("M-s" . projectile-ripgrep))
   :custom
   (projectile-cache-file
    (locate-user-emacs-file ".cache/projectile.cache"))
@@ -489,7 +508,7 @@
 
 (use-package rainbow-delimiters
   :ensure t
-  :hook (prog-mode . rainbow-delimiters-mode))
+  :hook ((prog-mode . rainbow-delimiters-mode)))
 
 (use-package swiper
   :ensure t
@@ -508,7 +527,8 @@
 
 (use-package undo-tree
   :ensure t
-  :config (global-undo-tree-mode t))
+  :config
+  (global-undo-tree-mode t))
 
 (use-package web-mode
   :ensure t
@@ -516,15 +536,24 @@
 
 (use-package which-key
   :ensure t
-  :config (which-key-mode t))
+  :config
+  (which-key-mode t))
+
+;; Atom-like default region.
+;; If there is no region, behave like current line is current region.
+;; Works on indent/outdent, comment block, cut (kill), copy, paste (yank).
+(use-package whole-line-or-region
+  :ensure t
+  :config
+  (whole-line-or-region-global-mode t))
 
 (use-package xref-js2
   :ensure t
-  :custom (xref-js2-search-program 'rg)
-  :hook (js2-mode . (lambda ()
+  :hook ((js2-mode . (lambda ()
                       (add-hook 'xref-backend-functions
-                                #'xref-js2-xref-backend nil t)))
-  :bind (:map js-mode-map ("M-." . nil)))
+                                #'xref-js2-xref-backend nil t))))
+  :bind (:map js-mode-map ("M-." . nil))
+  :custom (xref-js2-search-program 'rg))
 
 (use-package yaml-mode
   :ensure t
@@ -532,7 +561,7 @@
 
 (use-package yasnippet
   :ensure t
-  :hook (prog-mode . yas-minor-mode))
+  :hook ((prog-mode . yas-minor-mode)))
 
 (use-package yasnippet-snippets
   :ensure t)
