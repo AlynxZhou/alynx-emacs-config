@@ -62,6 +62,15 @@
 ;; Line space makes highlight-indent-guides wired.
 ;; (setq-default line-spacing nil)
 
+;; By default Emacs will jump a half screen if your cursor is out of screen.
+;; This makes it behave like other editors, but sometimes it still jumps.
+(setq scroll-margin 3)
+(setq scroll-conservatively 101)
+(setq scroll-preserve-screen-position t)
+(setq auto-window-vscroll nil)
+(setq-default scroll-up-aggressively 0.01)
+(setq-default scroll-down-aggressively 0.01)
+
 ;; Disable backup files.
 (setq make-backup-files nil)
 ;; Move backup files and list into backup dir.
