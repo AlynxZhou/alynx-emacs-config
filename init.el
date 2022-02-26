@@ -109,9 +109,6 @@
 
 ;; Keymaps.
 
-;; I probably need to make those functions handle region.
-;; Atom will handle region for those, and if no region,
-;; region should be current line.
 ;; Atom style indent left or right.
 ;; See <https://dougie.io/emacs/indent-selection/>.
 (global-set-key (kbd "M-[") 'indent-rigidly-left-to-tab-stop)
