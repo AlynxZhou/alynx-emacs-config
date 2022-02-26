@@ -55,8 +55,10 @@
 ;; Set cursor to underline.
 (setq-default cursor-type 'hbar)
 
-;; Highlight trailing whitespace.
-(setq-default show-trailing-whitespace t)
+;; Highlight trailing whitespace in prog-mode only.
+(add-hook 'prog-mode-hook
+          (lambda ()
+            (setq show-trailing-whitespace t)))
 
 ;; Disable line spacing.
 ;; Line space makes highlight-indent-guides wired.
