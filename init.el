@@ -7,6 +7,13 @@
 
 ;; Internal tweaks.
 
+;; Make startup faster by reducing the frequency of garbage collection.
+;; The default is 800 kilobytes. Measured in bytes.
+;; See <http://blog.lujun9972.win/emacs-document/blog/2019/03/15/%E9%99%8D%E4%BD%8Eemacs%E5%90%AF%E5%8A%A8%E6%97%B6%E9%97%B4%E7%9A%84%E9%AB%98%E7%BA%A7%E6%8A%80%E6%9C%AF/index.html>.
+;; Move this into `early-init.el` can reduce more 10 gcs and 0.07 second.
+;; But I don't want more file.
+(setq gc-cons-threshold (* 50 1024 1024))
+
 ;; Disable startup message.
 (setq inhibit-startup-message t)
 
@@ -21,11 +28,6 @@
                      (float-time
                       (time-subtract after-init-time before-init-time))
                      gcs-done)))
-
-;; Make startup faster by reducing the frequency of garbage collection.
-;; The default is 800 kilobytes. Measured in bytes.
-;; See <http://blog.lujun9972.win/emacs-document/blog/2019/03/15/%E9%99%8D%E4%BD%8Eemacs%E5%90%AF%E5%8A%A8%E6%97%B6%E9%97%B4%E7%9A%84%E9%AB%98%E7%BA%A7%E6%8A%80%E6%9C%AF/index.html>.
-(setq gc-cons-threshold (* 50 1024 1024))
 
 ;; Create cache dir to redirect package-generated files.
 ;; `:parents` makes `make-directory` silience if dir exists.
