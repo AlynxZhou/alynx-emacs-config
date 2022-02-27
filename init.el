@@ -14,6 +14,19 @@
 ;; See <https://emacsredux.com/blog/2020/12/04/maximize-the-emacs-frame-on-startup/>.
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
+;; Show loading time after startup.
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (message "Emacs ready in %.2f seconds with %d garbage collections."
+                     (float-time
+                      (time-subtract after-init-time before-init-time))
+                     gcs-done)))
+
+;; Make startup faster by reducing the frequency of garbage collection.
+;; The default is 800 kilobytes. Measured in bytes.
+;; See <http://blog.lujun9972.win/emacs-document/blog/2019/03/15/%E9%99%8D%E4%BD%8Eemacs%E5%90%AF%E5%8A%A8%E6%97%B6%E9%97%B4%E7%9A%84%E9%AB%98%E7%BA%A7%E6%8A%80%E6%9C%AF/index.html>.
+(setq gc-cons-threshold (* 50 1024 1024))
+
 ;; Create cache dir to redirect package-generated files.
 ;; `:parents` makes `make-directory` silience if dir exists.
 (make-directory (locate-user-emacs-file ".cache") :parents)
@@ -32,22 +45,6 @@
 ;; Display line number and column number in mode line.
 (line-number-mode t)
 (column-number-mode t)
-
-;; Set column ruler at 80 columns.
-(setq-default display-fill-column-indicator-column 80)
-;; Display it globally.
-;; (global-display-fill-column-indicator-mode t)
-;; Or maybe only display it in prog-mode.
-(add-hook 'prog-mode-hook #'display-fill-column-indicator-mode)
-
-;; Built in minor mode to open files at last-edited position.
-(save-place-mode t)
-(customize-set-variable 'save-place-file
-                        (locate-user-emacs-file ".cache/places"))
-;; Built in minor mode to save recent files.
-(recentf-mode t)
-(customize-set-variable 'recentf-save-file
-                        (locate-user-emacs-file ".cache/recentf"))
 
 ;; Use y or n instead yes or no.
 (fset 'yes-or-no-p 'y-or-n-p)
@@ -83,6 +80,8 @@
 ;; Set customization data in a specific file, without littering my init files.
 ;; `locate-user-emacs-file` will create file if it does not exist.
 (setq custom-file (locate-user-emacs-file "custom-file.el"))
+(unless (file-exists-p custom-file)
+  (make-empty-file custom-file))
 (load-file custom-file)
 
 ;; Fonts.
@@ -299,14 +298,14 @@ point reaches the beginning or end of the buffer, stop there."
 (setq-default electric-indent-inhibit t)
 ;; By default if you press backspace on indentations, Emacs will turn a tab into
 ;; spaces and delete one space, I think no one will like this.
-(setq backward-delete-char-untabify-method 'nil)
+(setq backward-delete-char-untabify-method nil)
 
 ;; Packages.
 
 (require 'package)
 (setq-default package-enable-at-startup nil)
 (setq-default package-archives
-              '(("gnu"   . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+              '(("gnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
                 ("melpa" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
 (package-initialize)
 
@@ -317,7 +316,14 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Install packages.
 
+;; If a package is not needed since startup and has no bind or mode or hook
+;; to make `use-package` auto load it, add `:defer 1` to load it after 1 second.
+;; Difference between `:defer t` and `:defer 1`: `:defer 1` will load package
+;; after 1 second, but `:defer t` does not load package, expects other options
+;; load it.
+
 ;; My favorite theme.
+;; Don't defer this, I need it all time.
 (use-package atom-one-dark-theme
   :ensure t
   :config
@@ -334,9 +340,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package company
   :ensure t
-  :config
-  (global-company-mode t)
-  :hook ((js2-mode . company-mode))
+  :defer t
+  :hook ((prog-mode . company-mode))
   :custom
   (debug-on-error nil)
   (lsp-completion-provider :capf))
@@ -358,14 +363,26 @@ point reaches the beginning or end of the buffer, stop there."
          :map minibuffer-local-map
          ("C-r" . counsel-minibuffer-history)))
 
+;; Built in minor mode to display column ruler.
+(use-package display-fill-column-indicator
+  :ensure t
+  :defer t
+  ;; I only use this in prog-mode.
+  :hook ((prog-mode . display-fill-column-indicator-mode))
+  :custom
+  ;; Set column ruler at 80 columns.
+  (display-fill-column-indicator-column 80))
+
 (use-package flycheck
   :ensure t
+  :defer t
   :hook ((prog-mode . flycheck-mode)
          (markdown-mode . flycheck-mode)
          (org-mode . flycheck-mode)))
 
 (use-package highlight-indent-guides
   :ensure t
+  :defer t
   :hook ((prog-mode . highlight-indent-guides-mode))
   :custom
   (highlight-indent-guides-method 'character)
@@ -376,6 +393,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Highlight FIXME or TODO.
 (use-package hl-todo
   :ensure t
+  :defer t
   :hook ((prog-mode . hl-todo-mode)))
 
 (use-package ivy
@@ -416,6 +434,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package lsp-ivy
   :ensure t
+  :defer 1
   :commands lsp-ivy-workspace-symbol)
 
 (use-package lsp-mode
@@ -446,10 +465,12 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package lsp-treemacs
   :ensure t
+  :defer 1
   :commands lsp-treemacs-errors-list)
 
 (use-package lsp-ui
   :ensure t
+  :defer 1
   :commands lsp-ui-mode)
 
 (use-package lua-mode
@@ -473,6 +494,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; https://github.com/jandamm/doom-emacs-minimap/blob/master/blockfont.ttf
 ;; (use-package minimap
 ;;   :ensure t
+;;   :defer 1
 ;;   :config
 ;;   (add-to-list 'minimap-major-modes 'markdown-mode)
 ;;   (minimap-mode t)
@@ -499,6 +521,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package org-bullets
   :ensure t
+  :defer t
   :hook ((org-mode . org-bullets-mode)))
 
 (use-package projectile
@@ -516,7 +539,28 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package rainbow-delimiters
   :ensure t
+  :defer t
   :hook ((prog-mode . rainbow-delimiters-mode)))
+
+;; Built in minor mode to save recent files.
+;; This is not needed in startup so we defer it for 1 second.
+(use-package recentf
+  :ensure t
+  :defer 1
+  :config
+  (recentf-mode t)
+  :custom
+  (recentf-save-file (locate-user-emacs-file ".cache/recentf")))
+
+;; Built in minor mode to open files at last-edited position.
+;; This is not needed in startup so we defer it for 1 second.
+(use-package saveplace
+  :ensure t
+  :defer 1
+  :config
+  (save-place-mode t)
+  :custom
+  (save-place-file (locate-user-emacs-file ".cache/places")))
 
 (use-package swiper
   :ensure t
@@ -524,14 +568,17 @@ point reaches the beginning or end of the buffer, stop there."
 	 ("C-r" . swiper)))
 
 (use-package treemacs
-  :ensure t)
+  :ensure t
+  :defer 1)
 
 (use-package treemacs-projectile
-  :ensure t)
+  :ensure t
+  :defer 1)
 
 ;; I hardly try.
 ;; (use-package try
-;;   :ensure t)
+;;   :ensure t
+;;   :defer 1)
 
 (use-package undo-tree
   :ensure t
@@ -569,9 +616,14 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package yasnippet
   :ensure t
+  :defer t
   :hook ((prog-mode . yas-minor-mode)))
 
 (use-package yasnippet-snippets
-  :ensure t)
+  :ensure t
+  :defer 1)
+
+;; Make gc pauses faster by decreasing the threshold.
+(setq gc-cons-threshold (* 2 1024 1024))
 
 ;;; init.el ends here.
