@@ -546,6 +546,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Built in minor mode to save recent files.
 ;; This is not needed in startup so we defer it for 1 second.
+;; Only ivy virtual buffers need it.
 (use-package recentf
   :ensure t
   :defer 1
@@ -555,10 +556,10 @@ point reaches the beginning or end of the buffer, stop there."
   (recentf-save-file (locate-user-emacs-file ".cache/recentf")))
 
 ;; Built in minor mode to open files at last-edited position.
-;; This is not needed in startup so we defer it for 1 second.
 (use-package saveplace
   :ensure t
-  :defer 1
+  ;; Don't defer this if you want it to work on the first file you opened.
+  ;; :defer 1
   :config
   (save-place-mode t)
   :custom
