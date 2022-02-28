@@ -138,6 +138,9 @@
 ;; But in GUI, Emacs makes Backspace generate `DEL` code, and make Delete
 ;; generate another code which is bound to forward delete.
 ;; Also GNOME Terminal makes Backspace generate `DEL` code by default, too.
+;; Another problem is that GNOME Terminal makes Delete generate escape sequence
+;; by default, Emacs cannot handle it, but there are also conflict with other
+;; keybindings, so I just suggest not to use Emacs in terminal.
 ;; It's not good to translate Delete to `DEL` code and bind Backspace to
 ;; functions like `backward-delete-char`, since many backward delete related
 ;; functions are actually bound to `DEL` code.
@@ -614,7 +617,6 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Atom-like default region.
 ;; If there is no region, behave like current line is current region.
 ;; Works on indent/outdent, comment block, cut (kill), copy, paste (yank).
-;; Seems not work in GNOME Terminal.
 (use-package whole-line-or-region
   :ensure t
   :config
