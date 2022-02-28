@@ -10,8 +10,8 @@
 ;; Make startup faster by reducing the frequency of garbage collection.
 ;; The default is 800 kilobytes. Measured in bytes.
 ;; See <http://blog.lujun9972.win/emacs-document/blog/2019/03/15/%E9%99%8D%E4%BD%8Eemacs%E5%90%AF%E5%8A%A8%E6%97%B6%E9%97%B4%E7%9A%84%E9%AB%98%E7%BA%A7%E6%8A%80%E6%9C%AF/index.html>.
-;; Move this into `early-init.el` can reduce more 10 gcs and 0.07 second.
-;; But I don't want more file.
+;; Move this into `early-init.el` can reduce more 10 gcs and 0.07 second, but I
+;; don't want more file.
 (setq gc-cons-threshold (* 50 1024 1024))
 
 ;; Disable startup message.
@@ -40,13 +40,13 @@
 (scroll-bar-mode -1)
 (blink-cursor-mode -1)
 
-;; Display line number and highlight current line.
-(global-display-line-numbers-mode t)
-(global-hl-line-mode t)
+;; Display line number (gutter) and highlight current line.
+(global-display-line-numbers-mode 1)
+(global-hl-line-mode 1)
 
-;; Display line number and column number in mode line.
-(line-number-mode t)
-(column-number-mode t)
+;; Display line number and column number of cursor in mode line.
+(line-number-mode 1)
+(column-number-mode 1)
 
 ;; Use y or n instead yes or no.
 (fset 'yes-or-no-p 'y-or-n-p)
@@ -54,17 +54,17 @@
 ;; Set cursor to underline.
 (setq-default cursor-type 'hbar)
 
-;; Highlight trailing whitespace in prog-mode only.
+;; Highlight trailing whitespace in `prog-mode` only.
 (add-hook 'prog-mode-hook
           (lambda ()
             (setq show-trailing-whitespace t)))
 
 ;; Disable line spacing.
-;; Line space makes highlight-indent-guides wired.
+;; Line space makes `highlight-indent-guides` wired.
 ;; (setq-default line-spacing nil)
 
-;; By default Emacs will jump a half screen if your cursor is out of screen.
-;; This makes it behave like other editors, but sometimes it still jumps.
+;; By default Emacs will jump a half screen if your cursor is out of screen,
+;; this makes it behave like other editors, but sometimes it still jumps.
 (setq scroll-margin 3)
 (setq scroll-conservatively 101)
 (setq scroll-preserve-screen-position t)
@@ -111,10 +111,10 @@
                                          :weight 'normal)))
 
 ;; Make Monaco and Noto Sans CJK SC the same line height.
-;; This is not perfect, since font size is always integer,
-;; same line height makes Chinese too small.
-;; Better way is to custom Monaco's ascent and descent in its OS/2 table,
-;; to make it have the same ratio as Noto Sans Mono CJK SC.
+;; This is not perfect, since font size is always integer, same line height
+;; makes Chinese too small.
+;; Better way is to custom Monaco's ascent and descent in its OS/2 table to make
+;; it have the same ratio as Noto Sans Mono CJK SC.
 ;; However it will break box-drawing characters, which needs to be stretched.
 ;; If Emacs allows user to set a custom min line height, this will be solved.
 (setq face-font-rescale-alist '(("Noto Sans Mono CJK SC" . 0.85)))
@@ -126,15 +126,31 @@
 (global-set-key (kbd "M-[") 'indent-rigidly-left-to-tab-stop)
 (global-set-key (kbd "M-]") 'indent-rigidly-right-to-tab-stop)
 
-;; I use this in Atom, but by default `M-;` is used in Emacs.
-;; So I may use this keybinding for others in future.
+;; I use this in Atom, but by default `M-;` is used in Emacs, so I may use this
+;; keybinding for others in future.
 (global-set-key (kbd "C-;") 'comment-dwim)
 
-;; Need a better key for help, `C-h` is backspace and `C-?` is undo-tree-redo.
-;; Seems counsel use `<F1>` as prefix.
-;; (global-set-key (kbd "C-?") 'help-command)
-(global-unset-key (kbd "C-h"))
-(global-set-key (kbd "C-h")  'delete-backward-char)
+;; See <https://www.gnu.org/software/emacs/manual/html_node/efaq/Backspace-invokes-help.html>.
+;; A long story: old terminals make Backspace generate the same code as `C-h`,
+;; and make Delete generate `DEL` code.
+;; Emacs binds backward delete to `DEL` code and help to `C-h` (Maybe that's
+;; why by default HHKB has a Delete key in Backspace's place).
+;; But in GUI, Emacs makes Backspace generate `DEL` code, and make Delete
+;; generate another code which is bound to forward delete.
+;; Also GNOME Terminal makes Backspace generate `DEL` code by default, too.
+;; It's not good to translate Delete to `DEL` code and bind Backspace to
+;; functions like `backward-delete-char`, since many backward delete related
+;; functions are actually bound to `DEL` code.
+;; So the only thing to do is to make `C-h` generate `DEL` code to make it the
+;; same behavior as Backspace like `C-i` for `TAB`. We have `F1` for help.
+;; See <https://www.emacswiki.org/emacs/BackspaceKey>.
+(define-key key-translation-map (kbd "C-h") (kbd "DEL"))
+;; And don't forget to make `M-h` the same as `M-DEL`.
+;; I am not using `keyboard-translate` here, since it only accept 1 char (or a
+;; key code), `M-DEL` does not generate a single key code, but a sequence.
+;; I use `kbd` because it's easy to read, char constant or vector is also OK.
+;; See <https://ftp.gnu.org/old-gnu/Manuals/emacs-20.7/html_node/emacs_451.html>.
+(define-key key-translation-map (kbd "M-h") (kbd "M-DEL"))
 
 ;; By default, `join-line` will join current line into previous line.
 ;; In Atom, I typically join next line into current line.
@@ -142,7 +158,9 @@
 (defun join-next-line ()
   "Join the current line with the next line."
   (interactive)
-  (join-line t))
+  (join-line 1))
+;; `C-j` is used to insert evaluated value in `lisp-interaction-mode`, maybe I
+;; should find another keybinding for this.
 (global-set-key (kbd "C-j") 'join-next-line)
 
 ;; See <https://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/>.
@@ -159,7 +177,7 @@ point reaches the beginning or end of the buffer, stop there."
   (interactive "^p")
   (setq arg (or arg 1))
 
-  ;; Move lines first
+  ;; Move lines first.
   (when (/= arg 1)
     (let ((line-move-visual nil))
       (forward-line (1- arg))))
@@ -168,7 +186,7 @@ point reaches the beginning or end of the buffer, stop there."
     (back-to-indentation)
     (when (= orig-point (point))
       (move-beginning-of-line 1))))
-;; remap `C-a`, `Home` to `smarter-move-beginning-of-line'
+;; Remap `C-a`, `Home` to `smarter-move-beginning-of-line`.
 (global-set-key [remap move-beginning-of-line]
                 'smarter-move-beginning-of-line)
 
@@ -177,11 +195,10 @@ point reaches the beginning or end of the buffer, stop there."
 (global-set-key (kbd "C-z p") 'windmove-up)
 (global-set-key (kbd "C-z f") 'windmove-right)
 (global-set-key (kbd "C-z b") 'windmove-left)
-;; Shift+Arrow to move between windows.
+;; `S-<arrow>` to move between windows (`S` means Shift).
 (windmove-default-keybindings)
 
-;; Cannot find a keybinding for this.
-;; Just call it.
+;; Cannot find a keybinding for this. Just call it.
 (defun show-file-path ()
   "Show the full file path of current buffer in the minibuffer."
   (interactive)
@@ -189,8 +206,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Indentations.
 
-;; Making tab other length than 8 sounds like define PI to 3, if you don't
-;; want 8, you should also not use tabs, but use spaces.
+;; Making tab other length than 8 sounds like define PI to 3, if you don't want
+;; 8, you should also not use tabs, but use spaces.
 (setq-default tab-width 8)
 
 ;; This is the default value, which means if major mode does not set those
@@ -199,11 +216,11 @@ point reaches the beginning or end of the buffer, stop there."
 ;; can be divided by tab-width, use tabs, and use spaces for the remaining.
 (setq-default indent-tabs-mode t)
 
-;; Emacs have different indent variables for different modes.
-;; I'd like to control them with one variable, and set it via different hooks.
+;; Emacs have different indent variables for different modes. I'd like to
+;; control them with one variable, and set it via different hooks.
 ;; Having one variable that holds different values for different buffers is
-;; better than setting different variables for different buffers,
-;; so just make aliases between `indent-offset` and mode-specific variables.
+;; better than setting different variables for different buffers, so just make
+;; aliases between `indent-offset` and mode-specific variables.
 ;; If installed more modes, add their indent-offset here.
 (defvar mode-indent-offsets '(c-basic-offset
                               js-indent-level
@@ -223,38 +240,38 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; If you quote a list, not only itself, but it's elements will not be eval.
 ;; Using `list` will eval elements and return a list.
-;; `interactive` wants a list of integers to fill arguments,
-;; so we cannot quote here, because we need to evaluate `read-number`,
-;; and quote will prevent list and it's elements to be evaluated.
+;; `interactive` wants a list of integers to fill arguments, so we cannot quote
+;; here, because we need to evaluate `read-number`, and quote will prevent list
+;; and it's elements to be evaluated.
 ;; Using `\`` with `,` can also evaluate selected elements.
-;; Don't use `setq-default`, because every time we start a new major mode we
-;; set those values, and if we open two files with different modes,
-;; the latter one will cover the former one's value with `setq-default`.
+;; Don't use `setq-default`, because every time we start a new major mode we set
+;; those values, and if we open two files with different modes, the latter one
+;; will cover the former one's value with `setq-default`.
 (defun indent-tabs (num)
   "Mark this buffer to indent with tabs and set indent offset to NUM chars."
   (interactive `(,(read-number "Indent offset (chars): " 8)))
-  (setq indent-tabs-mode t)
+  (indent-tabs-mode 1)
   (setq indent-offset num))
 
 (defun indent-spaces (num)
   "Mark this buffer to indent with spaces and set indent offset to NUM chars."
   (interactive `(,(read-number "Indent offset (chars): " 8)))
-  (setq indent-tabs-mode nil)
+  (indent-tabs-mode -1)
   (setq indent-offset num))
 
-;; Most projects saying that they are using 2 as tab-width actually means
-;; they are using 2 as indent-offset. If you don't use spaces to indent,
-;; tab-width has no meaning for you.
+;; Most projects saying that they are using 2 as `tab-width` actually means they
+;; are using 2 as `indent-offset`. If you don't use spaces to indent,
+;; `tab-width` has no meaning for you.
 ;; You should call `(indent-spaces 2)` for those projects.
 ;;
-;; There are also other projects like GTK using 2 as indent-offset, and they
-;; actually also assume tab-width is 8 and use tabs to indent. If you set
-;; tab-width to 2, you'll find some 4-level code become 1-level, which is wrong.
+;; There are also other projects like GTK using 2 as `indent-offset`, and they
+;; actually also assume `tab-width` is 8 and use tabs to indent. If you set
+;; `tab-width` to 2, you'll find some 4-level code is 1-level, which is wrong.
 ;; You should call `(indent-tabs 2)` for those projects.
 ;;
-;; So most of time you should not change tab-width,
-;; but maybe some crazy projects use tabs for indent and they don't want
-;; tab-width to be 8, then call this.
+;; So most of time you should not change `tab-width`, but maybe some crazy
+;; projects use tabs for indent and they don't want `tab-width` to be 8, then
+;; call this via `M-x` manually.
 ;; I personally think they should use 2 spaces instead.
 (defun set-tab-width (num)
   "Mark this buffer to set tab width to NUM chars."
@@ -263,7 +280,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; If installed more modes, add them here as `(mode-name . indent-offset)`.
 (defvar indent-tabs-modes '((prog-mode . 8)
-                            ;; markdown-mode is not a prog-mode.
+                            ;; `markdown-mode` is not a `prog-mode`.
                             (markdown-mode . 8)
                             (gfm-mode . 8)))
 
@@ -277,9 +294,9 @@ point reaches the beginning or end of the buffer, stop there."
                               (python-mode . 4)))
 
 ;; `intern` returns symbol by string. `symbol-name` returns string by symbol.
-;; In dynamic binding, lambda is self-quoting, and there is no closure.
-;; so we need to evaluate `(cdr pair)` first.
-;; Some modes set tab-width to other value, correct them to 8.
+;; In dynamic binding, lambda is self-quoting, and there is no closure, so we
+;; need to evaluate `(cdr pair)` first.
+;; Some modes set `tab-width` to other value, correct them to 8.
 (dolist (pair indent-tabs-modes)
   (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
             `(lambda () (indent-tabs ,(cdr pair)) (set-tab-width 8))))
@@ -350,18 +367,13 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package counsel
   :ensure t
-  :bind (("M-x" . counsel-M-x)
-	 ("C-x C-f" . counsel-find-file)
-	 ("<f1> f" . counsel-describe-function)
-	 ("<f1> v" . counsel-describe-variable)
-	 ("<f1> l" . counsel-find-library)
-	 ("<f2> i" . counsel-info-lookup-symbol)
-	 ("<f2> u" . counsel-unicode-char)
-	 ("C-c g" . counsel-git)
+  :config
+  (counsel-mode 1)
+  :bind (("C-c g" . counsel-git)
 	 ("C-c j" . counsel-git-grep)
-	 ("C-c k" . counsel-ag)
-	 ("C-x l" . counsel-locate)
-	 ("C-S-o" . counsel-rhythmbox)
+	 ("C-c k" . counsel-rg)
+	 ("C-c l" . counsel-locate)
+	 ;; ("C-S-o" . counsel-rhythmbox)
          :map minibuffer-local-map
          ("C-r" . counsel-minibuffer-history)))
 
@@ -369,7 +381,7 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package display-fill-column-indicator
   :ensure t
   :defer t
-  ;; I only use this in prog-mode.
+  ;; I only use this in `prog-mode`.
   :hook ((prog-mode . display-fill-column-indicator-mode))
   :custom
   ;; Set column ruler at 80 columns.
@@ -385,6 +397,7 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package highlight-indent-guides
   :ensure t
   :defer t
+  ;; I only use this in `prog-mode`.
   :hook ((prog-mode . highlight-indent-guides-mode))
   :custom
   (highlight-indent-guides-method 'character)
@@ -398,11 +411,11 @@ point reaches the beginning or end of the buffer, stop there."
   :defer t
   :hook ((prog-mode . hl-todo-mode)))
 
+;; I remove `:diminish` here because `mood-line` hides minor modes by default.
 (use-package ivy
   :ensure t
-  :diminish (ivy-mode)
   :config
-  (ivy-mode t)
+  (ivy-mode 1)
   :bind (("C-x b" . ivy-switch-buffer)
 	 ("C-c C-r" . ivy-resume))
   :custom
@@ -453,8 +466,8 @@ point reaches the beginning or end of the buffer, stop there."
          (js-mode . lsp-deferred)
 	 (js2-mode . lsp-deferred)
          (python-mode . lsp-deferred)
-	 ;; Don't enable lsp for web-mode, I only use this for templates,
-	 ;; lsp cannot understand nunjucks.
+	 ;; Don't enable lsp for `web-mode`, I only use this for templates, and
+         ;; lsp cannot understand nunjucks.
          ;; (web-mode . lsp-deferred)
 	 (lsp-mode . lsp-enable-which-key-integration))
   :bind (:map lsp-mode-map
@@ -493,13 +506,14 @@ point reaches the beginning or end of the buffer, stop there."
   (markdown-indent-on-enter nil))
 
 ;; Not good, I only use minimap as scroll bar, but it cannot do this well.
-;; https://github.com/jandamm/doom-emacs-minimap/blob/master/blockfont.ttf
+;; If use this don't forget to install block font.
+;; See <https://github.com/jandamm/doom-emacs-minimap/blob/master/blockfont.ttf>.
 ;; (use-package minimap
 ;;   :ensure t
 ;;   :defer 1
 ;;   :config
 ;;   (add-to-list 'minimap-major-modes 'markdown-mode)
-;;   (minimap-mode t)
+;;   (minimap-mode 1)
 ;;   :custom
 ;;   (minimap-window-location 'right)
 ;;   ;; Enlarge breaks BlockFont.
@@ -507,11 +521,11 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   :custom-face
 ;;   (minimap-font-face ((t (:height 30 :family "BlockFont")))))
 
-;; doom-modeline is good, but mood-line is enough for me.
+;; `doom-modeline` is good, but `mood-line` is enough for me.
 (use-package mood-line
   :ensure t
   :config
-  (mood-line-mode t)
+  (mood-line-mode 1)
   :custom
   (mood-line-show-encoding-information t)
   (mood-line-show-eol-style t))
@@ -529,7 +543,7 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package projectile
   :ensure t
   :config
-  (projectile-mode t)
+  (projectile-mode 1)
   :bind (:map projectile-mode-map
 	      ("C-c p" . projectile-command-map)
 	      ("M-s" . projectile-ripgrep))
@@ -551,7 +565,7 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer 1
   :config
-  (recentf-mode t)
+  (recentf-mode 1)
   :custom
   (recentf-save-file (locate-user-emacs-file ".cache/recentf")))
 
@@ -561,7 +575,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Don't defer this if you want it to work on the first file you opened.
   ;; :defer 1
   :config
-  (save-place-mode t)
+  (save-place-mode 1)
   :custom
   (save-place-file (locate-user-emacs-file ".cache/places")))
 
@@ -586,7 +600,7 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package undo-tree
   :ensure t
   :config
-  (global-undo-tree-mode t))
+  (global-undo-tree-mode 1))
 
 (use-package web-mode
   :ensure t
@@ -595,15 +609,16 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package which-key
   :ensure t
   :config
-  (which-key-mode t))
+  (which-key-mode 1))
 
 ;; Atom-like default region.
 ;; If there is no region, behave like current line is current region.
 ;; Works on indent/outdent, comment block, cut (kill), copy, paste (yank).
+;; Seems not work in GNOME Terminal.
 (use-package whole-line-or-region
   :ensure t
   :config
-  (whole-line-or-region-global-mode t))
+  (whole-line-or-region-global-mode 1))
 
 (use-package xref-js2
   :ensure t
