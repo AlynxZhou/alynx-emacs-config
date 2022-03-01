@@ -592,7 +592,9 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package treemacs
   :ensure t
-  :defer 1)
+  :defer 1
+  ;; I never use internal input method so bind this to treemacs.
+  :bind (("C-\\" . treemacs)))
 
 (use-package treemacs-projectile
   :ensure t
