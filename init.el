@@ -378,6 +378,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package counsel
   :ensure t
+  :after (ivy)
   :config
   (counsel-mode 1)
   :bind (("C-c g" . counsel-git)
@@ -390,8 +391,12 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package counsel-projectile
   :ensure t
+  :after (counsel projectile)
+  ;; None of this works, how to load it correctly?
   :config
-  (counsel-projectile-mode 1))
+  (counsel-projectile-mode 1)
+  ;; :hook ((projectile-mode . counsel-projectile-mode))
+  )
 
 ;; Built in minor mode to display column ruler.
 (use-package display-fill-column-indicator
@@ -438,8 +443,6 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :config
   (ivy-mode 1)
-  :bind (("C-x b" . ivy-switch-buffer)
-	 ("C-c C-r" . ivy-resume))
   :custom
   (ivy-use-virtual-buffers t)
   (ivy-display-style 'fancy)
@@ -456,6 +459,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package js2-refactor
   :ensure t
+  :after (js2-mode)
   :config
   (js2r-add-keybindings-with-prefix "C-c C-r")
   :hook ((js2-mode . js2-refactor-mode))
@@ -472,6 +476,7 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package lsp-ivy
   :ensure t
   :defer 1
+  :after (lsp-mode ivy)
   :commands lsp-ivy-workspace-symbol)
 
 (use-package lsp-mode
@@ -503,11 +508,13 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package lsp-treemacs
   :ensure t
   :defer 1
+  :after (lsp-mode treemacs)
   :commands lsp-treemacs-errors-list)
 
 (use-package lsp-ui
   :ensure t
   :defer 1
+  :after (lsp-mode)
   :commands lsp-ui-mode)
 
 (use-package lua-mode
@@ -566,10 +573,11 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :config
   (projectile-mode 1)
-  :bind (:map projectile-mode-map
-	      ("C-c p" . projectile-command-map)
-	      ("M-s" . projectile-ripgrep))
+  :bind (("M-s" . projectile-ripgrep))
+  ;; See <https://github.com/jwiegley/use-package#binding-to-keymaps>.
+  :bind-keymap (("C-c p" . projectile-command-map))
   :custom
+  (projectile-completion-system 'ivy)
   (projectile-cache-file
    (locate-user-emacs-file ".local/cache/projectile.cache"))
   (projectile-known-projects-file
@@ -603,6 +611,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package swiper
   :ensure t
+  :after (ivy)
   :bind (("C-s" . swiper)
 	 ("C-r" . swiper)))
 
@@ -618,7 +627,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package treemacs-projectile
   :ensure t
-  :defer 1)
+  :defer 1
+  :after (treemacs projectile))
 
 ;; I hardly try.
 ;; (use-package try
@@ -649,6 +659,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package xref-js2
   :ensure t
+  :after (js2-mode)
   :hook ((js2-mode . (lambda ()
                       (add-hook 'xref-backend-functions
                                 #'xref-js2-xref-backend nil t))))
@@ -666,7 +677,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package yasnippet-snippets
   :ensure t
-  :defer 1)
+  :defer 1
+  :after (yasnippet))
 
 ;; Make gc pauses faster by decreasing the threshold.
 (setq gc-cons-threshold (* 2 1024 1024))
