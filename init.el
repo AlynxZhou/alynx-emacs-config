@@ -29,9 +29,13 @@
                       (time-subtract after-init-time before-init-time))
                      gcs-done)))
 
-;; Create cache dir to redirect package-generated files.
+;; Create local dir to redirect package-generated files.
 ;; `:parents` makes `make-directory` silience if dir exists.
-(make-directory (locate-user-emacs-file ".cache") :parents)
+(make-directory (locate-user-emacs-file ".local") :parents)
+;; Cache dir which contains package caches that you can safely remove it.
+(make-directory (locate-user-emacs-file ".local/cache") :parents)
+;; Backup dir which contains backup files and auto save lists.
+(make-directory (locate-user-emacs-file ".local/backup") :parents)
 
 ;; Disable menu bar, tool bar, scroll bar and cursor blink.
 (menu-bar-mode -1)
@@ -75,9 +79,10 @@
 ;; Disable backup files.
 (setq make-backup-files nil)
 ;; Move backup files and list into backup dir.
-(make-directory (locate-user-emacs-file ".backup") :parents)
-(setq backup-directory-alist `(("." . ,(locate-user-emacs-file ".backup"))))
-(setq auto-save-list-file-prefix (locate-user-emacs-file ".backup/.saves-"))
+(setq backup-directory-alist
+      `(("." . ,(locate-user-emacs-file ".local/backup"))))
+(setq auto-save-list-file-prefix
+      (locate-user-emacs-file ".local/backup/.saves-"))
 
 ;; Set customization data in a specific file, without littering my init files.
 ;; `locate-user-emacs-file` will create file if it does not exist.
@@ -393,6 +398,12 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Set column ruler at 80 columns.
   (display-fill-column-indicator-column 80))
 
+;; I hardly use built in eshell, but I still redirect its data dir.
+(use-package eshell
+  :ensure t
+  :custom
+  (eshell-directory-name (locate-user-emacs-file ".local/eshell")))
+
 (use-package flycheck
   :ensure t
   :defer t
@@ -479,9 +490,9 @@ point reaches the beginning or end of the buffer, stop there."
   :bind (:map lsp-mode-map
               ("M-." . lsp-find-definition)
               ("M-n" . lsp-find-references))
-  ;; Move lsp session file into cache dir.
+  ;; Move lsp session file into local dir.
   :custom
-  (lsp-session-file (locate-user-emacs-file ".cache/lsp-session"))
+  (lsp-session-file (locate-user-emacs-file ".local/lsp-session"))
   (lsp-keymap-prefix "C-c l"))
 
 (use-package lsp-treemacs
@@ -555,9 +566,9 @@ point reaches the beginning or end of the buffer, stop there."
 	      ("M-s" . projectile-ripgrep))
   :custom
   (projectile-cache-file
-   (locate-user-emacs-file ".cache/projectile.cache"))
+   (locate-user-emacs-file ".local/cache/projectile.cache"))
   (projectile-known-projects-file
-   (locate-user-emacs-file ".cache/projectile-bookmarks.eld")))
+   (locate-user-emacs-file ".local/projectile-bookmarks.eld")))
 
 (use-package rainbow-delimiters
   :ensure t
@@ -573,7 +584,7 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (recentf-mode 1)
   :custom
-  (recentf-save-file (locate-user-emacs-file ".cache/recentf")))
+  (recentf-save-file (locate-user-emacs-file ".local/recentf")))
 
 ;; Built in minor mode to open files at last-edited position.
 (use-package saveplace
@@ -583,7 +594,7 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (save-place-mode 1)
   :custom
-  (save-place-file (locate-user-emacs-file ".cache/places")))
+  (save-place-file (locate-user-emacs-file ".local/places")))
 
 (use-package swiper
   :ensure t
@@ -594,7 +605,11 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer 1
   ;; I never use internal input method so bind this to treemacs.
-  :bind (("C-\\" . treemacs)))
+  :bind (("C-\\" . treemacs))
+  :custom
+  (treemacs-persist-file (locate-user-emacs-file ".local/treemacs-persist"))
+  (treemacs-last-error-persist-file
+   (locate-user-emacs-file ".local/treemacs-persist-at-last-error")))
 
 (use-package treemacs-projectile
   :ensure t

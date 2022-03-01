@@ -1,5 +1,4 @@
-.backup/
-.cache/
+.local/
 eln-cache/
 elpa/
 # Some flycheck checkers generate files in source dir with prefix `flycheck_`,
