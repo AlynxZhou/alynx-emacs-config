@@ -200,6 +200,9 @@ point reaches the beginning or end of the buffer, stop there."
 (global-set-key (kbd "C-z b") 'windmove-left)
 ;; `S-<arrow>` to move between windows (`S` means Shift).
 (windmove-default-keybindings)
+;; The default Buffer List is ugly, replace it with IBuffer.
+;; However I don't use them both.
+(global-set-key (kbd "C-x C-b") 'ibuffer-other-window)
 
 ;; Cannot find a keybinding for this. Just call it.
 (defun show-file-path ()
