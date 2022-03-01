@@ -388,6 +388,11 @@ point reaches the beginning or end of the buffer, stop there."
          :map minibuffer-local-map
          ("C-r" . counsel-minibuffer-history)))
 
+(use-package counsel-projectile
+  :ensure t
+  :config
+  (counsel-projectile-mode 1))
+
 ;; Built in minor mode to display column ruler.
 (use-package display-fill-column-indicator
   :ensure t
