@@ -599,8 +599,9 @@ point reaches the beginning or end of the buffer, stop there."
   :bind (:map lsp-mode-map
               ("M-." . lsp-find-definition)
               ("M-n" . lsp-find-references))
-  ;; Move lsp session file into local dir.
+  ;; Move lsp files into local dir.
   :custom
+  (lsp-server-install-dir (locate-user-emacs-file ".local/lsp"))
   (lsp-session-file (locate-user-emacs-file ".local/lsp-session"))
   (lsp-keymap-prefix "C-c l"))
 
