@@ -45,4 +45,4 @@ If you really want to modify `tab-width`, you can press `C-c i w` or `M-x set-ta
 
 There are two cons lists called `indent-tabs-modes` and `indent-spaces-modes` that holds default value of `indent-offset` for different modes. The car of cons is mode's hook without hook, and the cdr of cons is default value of `indent-offset`, you should modify those lists if you want different settings.
 
-There is an indicator on modeline, first is `TAB` or `SPC`, second is `indent-offset`, third is `tab-width`.
+There is an indicator on mode line, first is `TAB` or `SPC`, second is `indent-offset`, third is `tab-width`.
