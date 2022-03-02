@@ -563,6 +563,8 @@ point reaches the beginning or end of the buffer, stop there."
   :defer 1
   ;; I never use internal input method so bind this to treemacs.
   :bind (("C-\\" . treemacs))
+  ;; Disable line number for treemacs buffer.
+  :hook ((treemacs-mode . (lambda() (display-line-numbers-mode -1))))
   :custom
   (treemacs-width 20)
   (treemacs-persist-file (locate-user-emacs-file ".local/treemacs-persist"))
