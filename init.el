@@ -8,11 +8,13 @@
 ;; Internal tweaks.
 
 ;; Make startup faster by reducing the frequency of garbage collection.
-;; The default is 800 kilobytes. Measured in bytes.
+;; The default is 800 KB which is too small. Measured in bytes.
 ;; See <http://blog.lujun9972.win/emacs-document/blog/2019/03/15/%E9%99%8D%E4%BD%8Eemacs%E5%90%AF%E5%8A%A8%E6%97%B6%E9%97%B4%E7%9A%84%E9%AB%98%E7%BA%A7%E6%8A%80%E6%9C%AF/index.html>.
-;; Move this into `early-init.el` can reduce more 10 gcs and 0.07 second, but I
-;; don't want more file.
-(setq gc-cons-threshold (* 50 1024 1024))
+;; Also good for `lsp-mode`.
+;; See <https://emacs-lsp.github.io/lsp-mode/page/performance/#adjust-gc-cons-threshold>.
+(setq gc-cons-threshold (* 128 1024 1024))
+;; See <https://emacs-lsp.github.io/lsp-mode/page/performance/#increase-the-amount-of-data-which-emacs-reads-from-the-process>.
+(setq read-process-output-max (* 2 1024 1024))
 
 ;; Disable startup message.
 (setq inhibit-startup-message t)
@@ -366,7 +368,16 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (load-theme 'atom-one-dark t))
 
+;; Or if you like `mood-one-theme`.
+;; (use-package mood-one-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'mood-one t)
+;;   (mood-one-theme-arrow-fringe-bmp-enable)
+;;   (eval-after-load 'flycheck #'mood-one-theme-flycheck-fringe-bmp-enable))
+
 ;; `doom-modeline` is good, but `mood-line` is enough for me.
+;; Don't defer this, either.
 (use-package mood-line
   :ensure t
   :config
@@ -553,6 +564,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; I never use internal input method so bind this to treemacs.
   :bind (("C-\\" . treemacs))
   :custom
+  (treemacs-width 20)
   (treemacs-persist-file (locate-user-emacs-file ".local/treemacs-persist"))
   (treemacs-last-error-persist-file
    (locate-user-emacs-file ".local/treemacs-persist-at-last-error")))
@@ -629,6 +641,17 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer 1)
 
+(use-package tree-sitter
+  :ensure t
+  :config
+  ;; Enable `tree-sitter` for all supported major modes.
+  (global-tree-sitter-mode 1)
+  ;; Use `tree-sitter` for highlight on supported major modes.
+  :hook ((tree-sitter-after-on . tree-sitter-hl-mode)))
+
+(use-package tree-sitter-langs
+  :ensure t)
+
 ;; Modes and tools for different languages.
 
 (use-package js2-mode
@@ -684,7 +707,8 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :mode (("\\.yml\\'" . yaml-mode) ("\\.yaml\\'" . yaml-mode)))
 
+;; Maybe not good for `lsp-mode` so I am not using this.
 ;; Make gc pauses faster by decreasing the threshold.
-(setq gc-cons-threshold (* 2 1024 1024))
+;; (setq gc-cons-threshold (* 2 1024 1024))
 
 ;;; init.el ends here.
