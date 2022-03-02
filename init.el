@@ -352,6 +352,13 @@ point reaches the beginning or end of the buffer, stop there."
 ;; after 1 second, but `:defer t` does not load package, expects other options
 ;; load it.
 
+;; Simple packages that have no dependencies.
+
+;; I hardly try.
+;; (use-package try
+;;   :ensure t
+;;   :defer 1)
+
 ;; My favorite theme.
 ;; Don't defer this, I need it all time.
 (use-package atom-one-dark-theme
@@ -359,67 +366,32 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (load-theme 'atom-one-dark t))
 
-(use-package avy
+;; `doom-modeline` is good, but `mood-line` is enough for me.
+(use-package mood-line
   :ensure t
-  :bind (("M-g a" . avy-goto-char)))
-
-(use-package better-shell
-  :ensure t
-  :bind (("C-\"" . better-shell-shell)
-         ("C-:" . better-shell-remote-open)))
-
-(use-package company
-  :ensure t
-  :defer t
-  :hook ((prog-mode . company-mode))
-  :custom
-  (debug-on-error nil)
-  (lsp-completion-provider :capf))
-
-(use-package counsel
-  :ensure t
-  :after (ivy)
   :config
-  (counsel-mode 1)
-  :bind (("C-c g" . counsel-git)
-	 ("C-c j" . counsel-git-grep)
-	 ("C-c k" . counsel-rg)
-	 ("C-c l" . counsel-locate)
-	 ;; ("C-S-o" . counsel-rhythmbox)
-         :map minibuffer-local-map
-         ("C-r" . counsel-minibuffer-history)))
+  (mood-line-mode 1)
+  :custom
+  (mood-line-show-encoding-information t)
+  (mood-line-show-eol-style t))
 
-(use-package counsel-projectile
+;; Atom-like move regine/current line up and down.
+(use-package move-text
   :ensure t
-  :after (counsel projectile)
-  ;; None of this works, how to load it correctly?
+  :bind (("M-p" . move-text-up) ("M-n" . move-text-down)))
+
+;; Atom-like default region.
+;; If there is no region, behave like current line is current region.
+;; Works on indent/outdent, comment block, cut (kill), copy, paste (yank).
+(use-package whole-line-or-region
+  :ensure t
   :config
-  (counsel-projectile-mode 1)
-  ;; :hook ((projectile-mode . counsel-projectile-mode))
-  )
+  (whole-line-or-region-global-mode 1))
 
-;; Built in minor mode to display column ruler.
-(use-package display-fill-column-indicator
+(use-package undo-tree
   :ensure t
-  :defer t
-  ;; I only use this in `prog-mode`.
-  :hook ((prog-mode . display-fill-column-indicator-mode))
-  :custom
-  ;; Set column ruler at 80 columns.
-  (display-fill-column-indicator-column 80))
-
-;; I hardly use built in eshell, but I still redirect its data dir.
-(use-package eshell
-  :ensure t
-  :custom
-  (eshell-directory-name (locate-user-emacs-file ".local/eshell")))
-
-(use-package flycheck
-  :ensure t
-  :defer t
-  :hook ((prog-mode . flycheck-mode)
-         (markdown-mode . flycheck-mode)
-         (org-mode . flycheck-mode)))
+  :config
+  (global-undo-tree-mode 1))
 
 (use-package highlight-indent-guides
   :ensure t
@@ -438,6 +410,112 @@ point reaches the beginning or end of the buffer, stop there."
   :defer t
   :hook ((prog-mode . hl-todo-mode)))
 
+;; Built in minor mode to display column ruler.
+(use-package display-fill-column-indicator
+  :ensure t
+  :defer t
+  ;; I only use this in `prog-mode`.
+  :hook ((prog-mode . display-fill-column-indicator-mode))
+  :custom
+  ;; Set column ruler at 80 columns.
+  (display-fill-column-indicator-column 80))
+
+(use-package which-key
+  :ensure t
+  :config
+  (which-key-mode 1))
+
+(use-package rainbow-delimiters
+  :ensure t
+  :defer t
+  :hook ((prog-mode . rainbow-delimiters-mode)))
+
+;; Not good, I only use minimap as scroll bar, but it cannot do this well.
+;; If use this don't forget to install block font.
+;; See <https://github.com/jandamm/doom-emacs-minimap/blob/master/blockfont.ttf>.
+;; (use-package minimap
+;;   :ensure t
+;;   :defer 1
+;;   :config
+;;   (add-to-list 'minimap-major-modes 'markdown-mode)
+;;   (minimap-mode 1)
+;;   :custom
+;;   (minimap-window-location 'right)
+;;   ;; Enlarge breaks BlockFont.
+;;   (minimap-enlarge-certain-faces nil)
+;;   :custom-face
+;;   (minimap-font-face ((t (:height 30 :family "BlockFont")))))
+
+(use-package org-bullets
+  :ensure t
+  :defer t
+  :hook ((org-mode . org-bullets-mode)))
+
+(use-package avy
+  :ensure t
+  :bind (("M-g a" . avy-goto-char)))
+
+(use-package yasnippet
+  :ensure t
+  :defer t
+  :hook ((prog-mode . yas-minor-mode)))
+
+(use-package yasnippet-snippets
+  :ensure t
+  :defer 1)
+
+;; Built in minor mode to save recent files.
+;; This is not needed in startup so we defer it for 1 second.
+;; Only ivy virtual buffers need it.
+(use-package recentf
+  :ensure t
+  :defer 1
+  :config
+  (recentf-mode 1)
+  :custom
+  (recentf-save-file (locate-user-emacs-file ".local/recentf")))
+
+;; Built in minor mode to open files at last-edited position.
+(use-package saveplace
+  :ensure t
+  ;; Don't defer this if you want it to work on the first file you opened.
+  ;; :defer 1
+  :config
+  (save-place-mode 1)
+  :custom
+  (save-place-file (locate-user-emacs-file ".local/places")))
+
+;; I hardly use built in eshell, but I still redirect its data dir.
+(use-package eshell
+  :ensure t
+  :custom
+  (eshell-directory-name (locate-user-emacs-file ".local/eshell")))
+
+(use-package better-shell
+  :ensure t
+  :bind (("C-\"" . better-shell-shell)
+         ("C-:" . better-shell-remote-open)))
+
+;; Complex packages that have dependencies.
+;; Don't change the sequence, because the latter needs to obey the former's
+;; `:custom`, for example `projectile` and `counsel-projectile`. If a package
+;; depends on other package, it should be placed after all of its dependencies.
+;; I don't use `:after` here, because we may have keybindings for dependencies,
+;; which leads into an autoload, and if you have 2 dependencies in `:after`,
+;; you need to first press both keybindings of those 2 dependencies, then the
+;; package will be loaded, it won't be loaded before those keybindings. I don't
+;; want this, I just want to run dependencies' `:custom` first, so keep the
+;; sequence is easiest.
+;; See <https://github.com/jwiegley/use-package/issues/976#issuecomment-1056017784>.
+
+(use-package company
+  :ensure t
+  :defer t
+  :hook ((prog-mode . company-mode))
+  :custom
+  (debug-on-error nil)
+  (lsp-completion-provider :capf))
+
 ;; I remove `:diminish` here because `mood-line` hides minor modes by default.
 (use-package ivy
   :ensure t
@@ -452,32 +530,53 @@ point reaches the beginning or end of the buffer, stop there."
   ;; I don't want ivy to add `/` after I press `~`.
   (ivy-magic-tilde nil))
 
-(use-package js2-mode
+(use-package counsel
   :ensure t
-  :hook ((js2-mode . js2-imenu-extras-mode))
-  :mode (("\\.js\\'" . js2-mode)))
-
-(use-package js2-refactor
-  :ensure t
-  :after (js2-mode)
   :config
-  (js2r-add-keybindings-with-prefix "C-c C-r")
-  :hook ((js2-mode . js2-refactor-mode))
-  :bind (:map js2-mode-map ("C-k" . js2r-kill)))
+  (counsel-mode 1)
+  :bind (("C-c g" . counsel-git)
+	 ("C-c j" . counsel-git-grep)
+	 ("C-c k" . counsel-rg)
+	 ("C-c l" . counsel-locate)
+	 ;; ("C-S-o" . counsel-rhythmbox)
+         :map minibuffer-local-map
+         ("C-r" . counsel-minibuffer-history)))
 
-(use-package json-mode
+(use-package swiper
   :ensure t
-  :bind (:map json-mode-map ("C-c <tab>" . json-mode-beautify))
-  :mode (("\\.bowerrc\\'" . json-mode)
-         ("\\.jshintrc\\'" . json-mode)
-         ("\\.json_schema\\'" . json-mode)
-         ("\\.json\\'" . json-mode)))
+  :bind (("C-s" . swiper)
+	 ("C-r" . swiper)))
 
-(use-package lsp-ivy
+(use-package treemacs
   :ensure t
   :defer 1
-  :after (lsp-mode ivy)
-  :commands lsp-ivy-workspace-symbol)
+  ;; I never use internal input method so bind this to treemacs.
+  :bind (("C-\\" . treemacs))
+  :custom
+  (treemacs-persist-file (locate-user-emacs-file ".local/treemacs-persist"))
+  (treemacs-last-error-persist-file
+   (locate-user-emacs-file ".local/treemacs-persist-at-last-error")))
+
+(use-package projectile
+  :ensure t
+  :config
+  (projectile-mode 1)
+  :bind (("M-s" . projectile-ripgrep))
+  ;; See <https://github.com/jwiegley/use-package#binding-to-keymaps>.
+  :bind-keymap (("C-c p" . projectile-command-map))
+  :custom
+  (projectile-completion-system 'ivy)
+  (projectile-cache-file
+   (locate-user-emacs-file ".local/cache/projectile.cache"))
+  (projectile-known-projects-file
+   (locate-user-emacs-file ".local/projectile-bookmarks.eld")))
+
+(use-package flycheck
+  :ensure t
+  :defer t
+  :hook ((prog-mode . flycheck-mode)
+         (markdown-mode . flycheck-mode)
+         (org-mode . flycheck-mode)))
 
 (use-package lsp-mode
   :ensure t
@@ -505,17 +604,59 @@ point reaches the beginning or end of the buffer, stop there."
   (lsp-session-file (locate-user-emacs-file ".local/lsp-session"))
   (lsp-keymap-prefix "C-c l"))
 
-(use-package lsp-treemacs
+(use-package lsp-ivy
   :ensure t
   :defer 1
-  :after (lsp-mode treemacs)
-  :commands lsp-treemacs-errors-list)
+  :commands lsp-ivy-workspace-symbol)
 
 (use-package lsp-ui
   :ensure t
   :defer 1
-  :after (lsp-mode)
   :commands lsp-ui-mode)
+
+(use-package lsp-treemacs
+  :ensure t
+  :defer 1
+  :commands lsp-treemacs-errors-list)
+
+(use-package counsel-projectile
+  :ensure t
+  :config
+  (counsel-projectile-mode 1))
+
+(use-package treemacs-projectile
+  :ensure t
+  :defer 1)
+
+;; Modes and tools for different languages.
+
+(use-package js2-mode
+  :ensure t
+  :hook ((js2-mode . js2-imenu-extras-mode))
+  :mode (("\\.js\\'" . js2-mode)))
+
+(use-package js2-refactor
+  :ensure t
+  :config
+  (js2r-add-keybindings-with-prefix "C-c C-r")
+  :hook ((js2-mode . js2-refactor-mode))
+  :bind (:map js2-mode-map ("C-k" . js2r-kill)))
+
+(use-package xref-js2
+  :ensure t
+  :hook ((js2-mode . (lambda ()
+                      (add-hook 'xref-backend-functions
+                                #'xref-js2-xref-backend nil t))))
+  :bind (:map js-mode-map ("M-." . nil))
+  :custom (xref-js2-search-program 'rg))
+
+(use-package json-mode
+  :ensure t
+  :bind (:map json-mode-map ("C-c <tab>" . json-mode-beautify))
+  :mode (("\\.bowerrc\\'" . json-mode)
+         ("\\.jshintrc\\'" . json-mode)
+         ("\\.json_schema\\'" . json-mode)
+         ("\\.json\\'" . json-mode)))
 
 (use-package lua-mode
   :ensure t
@@ -534,151 +675,13 @@ point reaches the beginning or end of the buffer, stop there."
   (markdown-gfm-use-electric-backquote nil)
   (markdown-indent-on-enter nil))
 
-;; Not good, I only use minimap as scroll bar, but it cannot do this well.
-;; If use this don't forget to install block font.
-;; See <https://github.com/jandamm/doom-emacs-minimap/blob/master/blockfont.ttf>.
-;; (use-package minimap
-;;   :ensure t
-;;   :defer 1
-;;   :config
-;;   (add-to-list 'minimap-major-modes 'markdown-mode)
-;;   (minimap-mode 1)
-;;   :custom
-;;   (minimap-window-location 'right)
-;;   ;; Enlarge breaks BlockFont.
-;;   (minimap-enlarge-certain-faces nil)
-;;   :custom-face
-;;   (minimap-font-face ((t (:height 30 :family "BlockFont")))))
-
-;; `doom-modeline` is good, but `mood-line` is enough for me.
-(use-package mood-line
-  :ensure t
-  :config
-  (mood-line-mode 1)
-  :custom
-  (mood-line-show-encoding-information t)
-  (mood-line-show-eol-style t))
-
-;; Atom-like move regine/current line up and down.
-(use-package move-text
-  :ensure t
-  :bind (("M-p" . move-text-up) ("M-n" . move-text-down)))
-
-(use-package org-bullets
-  :ensure t
-  :defer t
-  :hook ((org-mode . org-bullets-mode)))
-
-(use-package projectile
-  :ensure t
-  :config
-  (projectile-mode 1)
-  :bind (("M-s" . projectile-ripgrep))
-  ;; See <https://github.com/jwiegley/use-package#binding-to-keymaps>.
-  :bind-keymap (("C-c p" . projectile-command-map))
-  :custom
-  (projectile-completion-system 'ivy)
-  (projectile-cache-file
-   (locate-user-emacs-file ".local/cache/projectile.cache"))
-  (projectile-known-projects-file
-   (locate-user-emacs-file ".local/projectile-bookmarks.eld")))
-
-(use-package rainbow-delimiters
-  :ensure t
-  :defer t
-  :hook ((prog-mode . rainbow-delimiters-mode)))
-
-;; Built in minor mode to save recent files.
-;; This is not needed in startup so we defer it for 1 second.
-;; Only ivy virtual buffers need it.
-(use-package recentf
-  :ensure t
-  :defer 1
-  :config
-  (recentf-mode 1)
-  :custom
-  (recentf-save-file (locate-user-emacs-file ".local/recentf")))
-
-;; Built in minor mode to open files at last-edited position.
-(use-package saveplace
-  :ensure t
-  ;; Don't defer this if you want it to work on the first file you opened.
-  ;; :defer 1
-  :config
-  (save-place-mode 1)
-  :custom
-  (save-place-file (locate-user-emacs-file ".local/places")))
-
-(use-package swiper
-  :ensure t
-  :after (ivy)
-  :bind (("C-s" . swiper)
-	 ("C-r" . swiper)))
-
-(use-package treemacs
-  :ensure t
-  :defer 1
-  ;; I never use internal input method so bind this to treemacs.
-  :bind (("C-\\" . treemacs))
-  :custom
-  (treemacs-persist-file (locate-user-emacs-file ".local/treemacs-persist"))
-  (treemacs-last-error-persist-file
-   (locate-user-emacs-file ".local/treemacs-persist-at-last-error")))
-
-(use-package treemacs-projectile
-  :ensure t
-  :defer 1
-  :after (treemacs projectile))
-
-;; I hardly try.
-;; (use-package try
-;;   :ensure t
-;;   :defer 1)
-
-(use-package undo-tree
-  :ensure t
-  :config
-  (global-undo-tree-mode 1))
-
 (use-package web-mode
   :ensure t
   :mode (("\\.njk\\'" . web-mode) ("\\.j2\\'" . web-mode)))
 
-(use-package which-key
-  :ensure t
-  :config
-  (which-key-mode 1))
-
-;; Atom-like default region.
-;; If there is no region, behave like current line is current region.
-;; Works on indent/outdent, comment block, cut (kill), copy, paste (yank).
-(use-package whole-line-or-region
-  :ensure t
-  :config
-  (whole-line-or-region-global-mode 1))
-
-(use-package xref-js2
-  :ensure t
-  :after (js2-mode)
-  :hook ((js2-mode . (lambda ()
-                      (add-hook 'xref-backend-functions
-                                #'xref-js2-xref-backend nil t))))
-  :bind (:map js-mode-map ("M-." . nil))
-  :custom (xref-js2-search-program 'rg))
-
 (use-package yaml-mode
   :ensure t
   :mode (("\\.yml\\'" . yaml-mode) ("\\.yaml\\'" . yaml-mode)))
-
-(use-package yasnippet
-  :ensure t
-  :defer t
-  :hook ((prog-mode . yas-minor-mode)))
-
-(use-package yasnippet-snippets
-  :ensure t
-  :defer 1
-  :after (yasnippet))
 
 ;; Make gc pauses faster by decreasing the threshold.
 (setq gc-cons-threshold (* 2 1024 1024))
