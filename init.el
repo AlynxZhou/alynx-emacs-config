@@ -126,8 +126,133 @@
 ;; If Emacs allows user to set a custom min line height, this will be solved.
 (setq face-font-rescale-alist '(("Noto Sans Mono CJK SC" . 0.85)))
 
+;; Indentations.
+
+;; Making tab other length than 8 sounds like define PI to 3, if you don't want
+;; 8, you should also not use tabs, but use spaces.
+(setq-default tab-width 8)
+
+;; This is the default value, which means if major mode does not set those
+;; value, I'll use tabs and it's length should be 8 chars.
+;; `indent-tabs-mode` does not mean use tabs only, it means if the indent level
+;; can be divided by tab-width, use tabs, and use spaces for the remaining.
+(setq-default indent-tabs-mode t)
+
+;; Emacs have different indent variables for different modes. I'd like to
+;; control them with one variable, and set it via different hooks.
+;; Having one variable that holds different values for different buffers is
+;; better than setting different variables for different buffers, so just make
+;; aliases between `indent-offset` and mode-specific variables.
+;; If installed more modes, add their indent variables here.
+;; Maybe I can get all known modes' indent variables from `doom-modeline`.
+;; See <https://github.com/seagle0128/doom-modeline/blob/master/doom-modeline-core.el#L310-L418>.
+(defconst mode-indent-offsets '(c-basic-offset
+                                js-indent-level
+                                css-indent-offset
+                                sgml-basic-offset
+                                python-indent-offset
+                                lua-indent-level
+                                web-mode-code-indent-offset
+                                web-mode-css-indent-offset
+                                web-mode-markup-indent-offset
+                                markdown-list-indent-width)
+  "Different modes' indent variables to make alias to indent-offset.")
+
+(dolist (mode-indent-offset mode-indent-offsets)
+  (defvaralias mode-indent-offset 'indent-offset))
+
+;; Make `indent-offset` a buffer-local variable.
+(defvar-local indent-offset tab-width)
+
+;; If you quote a list, not only itself, but it's elements will not be eval.
+;; Using `list` will eval elements and return a list.
+;; `interactive` wants a list of integers to fill arguments, so we cannot quote
+;; here, because we need to evaluate `read-number`, and quote will prevent list
+;; and it's elements to be evaluated.
+;; Using `\`` with `,` can also evaluate selected elements.
+;; Don't use `setq-default`, because every time we start a new major mode we set
+;; those values, and if we open two files with different modes, the latter one
+;; will cover the former one's value with `setq-default`.
+(defun indent-tabs (num)
+  "Mark this buffer to indent with tabs and set indent offset to NUM chars."
+  (interactive `(,(read-number "Indent offset (chars): " 8)))
+  (indent-tabs-mode 1)
+  (setq indent-offset num))
+
+(defun indent-spaces (num)
+  "Mark this buffer to indent with spaces and set indent offset to NUM chars."
+  (interactive `(,(read-number "Indent offset (chars): " 8)))
+  (indent-tabs-mode -1)
+  (setq indent-offset num))
+
+;; Most projects saying that they are using 2 as `tab-width` actually means they
+;; are using 2 as `indent-offset`. If you don't use spaces to indent,
+;; `tab-width` has no meaning for you.
+;; You should call `(indent-spaces 2)` for those projects.
+;;
+;; There are also other projects like GTK using 2 as `indent-offset`, and they
+;; actually also assume `tab-width` is 8 and use tabs to indent. If you set
+;; `tab-width` to 2, you'll find some 4-level code is 1-level, which is wrong.
+;; You should call `(indent-tabs 2)` for those projects.
+;;
+;; So most of time you should not change `tab-width`, but maybe some crazy
+;; projects use tabs for indent and they don't want `tab-width` to be 8, then
+;; call this via `M-x` manually.
+;; I personally think they should use 2 spaces instead.
+(defun set-tab-width (num)
+  "Mark this buffer to set tab width to NUM chars."
+  (interactive `(,(read-number "Tab width (chars): " 8)))
+  (setq tab-width num))
+
+;; If installed more modes, add them here as `(mode-name . indent-offset)`.
+(defconst indent-tabs-modes '((prog-mode . 8)
+                              ;; `markdown-mode` is not a `prog-mode`.
+                              (markdown-mode . 8)
+                              (gfm-mode . 8))
+  "Modes that will use tabs to indent.")
+
+(defconst indent-spaces-modes '((lisp-mode . 2)
+                                (emacs-lisp-mode . 2)
+                                (js-mode . 2)
+                                (css-mode . 2)
+                                (html-mode . 2)
+                                (yaml-mode . 2)
+                                (lua-mode . 3)
+                                (python-mode . 4))
+  "Modes that will use spaces to indent.")
+
+;; `intern` returns symbol by string. `symbol-name` returns string by symbol.
+;; In dynamic binding, lambda is self-quoting, and there is no closure, so we
+;; need to evaluate `(cdr pair)` first.
+;; Some modes set `tab-width` to other value, correct them to 8.
+(dolist (pair indent-tabs-modes)
+  (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
+            `(lambda () (indent-tabs ,(cdr pair)) (set-tab-width 8))))
+
+(dolist (pair indent-spaces-modes)
+    (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
+              `(lambda () (indent-spaces ,(cdr pair)) (set-tab-width 8))))
+
+;; Add a indentation indicator on mode line.
+;; Must use `:eval`, mode line constructor does not work for numbers.
+(setq mode-line-misc-info '(:eval (format "%s %d %d"
+					  (if indent-tabs-mode "TAB" "SPC")
+					  indent-offset
+					  tab-width)))
+
+;; See <https://dougie.io/emacs/indentation/>.
+;; Don't auto-indent line when pressing enter.
+(setq-default electric-indent-inhibit t)
+;; By default if you press backspace on indentations, Emacs will turn a tab into
+;; spaces and delete one space, I think no one will like this.
+(setq backward-delete-char-untabify-method nil)
+
 ;; Keymaps.
 
+;; Keybindings for setting indentations.
+(global-set-key (kbd "C-c i TAB") 'indent-tabs)
+(global-set-key (kbd "C-c i SPC") 'indent-spaces)
+(global-set-key (kbd "C-c i w") 'set-tab-width)
 ;; Atom style indent left or right.
 ;; See <https://dougie.io/emacs/indent-selection/>.
 (global-set-key (kbd "M-[") 'indent-rigidly-left-to-tab-stop)
@@ -200,11 +325,10 @@ point reaches the beginning or end of the buffer, stop there."
 (global-set-key [remap move-beginning-of-line]
                 'smarter-move-beginning-of-line)
 
-(global-unset-key (kbd "C-z"))
-(global-set-key (kbd "C-z n") 'windmove-down)
-(global-set-key (kbd "C-z p") 'windmove-up)
-(global-set-key (kbd "C-z f") 'windmove-right)
-(global-set-key (kbd "C-z b") 'windmove-left)
+(global-set-key (kbd "C-c n") 'windmove-down)
+(global-set-key (kbd "C-c p") 'windmove-up)
+(global-set-key (kbd "C-c f") 'windmove-right)
+(global-set-key (kbd "C-c b") 'windmove-left)
 ;; `S-<arrow>` to move between windows (`S` means Shift).
 (windmove-default-keybindings)
 ;; The default Buffer List is ugly, replace it with IBuffer.
@@ -217,120 +341,9 @@ point reaches the beginning or end of the buffer, stop there."
   (interactive)
   (message "%s" buffer-file-name))
 
-;; Indentations.
-
-;; Making tab other length than 8 sounds like define PI to 3, if you don't want
-;; 8, you should also not use tabs, but use spaces.
-(setq-default tab-width 8)
-
-;; This is the default value, which means if major mode does not set those
-;; value, I'll use tabs and it's length should be 8 chars.
-;; `indent-tabs-mode` does not mean use tabs only, it means if the indent level
-;; can be divided by tab-width, use tabs, and use spaces for the remaining.
-(setq-default indent-tabs-mode t)
-
-;; Emacs have different indent variables for different modes. I'd like to
-;; control them with one variable, and set it via different hooks.
-;; Having one variable that holds different values for different buffers is
-;; better than setting different variables for different buffers, so just make
-;; aliases between `indent-offset` and mode-specific variables.
-;; If installed more modes, add their indent-offset here.
-(defvar mode-indent-offsets '(c-basic-offset
-                              js-indent-level
-                              css-indent-offset
-                              sgml-basic-offset
-                              python-indent-offset
-                              lua-indent-level
-                              web-mode-code-indent-offset
-                              web-mode-css-indent-offset
-                              web-mode-markup-indent-offset
-                              markdown-list-indent-width))
-
-(dolist (mode-indent-offset mode-indent-offsets)
-  (defvaralias mode-indent-offset 'indent-offset))
-
-(defvar-local indent-offset tab-width)
-
-;; If you quote a list, not only itself, but it's elements will not be eval.
-;; Using `list` will eval elements and return a list.
-;; `interactive` wants a list of integers to fill arguments, so we cannot quote
-;; here, because we need to evaluate `read-number`, and quote will prevent list
-;; and it's elements to be evaluated.
-;; Using `\`` with `,` can also evaluate selected elements.
-;; Don't use `setq-default`, because every time we start a new major mode we set
-;; those values, and if we open two files with different modes, the latter one
-;; will cover the former one's value with `setq-default`.
-(defun indent-tabs (num)
-  "Mark this buffer to indent with tabs and set indent offset to NUM chars."
-  (interactive `(,(read-number "Indent offset (chars): " 8)))
-  (indent-tabs-mode 1)
-  (setq indent-offset num))
-
-(defun indent-spaces (num)
-  "Mark this buffer to indent with spaces and set indent offset to NUM chars."
-  (interactive `(,(read-number "Indent offset (chars): " 8)))
-  (indent-tabs-mode -1)
-  (setq indent-offset num))
-
-;; Most projects saying that they are using 2 as `tab-width` actually means they
-;; are using 2 as `indent-offset`. If you don't use spaces to indent,
-;; `tab-width` has no meaning for you.
-;; You should call `(indent-spaces 2)` for those projects.
-;;
-;; There are also other projects like GTK using 2 as `indent-offset`, and they
-;; actually also assume `tab-width` is 8 and use tabs to indent. If you set
-;; `tab-width` to 2, you'll find some 4-level code is 1-level, which is wrong.
-;; You should call `(indent-tabs 2)` for those projects.
-;;
-;; So most of time you should not change `tab-width`, but maybe some crazy
-;; projects use tabs for indent and they don't want `tab-width` to be 8, then
-;; call this via `M-x` manually.
-;; I personally think they should use 2 spaces instead.
-(defun set-tab-width (num)
-  "Mark this buffer to set tab width to NUM chars."
-  (interactive `(,(read-number "Tab width (chars): " 8)))
-  (setq tab-width num))
-
-;; If installed more modes, add them here as `(mode-name . indent-offset)`.
-(defvar indent-tabs-modes '((prog-mode . 8)
-                            ;; `markdown-mode` is not a `prog-mode`.
-                            (markdown-mode . 8)
-                            (gfm-mode . 8)))
-
-(defvar indent-spaces-modes '((lisp-mode . 2)
-                              (emacs-lisp-mode . 2)
-                              (js-mode . 2)
-                              (css-mode . 2)
-                              (html-mode . 2)
-                              (yaml-mode . 2)
-                              (lua-mode . 3)
-                              (python-mode . 4)))
-
-;; `intern` returns symbol by string. `symbol-name` returns string by symbol.
-;; In dynamic binding, lambda is self-quoting, and there is no closure, so we
-;; need to evaluate `(cdr pair)` first.
-;; Some modes set `tab-width` to other value, correct them to 8.
-(dolist (pair indent-tabs-modes)
-  (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
-            `(lambda () (indent-tabs ,(cdr pair)) (set-tab-width 8))))
-
-(dolist (pair indent-spaces-modes)
-    (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
-              `(lambda () (indent-spaces ,(cdr pair)) (set-tab-width 8))))
-
-;; Add a indentation indicator on mode line.
-;; Must use `:eval`, mode line constructor does not work for numbers.
-(setq mode-line-misc-info '(:eval (format "%s %d %d"
-					  (if indent-tabs-mode "TAB" "SPC")
-					  indent-offset
-					  tab-width)))
-
-;; See <https://dougie.io/emacs/indentation/>.
-;; Don't auto-indent line when pressing enter.
-(setq-default electric-indent-inhibit t)
-;; By default if you press backspace on indentations, Emacs will turn a tab into
-;; spaces and delete one space, I think no one will like this.
-(setq backward-delete-char-untabify-method nil)
+;; I maybe use this as some custom keybindings' prefix, but currently I prefer
+;; `C-c`, because `C-z` is hard to press.
+(global-unset-key (kbd "C-z"))
 
 ;; Packages.
 
@@ -341,7 +354,7 @@ point reaches the beginning or end of the buffer, stop there."
                 ("melpa" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
 (package-initialize)
 
-;; Load use-package.
+;; Load `use-package`.
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
@@ -561,11 +574,12 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package treemacs
   :ensure t
   :defer 1
-  ;; I never use internal input method so bind this to treemacs.
+  ;; I never use internal input method so bind this to `treemacs`.
   :bind (("C-\\" . treemacs))
-  ;; Disable line number for treemacs buffer.
+  ;; Disable line number for `treemacs` window.
   :hook ((treemacs-mode . (lambda() (display-line-numbers-mode -1))))
   :custom
+  ;; Default `treemacs` window is too wide.
   (treemacs-width 20)
   (treemacs-persist-file (locate-user-emacs-file ".local/treemacs-persist"))
   (treemacs-last-error-persist-file
@@ -577,7 +591,7 @@ point reaches the beginning or end of the buffer, stop there."
   (projectile-mode 1)
   :bind (("M-s" . projectile-ripgrep))
   ;; See <https://github.com/jwiegley/use-package#binding-to-keymaps>.
-  :bind-keymap (("C-c p" . projectile-command-map))
+  :bind-keymap (("C-x p" . projectile-command-map))
   :custom
   (projectile-completion-system 'ivy)
   (projectile-cache-file
