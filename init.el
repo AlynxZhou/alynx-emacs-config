@@ -130,7 +130,7 @@
 ;; This is the default value, which means if major mode does not set those
 ;; value, I'll use tabs and it's length should be 8 chars.
 ;; `indent-tabs-mode` does not mean use tabs only, it means if the indent level
-;; can be divided by tab-width, use tabs, and use spaces for the remaining.
+;; can be divided by `tab-width`, use tabs, and use spaces for the remaining.
 (setq-default indent-tabs-mode t)
 
 ;; Emacs have different indent variables for different modes. I'd like to
