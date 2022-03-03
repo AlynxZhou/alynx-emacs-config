@@ -25,7 +25,7 @@ $ git clone https://github.com/AlynxZhou/alynx-emacs-config.git ~/.emacs.d
 
 And run Emacs.
 
-I am using Emacs 28 with pgtk and native-comp from <https://aur.archlinux.org/packages/emacs-gcc-wayland-devel-bin>, if you are not using the latest version, this configuration may not work.
+I am using Emacs 29 with pgtk and native-comp from <https://aur.archlinux.org/packages/emacs-pgtk-native-comp-git>, if you are not using the latest version, this configuration may not work.
 
 # Notice
 

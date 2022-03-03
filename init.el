@@ -1,27 +1,14 @@
-;;; init.el --- Alynx's major configurations.
+;;; init.el --- Alynx's init configurations.
 
 ;;; Commentary:
-;; I have nothing to say here, just configurations.
+;; Most configurations should be in this file.
 
 ;;; Code:
 
 ;; Internal tweaks.
 
-;; Make startup faster by reducing the frequency of garbage collection.
-;; The default is 800 KB which is too small. Measured in bytes.
-;; See <http://blog.lujun9972.win/emacs-document/blog/2019/03/15/%E9%99%8D%E4%BD%8Eemacs%E5%90%AF%E5%8A%A8%E6%97%B6%E9%97%B4%E7%9A%84%E9%AB%98%E7%BA%A7%E6%8A%80%E6%9C%AF/index.html>.
-;; Also good for `lsp-mode`.
-;; See <https://emacs-lsp.github.io/lsp-mode/page/performance/#adjust-gc-cons-threshold>.
-(setq gc-cons-threshold (* 128 1024 1024))
-;; See <https://emacs-lsp.github.io/lsp-mode/page/performance/#increase-the-amount-of-data-which-emacs-reads-from-the-process>.
-(setq read-process-output-max (* 2 1024 1024))
-
 ;; Disable startup message.
 (setq inhibit-startup-message t)
-
-;; Start every frame maximized.
-;; See <https://emacsredux.com/blog/2020/12/04/maximize-the-emacs-frame-on-startup/>.
-(add-to-list 'default-frame-alist '(fullscreen . maximized))
 
 ;; Show loading time after startup.
 (add-hook 'emacs-startup-hook
@@ -32,6 +19,11 @@
                      gcs-done)))
 
 ;; Create local dir to redirect package-generated files.
+;; It's better not to move `eln-cache` and `elpa` into local dir, `eln-cache` is
+;; defined in `native-comp-eln-load-path`, which is a list contains user one and
+;; system one, I am even not sure whether this is used to save compiled cache,
+;; maybe it's only used to load. `elpa` is defined in `package-user-dir`, I
+;; don't want to modify it, either.
 ;; `:parents` makes `make-directory` silience if dir exists.
 (make-directory (locate-user-emacs-file ".local") :parents)
 ;; Cache dir which contains package caches that you can safely remove it.
@@ -69,6 +61,9 @@
 ;; Line space makes `highlight-indent-guides` wired.
 ;; (setq-default line-spacing nil)
 
+;; Enable `pixel-scroll-precision-mode` added in Emacs 29.
+(when (>= emacs-major-version 29)
+  (pixel-scroll-precision-mode 1))
 ;; By default Emacs will jump a half screen if your cursor is out of screen,
 ;; this makes it behave like other editors, but sometimes it still jumps.
 (setq scroll-margin 3)
@@ -348,16 +343,19 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Packages.
 
 (require 'package)
-(setq-default package-enable-at-startup nil)
-(setq-default package-archives
-              '(("gnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-                ("melpa" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
+(setq package-archives
+      '(("gnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+        ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
+        ("melpa" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
 (package-initialize)
 
 ;; Load `use-package`.
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
+(require 'use-package)
+;; Let `use-package` always install packages.
+(setq use-package-always-ensure t)
 
 ;; Install packages.
 
@@ -371,19 +369,16 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; I hardly try.
 ;; (use-package try
-;;   :ensure t
 ;;   :defer 1)
 
 ;; My favorite theme.
 ;; Don't defer this, I need it all time.
 (use-package atom-one-dark-theme
-  :ensure t
   :config
   (load-theme 'atom-one-dark t))
 
 ;; Or if you like `mood-one-theme`.
 ;; (use-package mood-one-theme
-;;   :ensure t
 ;;   :config
 ;;   (load-theme 'mood-one t)
 ;;   (mood-one-theme-arrow-fringe-bmp-enable)
@@ -392,7 +387,6 @@ point reaches the beginning or end of the buffer, stop there."
 ;; `doom-modeline` is good, but `mood-line` is enough for me.
 ;; Don't defer this, either.
 (use-package mood-line
-  :ensure t
   :config
   (mood-line-mode 1)
   :custom
@@ -401,24 +395,20 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Atom-like move regine/current line up and down.
 (use-package move-text
-  :ensure t
   :bind (("M-p" . move-text-up) ("M-n" . move-text-down)))
 
 ;; Atom-like default region.
 ;; If there is no region, behave like current line is current region.
 ;; Works on indent/outdent, comment block, cut (kill), copy, paste (yank).
 (use-package whole-line-or-region
-  :ensure t
   :config
   (whole-line-or-region-global-mode 1))
 
 (use-package undo-tree
-  :ensure t
   :config
   (global-undo-tree-mode 1))
 
 (use-package highlight-indent-guides
-  :ensure t
   :defer t
   ;; I only use this in `prog-mode`.
   :hook ((prog-mode . highlight-indent-guides-mode))
@@ -430,13 +420,11 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Highlight FIXME or TODO.
 (use-package hl-todo
-  :ensure t
   :defer t
   :hook ((prog-mode . hl-todo-mode)))
 
 ;; Built in minor mode to display column ruler.
 (use-package display-fill-column-indicator
-  :ensure t
   :defer t
   ;; I only use this in `prog-mode`.
   :hook ((prog-mode . display-fill-column-indicator-mode))
@@ -445,12 +433,10 @@ point reaches the beginning or end of the buffer, stop there."
   (display-fill-column-indicator-column 80))
 
 (use-package which-key
-  :ensure t
   :config
   (which-key-mode 1))
 
 (use-package rainbow-delimiters
-  :ensure t
   :defer t
   :hook ((prog-mode . rainbow-delimiters-mode)))
 
@@ -458,7 +444,6 @@ point reaches the beginning or end of the buffer, stop there."
 ;; If use this don't forget to install block font.
 ;; See <https://github.com/jandamm/doom-emacs-minimap/blob/master/blockfont.ttf>.
 ;; (use-package minimap
-;;   :ensure t
 ;;   :defer 1
 ;;   :config
 ;;   (add-to-list 'minimap-major-modes 'markdown-mode)
@@ -471,28 +456,23 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   (minimap-font-face ((t (:height 30 :family "BlockFont")))))
 
 (use-package org-bullets
-  :ensure t
   :defer t
   :hook ((org-mode . org-bullets-mode)))
 
 (use-package avy
-  :ensure t
   :bind (("M-g a" . avy-goto-char)))
 
 (use-package yasnippet
-  :ensure t
   :defer t
   :hook ((prog-mode . yas-minor-mode)))
 
 (use-package yasnippet-snippets
-  :ensure t
   :defer 1)
 
 ;; Built in minor mode to save recent files.
 ;; This is not needed in startup so we defer it for 1 second.
 ;; Only ivy virtual buffers need it.
 (use-package recentf
-  :ensure t
   :defer 1
   :config
   (recentf-mode 1)
@@ -501,7 +481,6 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Built in minor mode to open files at last-edited position.
 (use-package saveplace
-  :ensure t
   ;; Don't defer this if you want it to work on the first file you opened.
   ;; :defer 1
   :config
@@ -511,12 +490,10 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; I hardly use built in eshell, but I still redirect its data dir.
 (use-package eshell
-  :ensure t
   :custom
   (eshell-directory-name (locate-user-emacs-file ".local/eshell")))
 
 (use-package better-shell
-  :ensure t
   :bind (("C-\"" . better-shell-shell)
          ("C-:" . better-shell-remote-open)))
 
@@ -533,7 +510,6 @@ point reaches the beginning or end of the buffer, stop there."
 ;; See <https://github.com/jwiegley/use-package/issues/976#issuecomment-1056017784>.
 
 (use-package company
-  :ensure t
   :defer t
   :hook ((prog-mode . company-mode))
   :custom
@@ -542,7 +518,6 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; I remove `:diminish` here because `mood-line` hides minor modes by default.
 (use-package ivy
-  :ensure t
   :config
   (ivy-mode 1)
   :custom
@@ -555,7 +530,6 @@ point reaches the beginning or end of the buffer, stop there."
   (ivy-magic-tilde nil))
 
 (use-package counsel
-  :ensure t
   :config
   (counsel-mode 1)
   :bind (("C-c g" . counsel-git)
@@ -567,12 +541,10 @@ point reaches the beginning or end of the buffer, stop there."
          ("C-r" . counsel-minibuffer-history)))
 
 (use-package swiper
-  :ensure t
   :bind (("C-s" . swiper)
 	 ("C-r" . swiper)))
 
 (use-package treemacs
-  :ensure t
   :defer 1
   ;; I never use internal input method so bind this to `treemacs`.
   :bind (("C-\\" . treemacs))
@@ -586,7 +558,6 @@ point reaches the beginning or end of the buffer, stop there."
    (locate-user-emacs-file ".local/treemacs-persist-at-last-error")))
 
 (use-package projectile
-  :ensure t
   :config
   (projectile-mode 1)
   :bind (("M-s" . projectile-ripgrep))
@@ -600,14 +571,12 @@ point reaches the beginning or end of the buffer, stop there."
    (locate-user-emacs-file ".local/projectile-bookmarks.eld")))
 
 (use-package flycheck
-  :ensure t
   :defer t
   :hook ((prog-mode . flycheck-mode)
          (markdown-mode . flycheck-mode)
          (org-mode . flycheck-mode)))
 
 (use-package lsp-mode
-  :ensure t
   :commands lsp
   :hook ((c-mode . lsp-deferred)
          (c++-mode . lsp-deferred)
@@ -634,31 +603,26 @@ point reaches the beginning or end of the buffer, stop there."
   (lsp-keymap-prefix "C-c l"))
 
 (use-package lsp-ivy
-  :ensure t
   :defer 1
   :commands lsp-ivy-workspace-symbol)
 
 (use-package lsp-ui
-  :ensure t
   :defer 1
   :commands lsp-ui-mode)
 
 (use-package lsp-treemacs
-  :ensure t
   :defer 1
   :commands lsp-treemacs-errors-list)
 
 (use-package counsel-projectile
-  :ensure t
   :config
   (counsel-projectile-mode 1))
 
 (use-package treemacs-projectile
-  :ensure t
   :defer 1)
 
 (use-package tree-sitter
-  :ensure t
+  :defer 1
   :config
   ;; Enable `tree-sitter` for all supported major modes.
   (global-tree-sitter-mode 1)
@@ -666,24 +630,21 @@ point reaches the beginning or end of the buffer, stop there."
   :hook ((tree-sitter-after-on . tree-sitter-hl-mode)))
 
 (use-package tree-sitter-langs
-  :ensure t)
+  :defer 1)
 
 ;; Modes and tools for different languages.
 
 (use-package js2-mode
-  :ensure t
   :hook ((js2-mode . js2-imenu-extras-mode))
   :mode (("\\.js\\'" . js2-mode)))
 
 (use-package js2-refactor
-  :ensure t
   :config
   (js2r-add-keybindings-with-prefix "C-c C-r")
   :hook ((js2-mode . js2-refactor-mode))
   :bind (:map js2-mode-map ("C-k" . js2r-kill)))
 
 (use-package xref-js2
-  :ensure t
   :hook ((js2-mode . (lambda ()
                       (add-hook 'xref-backend-functions
                                 #'xref-js2-xref-backend nil t))))
@@ -691,7 +652,6 @@ point reaches the beginning or end of the buffer, stop there."
   :custom (xref-js2-search-program 'rg))
 
 (use-package json-mode
-  :ensure t
   :bind (:map json-mode-map ("C-c <tab>" . json-mode-beautify))
   :mode (("\\.bowerrc\\'" . json-mode)
          ("\\.jshintrc\\'" . json-mode)
@@ -699,13 +659,11 @@ point reaches the beginning or end of the buffer, stop there."
          ("\\.json\\'" . json-mode)))
 
 (use-package lua-mode
-  :ensure t
   :mode (("\\.lua\\'" . lua-mode)
          ;; DaVinci Resolve's fuse scripts, it uses lua.
          ("\\.fuse\\'" . lua-mode)))
 
 (use-package markdown-mode
-  :ensure t
   :commands (markdown-mode gfm-mode)
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . gfm-mode)
@@ -716,11 +674,9 @@ point reaches the beginning or end of the buffer, stop there."
   (markdown-indent-on-enter nil))
 
 (use-package web-mode
-  :ensure t
   :mode (("\\.njk\\'" . web-mode) ("\\.j2\\'" . web-mode)))
 
 (use-package yaml-mode
-  :ensure t
   :mode (("\\.yml\\'" . yaml-mode) ("\\.yaml\\'" . yaml-mode)))
 
 ;; Maybe not good for `lsp-mode` so I am not using this.
