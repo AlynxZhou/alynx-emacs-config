@@ -133,6 +133,11 @@
 ;; can be divided by `tab-width`, use tabs, and use spaces for the remaining.
 (setq-default indent-tabs-mode t)
 
+;; I prefer linux coding style for C, not gnu.
+(customize-set-variable 'c-default-style '((java-mode . "java")
+                                           (awk-mode . "awk")
+                                           (other . "linux")))
+
 ;; Emacs have different indent variables for different modes. I'd like to
 ;; control them with one variable, and set it via different hooks.
 ;; Having one variable that holds different values for different buffers is
