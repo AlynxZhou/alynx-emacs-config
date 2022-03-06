@@ -185,17 +185,20 @@
 ;; Don't use `setq-default`, because every time we start a new major mode we set
 ;; those values, and if we open two files with different modes, the latter one
 ;; will cover the former one's value with `setq-default`.
+;; By default those functions do not modify buffer's `indent-offset`.
 (defun indent-tabs (num)
   "Mark this buffer to indent with tabs and set indent offset to NUM chars."
-  (interactive `(,(read-number "Indent offset (chars): " 8)))
+  (interactive `(,(read-number "Indent offset (chars): " indent-offset)))
   (indent-tabs-mode 1)
-  (setq indent-offset num))
+  (when (/= indent-offset num)
+    (setq indent-offset num)))
 
 (defun indent-spaces (num)
   "Mark this buffer to indent with spaces and set indent offset to NUM chars."
-  (interactive `(,(read-number "Indent offset (chars): " 8)))
+  (interactive `(,(read-number "Indent offset (chars): " indent-offset)))
   (indent-tabs-mode -1)
-  (setq indent-offset num))
+  (when (/= indent-offset num)
+    (setq indent-offset num)))
 
 ;; Most projects saying that they are using 2 as `tab-width` actually means they
 ;; are using 2 as `indent-offset`. If you don't use spaces to indent,
@@ -213,8 +216,9 @@
 ;; I personally think they should use 2 spaces instead.
 (defun set-tab-width (num)
   "Mark this buffer to set tab width to NUM chars."
-  (interactive `(,(read-number "Tab width (chars): " 8)))
-  (setq tab-width num))
+  (interactive `(,(read-number "Tab width (chars): " tab-width)))
+  (when (/= tab-width num)
+    (setq tab-width num)))
 
 ;; If installed more modes, add them here as `(mode-name . indent-offset)`.
 (defconst indent-tabs-modes '((prog-mode . 8)
@@ -689,6 +693,10 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
+  ;; Don't cover my `move-text` keybindings! They are more useful.
+  :bind (:map gfm-mode-map
+              ("M-n" . nil)
+              ("M-p" . nil))
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . gfm-mode)
          ("\\.markdown\\'" . gfm-mode))
