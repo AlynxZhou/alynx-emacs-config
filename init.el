@@ -7,16 +7,28 @@
 
 ;; Internal tweaks.
 
-;; Disable startup message.
+;; Disable startup buffer.
 (setq inhibit-startup-message t)
 
-;; Show loading time after startup.
+;; Show loading details after startup.
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (message "Emacs ready in %.2f seconds with %d garbage collections."
-                     (float-time
-                      (time-subtract after-init-time before-init-time))
-                     gcs-done)))
+            (let ((packages-installed (length load-path)))
+              (message
+               "Emacs is ready with %s, called %s and took %s."
+               (format "%d installed %s"
+                       packages-installed
+                       (if (> packages-installed 1) "packages" "package"))
+               (format "%d garbage %s"
+                       gcs-done
+                       (if (> gcs-done 1) "collections" "collection"))
+               (emacs-init-time "%.2fs")))))
+
+;; Contrary to what many Emacs users have in their configs, you only need this
+;; to make UTF-8 the default coding system.
+(set-language-environment "UTF-8")
+;; `set-language-enviornment` sets `default-input-method`, which is unwanted.
+(setq default-input-method nil)
 
 ;; Create local dir to redirect package-generated files.
 ;; It's better not to move `eln-cache` and `elpa` into local dir, `eln-cache` is
@@ -265,8 +277,8 @@
 ;; See <https://www.gnu.org/software/emacs/manual/html_node/efaq/Backspace-invokes-help.html>.
 ;; A long story: old terminals make Backspace generate the same code as `C-h`,
 ;; and make Delete generate `DEL` code.
-;; Emacs binds backward delete to `DEL` code and help to `C-h` (Maybe that's
-;; why by default HHKB has a Delete key in Backspace's place).
+;; Emacs binds backward delete to `DEL` code and help prefix to `C-h` (Maybe
+;; that's why by default HHKB has a Delete key in Backspace's place).
 ;; But in GUI, Emacs makes Backspace generate `DEL` code, and make Delete
 ;; generate another code which is bound to forward delete.
 ;; Also GNOME Terminal makes Backspace generate `DEL` code by default, too.
@@ -276,15 +288,18 @@
 ;; It's not good to translate Delete to `DEL` code and bind Backspace to
 ;; functions like `backward-delete-char`, since many backward delete related
 ;; functions are actually bound to `DEL` code.
-;; So the only thing to do is to make `C-h` generate `DEL` code to make it the
-;; same behavior as Backspace like `C-i` for `TAB`. We have `F1` for help.
+;; So what should do is to make `C-h` generate `DEL` code to make it the same
+;; behavior as Backspace like `C-i` for `TAB`.
 ;; See <https://www.emacswiki.org/emacs/BackspaceKey>.
-(define-key key-translation-map (kbd "C-h") (kbd "DEL"))
 ;; And don't forget to make `M-h` the same as `M-DEL`.
 ;; I am not using `keyboard-translate` here, since it only accept 1 char (or a
 ;; key code), `M-DEL` does not generate a single key code, but a sequence.
 ;; I use `kbd` because it's easy to read, char constant or vector is also OK.
 ;; See <https://ftp.gnu.org/old-gnu/Manuals/emacs-20.7/html_node/emacs_451.html>.
+;; Since we make `C-h` generate `DEL`, it should not be the default help prefix,
+;; unset it so `<f1>` will be used as default help prefix.
+(global-unset-key (kbd "C-h"))
+(define-key key-translation-map (kbd "C-h") (kbd "DEL"))
 (define-key key-translation-map (kbd "M-h") (kbd "M-DEL"))
 
 ;; By default, `join-line` will join current line into previous line.
@@ -347,6 +362,10 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Packages.
 
+;; I am not using `package-quickstart`, because my Emacs launches quickly enough
+;; on my machine with current CPU and SSD, and `package-quickstart` requires you
+;; to call `package-quickstart-refresh` to sync cache manually, which means you
+;; should be very careful if you changed some packages.
 (require 'package)
 (setq package-archives
       '(("gnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
