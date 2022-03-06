@@ -246,8 +246,8 @@
             `(lambda () (indent-tabs ,(cdr pair)) (set-tab-width 8))))
 
 (dolist (pair indent-spaces-modes)
-    (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
-              `(lambda () (indent-spaces ,(cdr pair)) (set-tab-width 8))))
+  (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
+            `(lambda () (indent-spaces ,(cdr pair)) (set-tab-width 8))))
 
 ;; Add a indentation indicator on mode line.
 ;; Must use `:eval`, mode line constructor does not work for numbers.
