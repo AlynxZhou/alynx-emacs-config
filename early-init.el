@@ -28,15 +28,8 @@
 ;; See <https://www.masteringemacs.org/article/whats-new-in-emacs-27-1#startup-changes-in-emacs-27.1>.
 
 ;; Since Emacs 27, `package-activate-all` is called automatically before
-;; `init.el` is loaded, but after `early-init.el`. The problem is that it will
-;; not call `package-initialize`, which leads into a lot of problems, for
-;; example, `package-initialize` will set `package--initialized`, without this,
-;; `package-activate-all` will call `package-refresh-contents`, which will slow
-;; down startup a lot, and it also messes up `package-selected-packages` by
-;; adding built in packages into it.
-;; See <https://www.reddit.com/r/emacs/comments/dd81vf/emacs_27_package_archive/>.
-;; So it's better to call `package-initialize` manually, and prevent this
-;; behavior here before the automatically calling.
+;; `init.el` is loaded, but after `early-init.el`. I prefer to call it
+;; explicitly, and prevent this behavior here before the automatically calling.
 (setq package-enable-at-startup nil)
 
 ;;; early-init.el ends here.

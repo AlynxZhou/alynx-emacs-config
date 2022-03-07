@@ -381,43 +381,38 @@ point reaches the beginning or end of the buffer, stop there."
         ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
         ("melpa" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
 
-;; ;; Enable `package-quickstart`, it will cache autoload files of all packages
-;; ;; into a single file cache to speed up loading. This reduces only 0.1s for me,
-;; ;; but maybe very helpful for HDD users.
-;; ;; See <https://git.savannah.gnu.org/cgit/emacs.git/commit/?id=6dfdf0c9e8e4aca77b148db8d009c862389c64d3>.
-;; (setq package-quickstart t)
-;; ;; Put quick start cache into cache dir.
-;; (setq package-quickstart-file
-;;       (locate-user-emacs-file ".local/cache/package-quickstart.el"))
-;; ;; Cache will not enable until we call `package-quickstart-refresh` manually.
-;; (unless (file-exists-p package-quickstart-file)
-;;   (package-quickstart-refresh))
-;; ;; Make sure quick start cache is refreshed after operations in package menu,
-;; ;; for example upgrading packages.
-;; ;; See <https://www.manueluberti.eu/emacs/2021/03/08/package/>.
-;; (advice-add 'package-menu-execute :after-while #'package-quickstart-refresh)
-;; ;; It should be enough to run `package-activate-all` only if we enable quick
-;; ;; start, because we won't load packages with `package-initialize` and only load
-;; ;; quick start cache. However `package-initialize` will set
-;; ;; `package--initialized`, without this I got a lot of problems. A dirty
-;; ;; workaround is to set this manually.
-;; ;; Also read comments for `(setq package-enable-at-startup nil)` in
-;; ;; `early-init.el`.
-;; (setq package--initialized t)
-;; (package-activate-all)
-
-;; Finally I decide not to use `package-quickstart` because the problem I metion
-;; in comments. I have a fast SSD. If you want to try it, uncomment the whole
-;; block above, and comment the line below.
-(package-initialize)
+;; Enable `package-quickstart`, it will cache autoload files of all packages
+;; into a single file cache to speed up loading. This reduces only 0.1s for me,
+;; but maybe very helpful for HDD users.
+;; See <https://git.savannah.gnu.org/cgit/emacs.git/commit/?id=6dfdf0c9e8e4aca77b148db8d009c862389c64d3>.
+(setq package-quickstart t)
+;; Put quick start cache into cache dir.
+(setq package-quickstart-file
+      (locate-user-emacs-file ".local/cache/package-quickstart.el"))
+;; Cache will not enable until we call `package-quickstart-refresh` manually.
+(unless (file-exists-p package-quickstart-file)
+  (package-quickstart-refresh))
+;; Make sure quick start cache is refreshed after operations in package menu,
+;; for example upgrading packages.
+;; See <https://www.manueluberti.eu/emacs/2021/03/08/package/>.
+(advice-add 'package-menu-execute :after-while #'package-quickstart-refresh)
+;; It should be enough to run `package-activate-all` only if we enable quick
+;; start, because we won't load packages with `package-initialize` and only load
+;; quick start cache.
+(package-activate-all)
 
 ;; Load `use-package`.
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
 (require 'use-package)
+;; Don't set `:ensure t` for built-in packages, it will mess things up when
+;; using `package-activate-all` instead of `package-initialize`.
+;; Setting `use-package-always-ensure` to `t` will also set `:ensure t` for
+;; built-in packages.
+;; See <https://github.com/jwiegley/use-package/issues/977>.
 ;; Let `use-package` always install packages.
-(setq use-package-always-ensure t)
+;; (setq use-package-always-ensure t)
 
 ;; Install packages.
 
@@ -431,16 +426,19 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; I hardly try.
 ;; (use-package try
+;;   :ensure t
 ;;   :defer 1)
 
 ;; My favorite theme.
 ;; Don't defer this, I need it all time.
 (use-package atom-one-dark-theme
+  :ensure t
   :config
   (load-theme 'atom-one-dark t))
 
 ;; Or if you like `mood-one-theme`.
 ;; (use-package mood-one-theme
+;;   :ensure t
 ;;   :config
 ;;   (load-theme 'mood-one t)
 ;;   (mood-one-theme-arrow-fringe-bmp-enable)
@@ -449,6 +447,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; `doom-modeline` is good, but `mood-line` is enough for me.
 ;; Don't defer this, either.
 (use-package mood-line
+  :ensure t
   :config
   (mood-line-mode 1)
   :custom
@@ -457,20 +456,24 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Atom-like move regine/current line up and down.
 (use-package move-text
+  :ensure t
   :bind (("M-p" . move-text-up) ("M-n" . move-text-down)))
 
 ;; Atom-like default region.
 ;; If there is no region, behave like current line is current region.
 ;; Works on indent/outdent, comment block, cut (kill), copy, paste (yank).
 (use-package whole-line-or-region
+  :ensure t
   :config
   (whole-line-or-region-global-mode 1))
 
 (use-package undo-tree
+  :ensure t
   :config
   (global-undo-tree-mode 1))
 
 (use-package highlight-indent-guides
+  :ensure t
   :defer t
   ;; I only use this in `prog-mode`.
   :hook ((prog-mode . highlight-indent-guides-mode))
@@ -482,11 +485,14 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Highlight FIXME or TODO.
 (use-package hl-todo
+  :ensure t
   :defer t
   :hook ((prog-mode . hl-todo-mode)))
 
-;; Built in minor mode to display column ruler.
+;; Built-in minor mode to display column ruler.
 (use-package display-fill-column-indicator
+  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
+  ;; using `package-activate-all` instead of `package-initialize`.
   :defer t
   ;; I only use this in `prog-mode`.
   :hook ((prog-mode . display-fill-column-indicator-mode))
@@ -495,10 +501,12 @@ point reaches the beginning or end of the buffer, stop there."
   (display-fill-column-indicator-column 80))
 
 (use-package which-key
+  :ensure t
   :config
   (which-key-mode 1))
 
 (use-package rainbow-delimiters
+  :ensure t
   :defer t
   :hook ((prog-mode . rainbow-delimiters-mode)))
 
@@ -506,6 +514,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; If use this don't forget to install block font.
 ;; See <https://github.com/jandamm/doom-emacs-minimap/blob/master/blockfont.ttf>.
 ;; (use-package minimap
+;;   :ensure t
 ;;   :defer 1
 ;;   :config
 ;;   (add-to-list 'minimap-major-modes 'markdown-mode)
@@ -518,47 +527,62 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   (minimap-font-face ((t (:height 30 :family "BlockFont")))))
 
 (use-package org-bullets
+  :ensure t
   :defer t
   :hook ((org-mode . org-bullets-mode)))
 
 ;; I never use this.
 ;; (use-package avy
+;;   :ensure t
 ;;   :bind (("M-g a" . avy-goto-char)))
 
 (use-package yasnippet
+  :ensure t
   :defer t
   :hook ((prog-mode . yas-minor-mode)))
 
 (use-package yasnippet-snippets
+  :ensure t
   :defer 1)
 
-;; Built in minor mode to save recent files.
-;; This is not needed in startup so we defer it for 1 second.
-;; Only ivy virtual buffers need it.
+;; Built-in minor mode to save recent files.
 (use-package recentf
+  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
+  ;; using `package-activate-all` instead of `package-initialize`.
+  ;; This is not needed in startup so we defer it for 1 second.
+  ;; Only ivy virtual buffers need it.
   :defer 1
   :config
   (recentf-mode 1)
   :custom
   (recentf-save-file (locate-user-emacs-file ".local/recentf")))
 
-;; Built in minor mode to open files at last-edited position.
+;; Built-in minor mode to open files at last-edited position.
 (use-package saveplace
+  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
+  ;; using `package-activate-all` instead of `package-initialize`.
   ;; Don't defer this if you want it to work on the first file you opened.
-  ;; :defer 1
   :config
   (save-place-mode 1)
   :custom
   (save-place-file (locate-user-emacs-file ".local/places")))
 
-;; I hardly use the built in eshell, but I still redirect its data dir.
+;; Built-in shell written in Emacs Lisp.
+;; I hardly use this, but it has a data dir.
 (use-package eshell
+  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
+  ;; using `package-activate-all` instead of `package-initialize`.
+  ;; This is not needed in startup so we defer it for 1 second.
+  :defer 1
   :custom
+  ;; Redirect its data dir.
   (eshell-directory-name (locate-user-emacs-file ".local/eshell")))
 
-(use-package better-shell
-  :bind (("C-\"" . better-shell-shell)
-         ("C-:" . better-shell-remote-open)))
+;; I hardly use this. I use GNOME Terminal.
+;; (use-package better-shell
+;;   :ensure t
+;;   :bind (("C-\"" . better-shell-shell)
+;;          ("C-:" . better-shell-remote-open)))
 
 ;; Complex packages that have dependencies.
 ;; Don't change the sequence, because the latter needs to obey the former's
@@ -573,6 +597,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; See <https://github.com/jwiegley/use-package/issues/976#issuecomment-1056017784>.
 
 (use-package company
+  :ensure t
   :defer t
   :hook ((prog-mode . company-mode))
   :custom
@@ -581,6 +606,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; I remove `:diminish` here because `mood-line` hides minor modes by default.
 (use-package ivy
+  :ensure t
   :config
   (ivy-mode 1)
   :custom
@@ -593,6 +619,7 @@ point reaches the beginning or end of the buffer, stop there."
   (ivy-magic-tilde nil))
 
 (use-package counsel
+  :ensure t
   :config
   (counsel-mode 1)
   :bind (("C-c g" . counsel-git)
@@ -604,10 +631,12 @@ point reaches the beginning or end of the buffer, stop there."
          ("C-r" . counsel-minibuffer-history)))
 
 (use-package swiper
+  :ensure t
   :bind (("C-s" . swiper)
          ("C-r" . swiper)))
 
 (use-package treemacs
+  :ensure t
   :defer 1
   ;; I never use internal input method so bind this to `treemacs`.
   :bind (("C-\\" . treemacs))
@@ -621,6 +650,7 @@ point reaches the beginning or end of the buffer, stop there."
    (locate-user-emacs-file ".local/treemacs-persist-at-last-error")))
 
 (use-package projectile
+  :ensure t
   :config
   (projectile-mode 1)
   :bind (("M-s" . projectile-ripgrep))
@@ -634,12 +664,14 @@ point reaches the beginning or end of the buffer, stop there."
    (locate-user-emacs-file ".local/projectile-bookmarks.eld")))
 
 (use-package flycheck
+  :ensure t
   :defer t
   :hook ((prog-mode . flycheck-mode)
          (markdown-mode . flycheck-mode)
          (org-mode . flycheck-mode)))
 
 (use-package lsp-mode
+  :ensure t
   :commands lsp
   :hook ((c-mode . lsp-deferred)
          (c++-mode . lsp-deferred)
@@ -665,25 +697,31 @@ point reaches the beginning or end of the buffer, stop there."
   (lsp-keymap-prefix "C-c l"))
 
 (use-package lsp-ivy
+  :ensure t
   :defer 1
   :commands lsp-ivy-workspace-symbol)
 
 (use-package lsp-ui
+  :ensure t
   :defer 1
   :commands lsp-ui-mode)
 
 (use-package lsp-treemacs
+  :ensure t
   :defer 1
   :commands lsp-treemacs-errors-list)
 
 (use-package counsel-projectile
+  :ensure t
   :config
   (counsel-projectile-mode 1))
 
 (use-package treemacs-projectile
+  :ensure t
   :defer 1)
 
 (use-package tree-sitter
+  :ensure t
   :defer 1
   :config
   ;; Enable `tree-sitter` for all supported major modes.
@@ -697,21 +735,25 @@ point reaches the beginning or end of the buffer, stop there."
   :hook ((tree-sitter-after-on . tree-sitter-hl-mode)))
 
 (use-package tree-sitter-langs
+  :ensure t
   :defer 1)
 
 ;; Modes and tools for different languages.
 
 (use-package js2-mode
+  :ensure t
   :hook ((js2-mode . js2-imenu-extras-mode))
   :mode (("\\.js\\'" . js2-mode)))
 
 (use-package js2-refactor
+  :ensure t
   :config
   (js2r-add-keybindings-with-prefix "C-c C-r")
   :hook ((js2-mode . js2-refactor-mode))
   :bind (:map js2-mode-map ("C-k" . js2r-kill)))
 
 (use-package xref-js2
+  :ensure t
   :hook ((js2-mode . (lambda ()
                       (add-hook 'xref-backend-functions
                                 #'xref-js2-xref-backend nil t))))
@@ -719,6 +761,7 @@ point reaches the beginning or end of the buffer, stop there."
   :custom (xref-js2-search-program 'rg))
 
 (use-package json-mode
+  :ensure t
   :bind (:map json-mode-map ("C-c <tab>" . json-mode-beautify))
   :mode (("\\.bowerrc\\'" . json-mode)
          ("\\.jshintrc\\'" . json-mode)
@@ -726,11 +769,13 @@ point reaches the beginning or end of the buffer, stop there."
          ("\\.json\\'" . json-mode)))
 
 (use-package lua-mode
+  :ensure t
   :mode (("\\.lua\\'" . lua-mode)
          ;; DaVinci Resolve's fuse scripts, it uses lua.
          ("\\.fuse\\'" . lua-mode)))
 
 (use-package markdown-mode
+  :ensure t
   :commands (markdown-mode gfm-mode)
   ;; Don't cover my `move-text` keybindings! They are more useful.
   :bind (:map gfm-mode-map
@@ -745,12 +790,14 @@ point reaches the beginning or end of the buffer, stop there."
   (markdown-indent-on-enter nil))
 
 (use-package web-mode
+  :ensure t
   :mode (("\\.njk\\'" . web-mode)
          ("\\.j2\\'" . web-mode)
          ;; `web-mode` can highlight JavaScript and CSS inside HTML.
          ("\\.html\\'" . web-mode)))
 
 (use-package yaml-mode
+  :ensure t
   :mode (("\\.yml\\'" . yaml-mode) ("\\.yaml\\'" . yaml-mode)))
 
 ;; Maybe not good for `lsp-mode` so I am not using this.
