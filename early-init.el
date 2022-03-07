@@ -17,8 +17,19 @@
 ;; See <https://emacs-lsp.github.io/lsp-mode/page/performance/#increase-the-amount-of-data-which-emacs-reads-from-the-process>.
 (setq read-process-output-max (* 2 1024 1024))
 
-;; Initial GUI states, put here to prevent it become large from a small window.
+;; Initial GUI states, put here to prevent it flash in color or shape.
 
+;; Set colors before window showing up to avoid white screen flash, those values
+;; match atom-one-dark theme. Should keep updated with theme.
+;; See <https://github.com/jonathanchu/atom-one-dark-theme/blob/master/atom-one-dark-theme.el#L36-L37>.
+;; Should only used if `(display-grapic-p)` is `t`, but I am not sure why it not
+;; work with that. Anyway, I don't use Emacs in terminal.
+(set-face-attribute 'default nil
+                    :foreground "#ABB2BF"
+                    :background "#282C34")
+;; Hide default mode line until `mood-line` is loaded, because the default style
+;; is ugly and it's useless during startup.
+(setq-default mode-line-format nil)
 ;; Start every frame maximized.
 ;; See <https://emacsredux.com/blog/2020/12/04/maximize-the-emacs-frame-on-startup/>.
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
