@@ -36,12 +36,12 @@
 ;; system one, I am even not sure whether this is used to save compiled cache,
 ;; maybe it's only used to load. `elpa` is defined in `package-user-dir`, I
 ;; don't want to modify it, either.
-;; `:parents` makes `make-directory` silience if dir exists.
-(make-directory (locate-user-emacs-file ".local") :parents)
+;; The last non-nil argument makes `make-directory` silience if dir exists.
+(make-directory (locate-user-emacs-file ".local") t)
 ;; Cache dir which contains package caches that you can safely remove it.
-(make-directory (locate-user-emacs-file ".local/cache") :parents)
+(make-directory (locate-user-emacs-file ".local/cache") t)
 ;; Backup dir which contains backup files and auto save lists.
-(make-directory (locate-user-emacs-file ".local/backup") :parents)
+(make-directory (locate-user-emacs-file ".local/backup") t)
 
 ;; Disable menu bar, tool bar, scroll bar and cursor blink.
 (menu-bar-mode -1)
@@ -156,9 +156,11 @@
 ;; better than setting different variables for different buffers, so just make
 ;; aliases between `indent-offset` and mode-specific variables.
 ;; If installed more modes, add their indent variables here.
-;; Maybe I can get all known modes' indent variables from `doom-modeline`.
+;; Maybe I can get indent variables of all known modes from `doom-modeline`.
 ;; See <https://github.com/seagle0128/doom-modeline/blob/master/doom-modeline-core.el#L310-L418>.
 (defconst mode-indent-offsets '(c-basic-offset
+                                ;; `js2-mode` redirect indentations to
+                                ;; `js-mode`, so they have the same variable.
                                 js-indent-level
                                 css-indent-offset
                                 sgml-basic-offset
@@ -168,7 +170,7 @@
                                 web-mode-css-indent-offset
                                 web-mode-markup-indent-offset
                                 markdown-list-indent-width)
-  "Different modes' indent variables to make alias to indent-offset.")
+  "Indent variables of different modes to make alias to indent-offset.")
 
 (dolist (mode-indent-offset mode-indent-offsets)
   (defvaralias mode-indent-offset 'indent-offset))
@@ -230,8 +232,10 @@
 (defconst indent-spaces-modes '((lisp-mode . 2)
                                 (emacs-lisp-mode . 2)
                                 (js-mode . 2)
+                                (js2-mode . 2)
                                 (css-mode . 2)
                                 (html-mode . 2)
+                                (web-mode . 2)
                                 (yaml-mode . 2)
                                 (lua-mode . 3)
                                 (python-mode . 4))
@@ -252,9 +256,9 @@
 ;; Add a indentation indicator on mode line.
 ;; Must use `:eval`, mode line constructor does not work for numbers.
 (setq mode-line-misc-info '(:eval (format "%s %d %d"
-					  (if indent-tabs-mode "TAB" "SPC")
-					  indent-offset
-					  tab-width)))
+                                          (if indent-tabs-mode "TAB" "SPC")
+                                          indent-offset
+                                          tab-width)))
 
 ;; See <https://dougie.io/emacs/indentation/>.
 ;; Don't auto-indent line when pressing enter.
@@ -354,11 +358,11 @@ point reaches the beginning or end of the buffer, stop there."
 ;; However I don't use them both.
 (global-set-key (kbd "C-x C-b") 'ibuffer-other-window)
 
-;; Cannot find a keybinding for this. Just call it.
 (defun show-file-path ()
   "Show the full file path of current buffer in the minibuffer."
   (interactive)
   (message "%s" buffer-file-name))
+(global-set-key (kbd "C-c s") 'show-file-path)
 
 ;; I maybe use this as some custom keybindings' prefix, but currently I prefer
 ;; `C-c`, because `C-z` is hard to press.
@@ -366,15 +370,45 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Packages.
 
-;; I am not using `package-quickstart`, because my Emacs launches quickly enough
-;; on my machine with current CPU and SSD, and `package-quickstart` requires you
-;; to call `package-quickstart-refresh` to sync cache manually, which means you
-;; should be very careful if you changed some packages.
+;; Before we can require packages, there are two things to do, first is loading
+;; packages and second is activating packages, `package-initialize` does both,
+;; but you can pass a `no-activate` argument to let it only load packages and,
+;; then call `package-activate-all` manually.
 (require 'package)
+;; Use TUNA mirrors for faster downloading.
 (setq package-archives
       '(("gnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
         ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
         ("melpa" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
+
+;; ;; Enable `package-quickstart`, it will cache autoload files of all packages
+;; ;; into a single file cache to speed up loading. This reduces only 0.1s for me,
+;; ;; but maybe very helpful for HDD users.
+;; ;; See <https://git.savannah.gnu.org/cgit/emacs.git/commit/?id=6dfdf0c9e8e4aca77b148db8d009c862389c64d3>.
+;; (setq package-quickstart t)
+;; ;; Put quick start cache into cache dir.
+;; (setq package-quickstart-file
+;;       (locate-user-emacs-file ".local/cache/package-quickstart.el"))
+;; ;; Cache will not enable until we call `package-quickstart-refresh` manually.
+;; (unless (file-exists-p package-quickstart-file)
+;;   (package-quickstart-refresh))
+;; ;; Make sure quick start cache is refreshed after operations in package menu,
+;; ;; for example upgrading packages.
+;; ;; See <https://www.manueluberti.eu/emacs/2021/03/08/package/>.
+;; (advice-add 'package-menu-execute :after-while #'package-quickstart-refresh)
+;; ;; It should be enough to run `package-activate-all` only if we enable quick
+;; ;; start, because we won't load packages with `package-initialize` and only load
+;; ;; quick start cache. However `package-initialize` will set
+;; ;; `package--initialized`, without this I got a lot of problems. A dirty
+;; ;; workaround is to set this manually.
+;; ;; Also read comments for `(setq package-enable-at-startup nil)` in
+;; ;; `early-init.el`.
+;; (setq package--initialized t)
+;; (package-activate-all)
+
+;; Finally I decide not to use `package-quickstart` because the problem I metion
+;; in comments. I have a fast SSD. If you want to try it, uncomment the whole
+;; block above, and comment the line below.
 (package-initialize)
 
 ;; Load `use-package`.
@@ -487,8 +521,9 @@ point reaches the beginning or end of the buffer, stop there."
   :defer t
   :hook ((org-mode . org-bullets-mode)))
 
-(use-package avy
-  :bind (("M-g a" . avy-goto-char)))
+;; I never use this.
+;; (use-package avy
+;;   :bind (("M-g a" . avy-goto-char)))
 
 (use-package yasnippet
   :defer t
@@ -516,7 +551,7 @@ point reaches the beginning or end of the buffer, stop there."
   :custom
   (save-place-file (locate-user-emacs-file ".local/places")))
 
-;; I hardly use built in eshell, but I still redirect its data dir.
+;; I hardly use the built in eshell, but I still redirect its data dir.
 (use-package eshell
   :custom
   (eshell-directory-name (locate-user-emacs-file ".local/eshell")))
@@ -561,16 +596,16 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (counsel-mode 1)
   :bind (("C-c g" . counsel-git)
-	 ("C-c j" . counsel-git-grep)
-	 ("C-c k" . counsel-rg)
-	 ("C-c l" . counsel-locate)
-	 ;; ("C-S-o" . counsel-rhythmbox)
+         ("C-c j" . counsel-git-grep)
+         ("C-c k" . counsel-rg)
+         ("C-c l" . counsel-locate)
+         ;; ("C-S-o" . counsel-rhythmbox)
          :map minibuffer-local-map
          ("C-r" . counsel-minibuffer-history)))
 
 (use-package swiper
   :bind (("C-s" . swiper)
-	 ("C-r" . swiper)))
+         ("C-r" . swiper)))
 
 (use-package treemacs
   :defer 1
@@ -611,16 +646,15 @@ point reaches the beginning or end of the buffer, stop there."
          (c-or-c++-mode . lsp-deferred)
          (css-mode . lsp-deferred)
          (cuda-mode . lsp-deferred)
-	 (objc-mode . lsp-deferred)
+         (objc-mode . lsp-deferred)
          (html-mode . lsp-deferred)
          (java-mode . lsp-deferred)
          (js-mode . lsp-deferred)
-	 (js2-mode . lsp-deferred)
+         (js2-mode . lsp-deferred)
          (python-mode . lsp-deferred)
-	 ;; Don't enable lsp for `web-mode`, I only use this for templates, and
-         ;; lsp cannot understand nunjucks.
+         ;; Don't enable lsp for `web-mode`, lsp cannot understand nunjucks.
          ;; (web-mode . lsp-deferred)
-	 (lsp-mode . lsp-enable-which-key-integration))
+         (lsp-mode . lsp-enable-which-key-integration))
   :bind (:map lsp-mode-map
               ("M-." . lsp-find-definition)
               ("M-n" . lsp-find-references))
@@ -655,6 +689,11 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Enable `tree-sitter` for all supported major modes.
   (global-tree-sitter-mode 1)
   ;; Use `tree-sitter` for highlight on supported major modes.
+  ;; `tree-sitter` currently does not support multi-language files,
+  ;; for example JSDoc comments and HTML with CSS and JS.
+  ;; I use `web-mode` for HTML, which is not supported by `tree-sitter`,
+  ;; but I am not sure how to disable it for `js2-mode`. Anyway, no highlight in
+  ;; comments is fine.
   :hook ((tree-sitter-after-on . tree-sitter-hl-mode)))
 
 (use-package tree-sitter-langs
@@ -706,7 +745,10 @@ point reaches the beginning or end of the buffer, stop there."
   (markdown-indent-on-enter nil))
 
 (use-package web-mode
-  :mode (("\\.njk\\'" . web-mode) ("\\.j2\\'" . web-mode)))
+  :mode (("\\.njk\\'" . web-mode)
+         ("\\.j2\\'" . web-mode)
+         ;; `web-mode` can highlight JavaScript and CSS inside HTML.
+         ("\\.html\\'" . web-mode)))
 
 (use-package yaml-mode
   :mode (("\\.yml\\'" . yaml-mode) ("\\.yaml\\'" . yaml-mode)))

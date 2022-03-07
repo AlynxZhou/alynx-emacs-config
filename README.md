@@ -6,7 +6,7 @@ Alynx's Emacs configuration files.
 
 ![Screenshot](./screenshot.png)
 
-I don't suggest others to use my configuration files since I only care about what I need, this is just for syncing my files.
+This repo is very personalized and may not be suitable for everyone, I use it for syncing files between my systems primarily.
 
 # Usage
 
@@ -25,7 +25,7 @@ $ git clone https://github.com/AlynxZhou/alynx-emacs-config.git ~/.emacs.d
 
 And run Emacs.
 
-I am using Emacs 29 with pgtk and native-comp from <https://aur.archlinux.org/packages/emacs-pgtk-native-comp-git>, if you are not using the latest version, this configuration may not work.
+I am using Emacs 29 with pgtk and native-comp from <https://aur.archlinux.org/packages/emacs-pgtk-native-comp-git>, if you are not using the latest version, it may not work.
 
 # Notice
 
