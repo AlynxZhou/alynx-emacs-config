@@ -37,11 +37,11 @@
 ;; maybe it's only used to load. `elpa` is defined in `package-user-dir`, I
 ;; don't want to modify it, either.
 ;; The last non-nil argument makes `make-directory` silience if dir exists.
-(make-directory (locate-user-emacs-file ".local") t)
+(make-directory (locate-user-emacs-file ".local/") t)
 ;; Cache dir which contains package caches that you can safely remove it.
-(make-directory (locate-user-emacs-file ".local/cache") t)
+(make-directory (locate-user-emacs-file ".local/cache/") t)
 ;; Backup dir which contains backup files and auto save lists.
-(make-directory (locate-user-emacs-file ".local/backup") t)
+(make-directory (locate-user-emacs-file ".local/backup/") t)
 
 ;; Disable menu bar, tool bar, scroll bar and cursor blink.
 (menu-bar-mode -1)
@@ -55,8 +55,9 @@
 (global-hl-line-mode 1)
 
 ;; Display line number and column number of cursor in mode line.
-(line-number-mode 1)
-(column-number-mode 1)
+;; `mood-line` shows those by default, this only works for built-in mode line.
+;; (line-number-mode 1)
+;; (column-number-mode 1)
 
 ;; Use y or n instead yes or no.
 (fset 'yes-or-no-p 'y-or-n-p)
@@ -64,34 +65,40 @@
 ;; Set cursor to underline.
 (setq-default cursor-type 'hbar)
 
-;; Highlight trailing whitespace in `prog-mode` only.
-(add-hook 'prog-mode-hook
-          (lambda ()
-            (setq show-trailing-whitespace t)))
+;; High CPU usage on scrolling.
+;; ;; Highlight trailing whitespace in `prog-mode` only.
+;; (add-hook 'prog-mode-hook
+;;           (lambda ()
+;;             (setq show-trailing-whitespace t)))
 
 ;; Disable line spacing.
 ;; Line space makes `highlight-indent-guides` wired.
 ;; (setq-default line-spacing nil)
 
+;; High CPU usage on scrolling.
 ;; Enable `pixel-scroll-precision-mode` added in Emacs 29.
 (when (>= emacs-major-version 29)
   (pixel-scroll-precision-mode 1))
 ;; By default Emacs will jump a half screen if your cursor is out of screen,
 ;; this makes it behave like other editors, but sometimes it still jumps.
-(setq scroll-margin 3)
+(setq scroll-margin 0)
 (setq scroll-conservatively 101)
 (setq scroll-preserve-screen-position t)
 (setq auto-window-vscroll nil)
-(setq-default scroll-up-aggressively 0.01)
-(setq-default scroll-down-aggressively 0.01)
 
+;; Backup file is generated when you save file. Autosave file is generated
+;; every few seconds or every few characters.
+;; See <https://emacsredux.com/blog/2013/05/09/keep-backup-and-auto-save-files-out-of-the-way/>.
 ;; Disable backup files.
 (setq make-backup-files nil)
-;; Move backup files and list into backup dir.
+;; Move backup files into backup dir.
 (setq backup-directory-alist
-      `(("." . ,(locate-user-emacs-file ".local/backup"))))
+      `(("." . ,(locate-user-emacs-file ".local/backup/"))))
+;; Move autosave files and list into backup dir.
 (setq auto-save-list-file-prefix
       (locate-user-emacs-file ".local/backup/.saves-"))
+(setq auto-save-file-name-transforms
+      `((".*" ,(locate-user-emacs-file ".local/backup/") t)))
 
 ;; Set customization data in a specific file, without littering my init files.
 ;; `locate-user-emacs-file` will create file if it does not exist.
@@ -133,6 +140,9 @@
 ;; If Emacs allows user to set a custom min line height, this will be solved.
 (setq face-font-rescale-alist '(("Noto Sans Mono CJK SC" . 0.85)))
 
+;; Don't clean font-caches during GC.
+(setq inhibit-compacting-font-caches t)
+
 ;; Indentations.
 
 ;; Making tab other length than 8 sounds like define PI to 3, if you don't want
@@ -162,6 +172,7 @@
                                 ;; `js2-mode` redirect indentations to
                                 ;; `js-mode`, so they have the same variable.
                                 js-indent-level
+                                sh-basic-offset
                                 css-indent-offset
                                 sgml-basic-offset
                                 python-indent-offset
@@ -364,6 +375,12 @@ point reaches the beginning or end of the buffer, stop there."
   (message "%s" buffer-file-name))
 (global-set-key (kbd "C-c s") 'show-file-path)
 
+(defun edit-config ()
+  "Open init.el to edit."
+  (interactive)
+  (find-file (locate-user-emacs-file "init.el")))
+(global-set-key (kbd "C-,") 'edit-config)
+
 ;; I maybe use this as some custom keybindings' prefix, but currently I prefer
 ;; `C-c`, because `C-z` is hard to press.
 (global-unset-key (kbd "C-z"))
@@ -445,7 +462,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   (eval-after-load 'flycheck #'mood-one-theme-flycheck-fringe-bmp-enable))
 
 ;; `doom-modeline` is good, but `mood-line` is enough for me.
-;; Don't defer this, either.
+;; Don't defer this because I need it since starting.
 (use-package mood-line
   :ensure t
   :config
@@ -453,6 +470,12 @@ point reaches the beginning or end of the buffer, stop there."
   :custom
   (mood-line-show-encoding-information t)
   (mood-line-show-eol-style t))
+
+;; (use-package doom-modeline
+;;   :ensure t
+;;   :disabled
+;;   :config
+;;   (doom-modeline-mode 1))
 
 ;; Atom-like move regine/current line up and down.
 (use-package move-text
@@ -472,16 +495,18 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (global-undo-tree-mode 1))
 
-(use-package highlight-indent-guides
-  :ensure t
-  :defer t
-  ;; I only use this in `prog-mode`.
-  :hook ((prog-mode . highlight-indent-guides-mode))
-  :custom
-  (highlight-indent-guides-method 'character)
-  ;; (highlight-indent-guides-character ?│)
-  (highlight-indent-guides-bitmap-function
-   'highlight-indent-guides--bitmap-line))
+;; High CPU usage on scrolling.
+;; (use-package highlight-indent-guides
+;;   :ensure t
+;;   :disabled
+;;   :defer t
+;;   ;; I only use this in `prog-mode`.
+;;   :hook ((prog-mode . highlight-indent-guides-mode))
+;;   :custom
+;;   (highlight-indent-guides-method 'bitmap)
+;;   ;; (highlight-indent-guides-character ?│)
+;;   (highlight-indent-guides-bitmap-function
+;;    'highlight-indent-guides--bitmap-line))
 
 ;; Highlight FIXME or TODO.
 (use-package hl-todo
@@ -505,10 +530,12 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (which-key-mode 1))
 
-(use-package rainbow-delimiters
-  :ensure t
-  :defer t
-  :hook ((prog-mode . rainbow-delimiters-mode)))
+;; High CPU usage on scrolling.
+;; (use-package rainbow-delimiters
+;;   :ensure t
+;;   :disabled
+;;   :defer t
+;;   :hook ((prog-mode . rainbow-delimiters-mode)))
 
 ;; Not good, I only use minimap as scroll bar, but it cannot do this well.
 ;; If use this don't forget to install block font.
@@ -550,7 +577,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Don't set `:ensure t` for built-in packages, it will mess things up when
   ;; using `package-activate-all` instead of `package-initialize`.
   ;; This is not needed in startup so we defer it for 1 second.
-  ;; Only ivy virtual buffers need it.
+  ;; Only `ivy-use-virtual-buffers` need it.
   :defer 1
   :config
   (recentf-mode 1)
@@ -576,7 +603,7 @@ point reaches the beginning or end of the buffer, stop there."
   :defer 1
   :custom
   ;; Redirect its data dir.
-  (eshell-directory-name (locate-user-emacs-file ".local/eshell")))
+  (eshell-directory-name (locate-user-emacs-file ".local/eshell/")))
 
 ;; I hardly use this. I use GNOME Terminal.
 ;; (use-package better-shell
@@ -668,7 +695,12 @@ point reaches the beginning or end of the buffer, stop there."
   :defer t
   :hook ((prog-mode . flycheck-mode)
          (markdown-mode . flycheck-mode)
-         (org-mode . flycheck-mode)))
+         (org-mode . flycheck-mode))
+  ;; :custom
+  ;; Currently `flycheck` is unable to run local `standardx` with `npx`.
+  ;; See <https://github.com/flycheck/flycheck/issues/1428>.
+  ;; (flycheck-javascript-standard-executable "/usr/bin/standardx")
+  )
 
 (use-package lsp-mode
   :ensure t
@@ -692,7 +724,7 @@ point reaches the beginning or end of the buffer, stop there."
               ("M-n" . lsp-find-references))
   ;; Move lsp files into local dir.
   :custom
-  (lsp-server-install-dir (locate-user-emacs-file ".local/lsp"))
+  (lsp-server-install-dir (locate-user-emacs-file ".local/lsp/"))
   (lsp-session-file (locate-user-emacs-file ".local/lsp-session"))
   (lsp-keymap-prefix "C-c l"))
 
@@ -701,10 +733,12 @@ point reaches the beginning or end of the buffer, stop there."
   :defer 1
   :commands lsp-ivy-workspace-symbol)
 
-(use-package lsp-ui
-  :ensure t
-  :defer 1
-  :commands lsp-ui-mode)
+;; High CPU usage on scrolling.
+;; (use-package lsp-ui
+;;   :ensure t
+;;   :disabled
+;;   :defer 1
+;;   :commands lsp-ui-mode)
 
 (use-package lsp-treemacs
   :ensure t
@@ -720,8 +754,10 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer 1)
 
+;; High CPU usage on scrolling.
 (use-package tree-sitter
   :ensure t
+  ;; :disabled
   :defer 1
   :config
   ;; Enable `tree-sitter` for all supported major modes.
@@ -736,6 +772,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package tree-sitter-langs
   :ensure t
+  ;; :disabled
   :defer 1)
 
 ;; Modes and tools for different languages.
@@ -799,9 +836,5 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package yaml-mode
   :ensure t
   :mode (("\\.yml\\'" . yaml-mode) ("\\.yaml\\'" . yaml-mode)))
-
-;; Maybe not good for `lsp-mode` so I am not using this.
-;; Make gc pauses faster by decreasing the threshold.
-;; (setq gc-cons-threshold (* 2 1024 1024))
 
 ;;; init.el ends here.

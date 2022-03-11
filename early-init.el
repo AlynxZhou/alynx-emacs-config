@@ -16,6 +16,10 @@
 (setq gc-cons-threshold (* 128 1024 1024))
 ;; See <https://emacs-lsp.github.io/lsp-mode/page/performance/#increase-the-amount-of-data-which-emacs-reads-from-the-process>.
 (setq read-process-output-max (* 2 1024 1024))
+;; Maybe not good for `lsp-mode`.
+;; Make GC pauses faster by decreasing the threshold after loading packages.
+(add-hook 'emacs-startup-hook (lambda ()
+                                (setq gc-cons-threshold (* 2 1024 1024))))
 
 ;; Initial GUI states, put here to prevent it flash in color or shape.
 
