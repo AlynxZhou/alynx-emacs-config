@@ -18,8 +18,9 @@
 (setq read-process-output-max (* 2 1024 1024))
 ;; Maybe not good for `lsp-mode`.
 ;; Make GC pauses faster by decreasing the threshold after loading packages.
+;; 16 MB is the default value of doom-emacs.
 (add-hook 'emacs-startup-hook (lambda ()
-                                (setq gc-cons-threshold (* 2 1024 1024))))
+                                (setq gc-cons-threshold (* 16 1024 1024))))
 
 ;; Initial GUI states, put here to prevent it flash in color or shape.
 

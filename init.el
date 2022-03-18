@@ -5,6 +5,9 @@
 
 ;;; Code:
 
+;; If a function/variable is not used for direct calling (only via keybinding),
+;; add a `alynx/` prefix for it.
+
 ;; Internal tweaks.
 
 ;; Disable startup buffer.
@@ -61,6 +64,10 @@
 
 ;; Use y or n instead yes or no.
 (fset 'yes-or-no-p 'y-or-n-p)
+
+;; Typing chars will replace selection, this is the default behavior of most
+;; editors.
+(delete-selection-mode 1)
 
 ;; Set cursor to underline.
 (setq-default cursor-type 'hbar)
@@ -143,6 +150,10 @@
 ;; Don't clean font-caches during GC.
 (setq inhibit-compacting-font-caches t)
 
+;; Decrease scrolling CPU usage.
+(setq fast-but-imprecise-scrolling t)
+(setq jit-lock-defer-time 0)
+
 ;; Indentations.
 
 ;; Making tab other length than 8 sounds like define PI to 3, if you don't want
@@ -168,26 +179,27 @@
 ;; If installed more modes, add their indent variables here.
 ;; Maybe I can get indent variables of all known modes from `doom-modeline`.
 ;; See <https://github.com/seagle0128/doom-modeline/blob/master/doom-modeline-core.el#L310-L418>.
-(defconst mode-indent-offsets '(c-basic-offset
-                                ;; `js2-mode` redirect indentations to
-                                ;; `js-mode`, so they have the same variable.
-                                js-indent-level
-                                sh-basic-offset
-                                css-indent-offset
-                                sgml-basic-offset
-                                python-indent-offset
-                                lua-indent-level
-                                web-mode-code-indent-offset
-                                web-mode-css-indent-offset
-                                web-mode-markup-indent-offset
-                                markdown-list-indent-width)
+(defconst
+  alynx/mode-indent-offsets '(c-basic-offset
+                              ;; `js2-mode` redirect indentations to
+                              ;; `js-mode`, so they have the same variable.
+                              js-indent-level
+                              sh-basic-offset
+                              css-indent-offset
+                              sgml-basic-offset
+                              python-indent-offset
+                              lua-indent-level
+                              web-mode-code-indent-offset
+                              web-mode-css-indent-offset
+                              web-mode-markup-indent-offset
+                              markdown-list-indent-width)
   "Indent variables of different modes to make alias to indent-offset.")
 
-(dolist (mode-indent-offset mode-indent-offsets)
-  (defvaralias mode-indent-offset 'indent-offset))
+(dolist (mode-indent-offset alynx/mode-indent-offsets)
+  (defvaralias mode-indent-offset 'alynx/indent-offset))
 
 ;; Make `indent-offset` a buffer-local variable.
-(defvar-local indent-offset tab-width)
+(defvar-local alynx/indent-offset tab-width)
 
 ;; If you quote a list, not only itself, but it's elements will not be eval.
 ;; Using `list` will eval elements and return a list.
@@ -201,17 +213,17 @@
 ;; By default those functions do not modify buffer's `indent-offset`.
 (defun indent-tabs (num)
   "Mark this buffer to indent with tabs and set indent offset to NUM chars."
-  (interactive `(,(read-number "Indent offset (chars): " indent-offset)))
+  (interactive `(,(read-number "Indent offset (chars): " alynx/indent-offset)))
   (indent-tabs-mode 1)
-  (when (/= indent-offset num)
-    (setq indent-offset num)))
+  (when (/= alynx/indent-offset num)
+    (setq alynx/indent-offset num)))
 
 (defun indent-spaces (num)
   "Mark this buffer to indent with spaces and set indent offset to NUM chars."
-  (interactive `(,(read-number "Indent offset (chars): " indent-offset)))
+  (interactive `(,(read-number "Indent offset (chars): " alynx/indent-offset)))
   (indent-tabs-mode -1)
-  (when (/= indent-offset num)
-    (setq indent-offset num)))
+  (when (/= alynx/indent-offset num)
+    (setq alynx/indent-offset num)))
 
 ;; Most projects saying that they are using 2 as `tab-width` actually means they
 ;; are using 2 as `indent-offset`. If you don't use spaces to indent,
@@ -234,33 +246,35 @@
     (setq tab-width num)))
 
 ;; If installed more modes, add them here as `(mode-name . indent-offset)`.
-(defconst indent-tabs-modes '((prog-mode . 8)
-                              ;; `markdown-mode` is not a `prog-mode`.
-                              (markdown-mode . 8)
-                              (gfm-mode . 8))
+(defconst
+  alynx/indent-tabs-modes '((prog-mode . 8)
+                            ;; `markdown-mode` is not a `prog-mode`.
+                            (markdown-mode . 8)
+                            (gfm-mode . 8))
   "Modes that will use tabs to indent.")
 
-(defconst indent-spaces-modes '((lisp-mode . 2)
-                                (emacs-lisp-mode . 2)
-                                (js-mode . 2)
-                                (js2-mode . 2)
-                                (css-mode . 2)
-                                (html-mode . 2)
-                                (web-mode . 2)
-                                (yaml-mode . 2)
-                                (lua-mode . 3)
-                                (python-mode . 4))
+(defconst
+  alynx/indent-spaces-modes '((lisp-mode . 2)
+                              (emacs-lisp-mode . 2)
+                              (js-mode . 2)
+                              (js2-mode . 2)
+                              (css-mode . 2)
+                              (html-mode . 2)
+                              (web-mode . 2)
+                              (yaml-mode . 2)
+                              (lua-mode . 3)
+                              (python-mode . 4))
   "Modes that will use spaces to indent.")
 
 ;; `intern` returns symbol by string. `symbol-name` returns string by symbol.
 ;; In dynamic binding, lambda is self-quoting, and there is no closure, so we
 ;; need to evaluate `(cdr pair)` first.
 ;; Some modes set `tab-width` to other value, correct them to 8.
-(dolist (pair indent-tabs-modes)
+(dolist (pair alynx/indent-tabs-modes)
   (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
             `(lambda () (indent-tabs ,(cdr pair)) (set-tab-width 8))))
 
-(dolist (pair indent-spaces-modes)
+(dolist (pair alynx/indent-spaces-modes)
   (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
             `(lambda () (indent-spaces ,(cdr pair)) (set-tab-width 8))))
 
@@ -268,12 +282,12 @@
 ;; Must use `:eval`, mode line constructor does not work for numbers.
 (setq mode-line-misc-info '(:eval (format "%s %d %d"
                                           (if indent-tabs-mode "TAB" "SPC")
-                                          indent-offset
+                                          alynx/indent-offset
                                           tab-width)))
 
 ;; See <https://dougie.io/emacs/indentation/>.
-;; Don't auto-indent line when pressing enter.
-(setq-default electric-indent-inhibit t)
+;; Auto-indent line when pressing enter.
+(setq-default electric-indent-inhibit nil)
 ;; By default if you press backspace on indentations, Emacs will turn a tab into
 ;; spaces and delete one space, I think no one will like this.
 (setq backward-delete-char-untabify-method nil)
@@ -285,6 +299,8 @@
 (global-set-key (kbd "C-c i SPC") 'indent-spaces)
 (global-set-key (kbd "C-c i w") 'set-tab-width)
 ;; Atom style indent left or right.
+;; TODO: Currently they will indent by a `tab-width`, I want to modify them to
+;; use `indent-offset`.
 ;; See <https://dougie.io/emacs/indent-selection/>.
 (global-set-key (kbd "M-[") 'indent-rigidly-left-to-tab-stop)
 (global-set-key (kbd "M-]") 'indent-rigidly-right-to-tab-stop)
@@ -324,16 +340,16 @@
 ;; By default, `join-line` will join current line into previous line.
 ;; In Atom, I typically join next line into current line.
 ;; See <https://emacsredux.com/blog/2013/05/30/joining-lines/>.
-(defun join-next-line ()
+(defun alynx/join-next-line ()
   "Join the current line with the next line."
   (interactive)
   (join-line 1))
 ;; `C-j` is used to insert evaluated value in `lisp-interaction-mode`, maybe I
 ;; should find another keybinding for this.
-(global-set-key (kbd "C-j") 'join-next-line)
+(global-set-key (kbd "C-j") 'alynx/join-next-line)
 
 ;; See <https://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/>.
-(defun smarter-move-beginning-of-line (arg)
+(defun alynx/smarter-move-beginning-of-line (arg)
   "Move point back to indentation of beginning of line.
 
 Move point to the first non-whitespace character on this line.
@@ -357,7 +373,7 @@ point reaches the beginning or end of the buffer, stop there."
       (move-beginning-of-line 1))))
 ;; Remap `C-a`, `Home` to `smarter-move-beginning-of-line`.
 (global-set-key [remap move-beginning-of-line]
-                'smarter-move-beginning-of-line)
+                'alynx/smarter-move-beginning-of-line)
 
 (global-set-key (kbd "C-c n") 'windmove-down)
 (global-set-key (kbd "C-c p") 'windmove-up)
@@ -373,7 +389,7 @@ point reaches the beginning or end of the buffer, stop there."
   "Show the full file path of current buffer in the minibuffer."
   (interactive)
   (message "%s" buffer-file-name))
-(global-set-key (kbd "C-c s") 'show-file-path)
+(global-set-key (kbd "C-c s") 'alynx/show-file-path)
 
 (defun edit-config ()
   "Open init.el to edit."
@@ -488,7 +504,16 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package whole-line-or-region
   :ensure t
   :config
-  (whole-line-or-region-global-mode 1))
+  (whole-line-or-region-global-mode 1)
+  ;; If you use `:bind`, `use-package` will create lazy loading for package,
+  ;; however I don't want to lazy load this, I just want to add some
+  ;; keybindings. In this case, use `:demand`.
+  ;; See <https://github.com/jwiegley/use-package#notes-about-lazy-loading>.
+  :demand
+  ;; See <https://github.com/purcell/whole-line-or-region/commit/ba193b2034388bbc384cb04093150fca56f7e262>.
+  :bind (:map whole-line-or-region-local-mode-map
+              ([remap indent-rigidly-left-to-tab-stop] . whole-line-or-region-indent-rigidly-left-to-tab-stop)
+              ([remap indent-rigidly-right-to-tab-stop] . whole-line-or-region-indent-rigidly-right-to-tab-stop)))
 
 (use-package undo-tree
   :ensure t
@@ -659,8 +684,16 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package swiper
   :ensure t
+  :config
+  (defun swiper-region ()
+    "Use current region if active for swiper search."
+    (interactive)
+    (if (use-region-p)
+        (swiper (format "%s" (buffer-substring
+                              (region-beginning) (region-end))))
+      (swiper)))
   :bind (("C-s" . swiper)
-         ("C-r" . swiper)))
+         ("C-r" . swiper-region)))
 
 (use-package treemacs
   :ensure t
@@ -702,6 +735,42 @@ point reaches the beginning or end of the buffer, stop there."
   ;; (flycheck-javascript-standard-executable "/usr/bin/standardx")
   )
 
+;; The FUCKING EVIL SHITTY VSCode TypeScript language server does auto
+;; formatting on indentation, which makes your code looks like a piece of
+;; shit. And you have 4 options to solve this:
+;; 1. Use a non-evil but silly server, like Eslint.
+;; 2. Don't hook `lsp-mode` with `js-mode` and `js2-mode`.
+;; 3. Just disable all indentation provided by `lsp-mode`.
+;; (lsp-enable-indentation nil)
+;; 4. Do you see those crazy codes? VSCode TypeScript language server's
+;; formatting options can only be tweaked via
+;; `workspace/didChangeConfiguration`.
+;; See <https://github.com/typescript-language-server/typescript-language-server#workspacedidchangeconfiguration>.
+;; Damn it, there is no properly exported way to set those shits for only one
+;; server, unless you modify `lsp-mode` itself.
+;; See <https://github.com/emacs-lsp/lsp-mode/issues/167>.
+;; Just in case if you want to solve this problem by modify `lsp-mode`.
+;; See <https://github.com/emacs-lsp/lsp-mode/blob/master/clients/lsp-javascript.el#L71>.
+;; When using Emacs's `json-encode`, keyword arguments will become key in
+;; `String` type, `t` will become `true`, but `nil` will become `null`! To get
+;; `false`, `:json-false` is needed.
+;; (lsp--set-configuration
+;;  '(:ts-ls (:javascript.format.insertSpaceBeforeFunctionParenthesis
+;;            :json-false
+;;            :javascript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces
+;;            :json-false
+;;            :javascript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces
+;;            :json-false)))
+;; Cons I got from VSCode TypeScript language server:
+;;   - I like CommonJS instead of ES module, but it asks me to replace `require`
+;;     with `import` like I am killing Jesus.
+;;   - Asking for type hints for my own JavaScript library.
+;;   - Showing type hints with inline completion.
+;;   - Doing "formatting" when I am want "indentation".
+;; Pros I got from VSCode TypeScript language server:
+;;   - Nothing.
+;; OK, finally I modified `lsp-mode`'s code and send a PR.
+;; See <https://github.com/emacs-lsp/lsp-mode/pull/3409>.
 (use-package lsp-mode
   :ensure t
   :commands lsp
@@ -721,12 +790,30 @@ point reaches the beginning or end of the buffer, stop there."
          (lsp-mode . lsp-enable-which-key-integration))
   :bind (:map lsp-mode-map
               ("M-." . lsp-find-definition)
-              ("M-n" . lsp-find-references))
+              ("M-," . lsp-find-references))
   ;; Move lsp files into local dir.
   :custom
   (lsp-server-install-dir (locate-user-emacs-file ".local/lsp/"))
   (lsp-session-file (locate-user-emacs-file ".local/lsp-session"))
-  (lsp-keymap-prefix "C-c l"))
+  (lsp-keymap-prefix "C-c l")
+  ;; Only enable log for debug.
+  ;; (lsp-log-io nil)
+  ;; For better performance
+  (lsp-enable-symbol-highlighting nil)
+  (lsp-enable-on-type-formatting nil)
+  (lsp-lens-enable nil)
+  (lsp-signature-auto-activate nil)
+  (lsp-signature-render-documentation nil)
+  (lsp-semantic-tokens-enable nil)
+  (lsp-enable-folding nil)
+  (lsp-enable-imenu nil)
+  (lsp-enable-snippet nil)
+  (lsp-enable-file-watchers nil)
+  ;; JavaScript (ts-ls) settings.
+  ;; Uncomment those lines if you want get `ts-ls` logs.
+  ;; (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/tmp/tsserver-log.txt"))
+  ;; (lsp-clients-typescript-log-verbosity "verbose")
+  (lsp-javascript-format-insert-space-after-opening-and-before-closing-nonempty-braces nil))
 
 (use-package lsp-ivy
   :ensure t
