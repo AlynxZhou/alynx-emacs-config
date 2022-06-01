@@ -73,10 +73,10 @@
 (setq-default cursor-type 'hbar)
 
 ;; High CPU usage on scrolling.
-;; ;; Highlight trailing whitespace in `prog-mode` only.
-;; (add-hook 'prog-mode-hook
-;;           (lambda ()
-;;             (setq show-trailing-whitespace t)))
+;; Highlight trailing whitespace in `prog-mode` only.
+(add-hook 'prog-mode-hook
+          (lambda ()
+            (setq show-trailing-whitespace t)))
 
 ;; Disable line spacing.
 ;; Line space makes `highlight-indent-guides` wired.
@@ -93,6 +93,9 @@
 (setq scroll-preserve-screen-position t)
 (setq auto-window-vscroll nil)
 
+;; Always follow symlinks instead of asking, because the minibuffer prompt might
+;; be covered by other messages.
+(setq vc-follow-symlinks t)
 ;; Backup file is generated when you save file. Autosave file is generated
 ;; every few seconds or every few characters.
 ;; See <https://emacsredux.com/blog/2013/05/09/keep-backup-and-auto-save-files-out-of-the-way/>.
@@ -192,7 +195,10 @@
                               web-mode-code-indent-offset
                               web-mode-css-indent-offset
                               web-mode-markup-indent-offset
-                              markdown-list-indent-width)
+                              web-mode-style-padding
+                              web-mode-script-padding
+                              markdown-list-indent-width
+                              meson-indent-basic)
   "Indent variables of different modes to make alias to indent-offset.")
 
 (dolist (mode-indent-offset alynx/mode-indent-offsets)
@@ -262,6 +268,7 @@
                               (html-mode . 2)
                               (web-mode . 2)
                               (yaml-mode . 2)
+                              (meson-mode . 2)
                               (lua-mode . 3)
                               (python-mode . 4))
   "Modes that will use spaces to indent.")
@@ -477,6 +484,12 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   (mood-one-theme-arrow-fringe-bmp-enable)
 ;;   (eval-after-load 'flycheck #'mood-one-theme-flycheck-fringe-bmp-enable))
 
+;; Or if you like `nano-theme`.
+;; (use-package nano-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'nano-dark t))
+
 ;; `doom-modeline` is good, but `mood-line` is enough for me.
 ;; Don't defer this because I need it since starting.
 (use-package mood-line
@@ -492,6 +505,11 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   :disabled
 ;;   :config
 ;;   (doom-modeline-mode 1))
+
+;; (use-package nano-modeline
+;;   :ensure t
+;;   :config
+;;   (nano-modeline-mode 1))
 
 ;; Atom-like move regine/current line up and down.
 (use-package move-text
@@ -515,29 +533,45 @@ point reaches the beginning or end of the buffer, stop there."
               ([remap indent-rigidly-left-to-tab-stop] . whole-line-or-region-indent-rigidly-left-to-tab-stop)
               ([remap indent-rigidly-right-to-tab-stop] . whole-line-or-region-indent-rigidly-right-to-tab-stop)))
 
+;; Redo like most editors.
 (use-package undo-tree
   :ensure t
   :config
-  (global-undo-tree-mode 1))
+  (global-undo-tree-mode 1)
+  :custom
+  ;; Why you guys always generate garbage in project dir by default? It is
+  ;; crazy!
+  (undo-tree-history-directory-alist
+        `(("." . ,(locate-user-emacs-file ".local/undo-tree/")))))
 
 ;; High CPU usage on scrolling.
-;; (use-package highlight-indent-guides
-;;   :ensure t
-;;   :disabled
-;;   :defer t
-;;   ;; I only use this in `prog-mode`.
-;;   :hook ((prog-mode . highlight-indent-guides-mode))
-;;   :custom
-;;   (highlight-indent-guides-method 'bitmap)
-;;   ;; (highlight-indent-guides-character ?│)
-;;   (highlight-indent-guides-bitmap-function
-;;    'highlight-indent-guides--bitmap-line))
+(use-package highlight-indent-guides
+  :ensure t
+  :defer t
+  ;; I only use this in `prog-mode`.
+  :hook ((prog-mode . highlight-indent-guides-mode))
+  :custom
+  (highlight-indent-guides-method 'bitmap)
+  ;; (highlight-indent-guides-character ?│)
+  (highlight-indent-guides-bitmap-function
+   'highlight-indent-guides--bitmap-line))
 
 ;; Highlight FIXME or TODO.
 (use-package hl-todo
   :ensure t
   :defer t
   :hook ((prog-mode . hl-todo-mode)))
+
+(use-package svg-tag-mode
+  :ensure t
+  ;; Maybe use with hooks.
+  ;; :config
+  ;; (svg-tag-mode 1)
+  :custom
+  ;; See <https://github.com/rougier/svg-tag-mode#usage-example>.
+  (svg-tag-tags
+      '(("\\(:[A-Z]+:\\)" . ((lambda (tag)
+                               (svg-tag-make tag :beg 1 :end -1)))))))
 
 ;; Built-in minor mode to display column ruler.
 (use-package display-fill-column-indicator
@@ -797,7 +831,8 @@ point reaches the beginning or end of the buffer, stop there."
   (lsp-session-file (locate-user-emacs-file ".local/lsp-session"))
   (lsp-keymap-prefix "C-c l")
   ;; Only enable log for debug.
-  ;; (lsp-log-io nil)
+  ;; This controls `*lsp-log*` buffer.
+  (lsp-log-io nil)
   ;; For better performance
   (lsp-enable-symbol-highlighting nil)
   (lsp-enable-on-type-formatting nil)
@@ -810,9 +845,10 @@ point reaches the beginning or end of the buffer, stop there."
   (lsp-enable-snippet nil)
   (lsp-enable-file-watchers nil)
   ;; JavaScript (ts-ls) settings.
-  ;; Uncomment those lines if you want get `ts-ls` logs.
-  ;; (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/tmp/tsserver-log.txt"))
-  ;; (lsp-clients-typescript-log-verbosity "verbose")
+  ;; OMG, the FUCKING EVIL SHITTY VSCode TypeScript language server generates
+  ;; log in project dir, can MicroSoft stop to let their software put shit in
+  ;; front of users?
+  (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/tmp/tsserver-log.txt"))
   (lsp-javascript-format-insert-space-after-opening-and-before-closing-nonempty-braces nil))
 
 (use-package lsp-ivy
@@ -918,10 +954,17 @@ point reaches the beginning or end of the buffer, stop there."
   :mode (("\\.njk\\'" . web-mode)
          ("\\.j2\\'" . web-mode)
          ;; `web-mode` can highlight JavaScript and CSS inside HTML.
-         ("\\.html\\'" . web-mode)))
+         ("\\.html\\'" . web-mode))
+  :custom
+  ;; I prefer not to indent control blocks of templating.
+  (web-mode-enable-control-block-indentation nil))
 
 (use-package yaml-mode
   :ensure t
   :mode (("\\.yml\\'" . yaml-mode) ("\\.yaml\\'" . yaml-mode)))
+
+(use-package meson-mode
+  :ensure t
+  :mode (("meson\\.build\\'" . meson-mode)))
 
 ;;; init.el ends here.
