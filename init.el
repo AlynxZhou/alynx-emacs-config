@@ -190,6 +190,8 @@
                               sh-basic-offset
                               css-indent-offset
                               sgml-basic-offset
+                              nxml-child-indent
+                              nxml-attribute-indent
                               python-indent-offset
                               lua-indent-level
                               web-mode-code-indent-offset
@@ -266,6 +268,7 @@
                               (js2-mode . 2)
                               (css-mode . 2)
                               (html-mode . 2)
+                              (nxml-mode . 2)
                               (web-mode . 2)
                               (yaml-mode . 2)
                               (meson-mode . 2)
@@ -880,7 +883,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; High CPU usage on scrolling.
 (use-package tree-sitter
   :ensure t
-  ;; :disabled
+  :disabled
   :defer 1
   :config
   ;; Enable `tree-sitter` for all supported major modes.
@@ -895,7 +898,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package tree-sitter-langs
   :ensure t
-  ;; :disabled
+  :disabled
   :defer 1)
 
 ;; Modes and tools for different languages.
