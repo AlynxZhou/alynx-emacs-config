@@ -174,6 +174,11 @@
                                            (awk-mode . "awk")
                                            (other . "linux")))
 
+;; TODO: Don't use alias, just use different variables for different modes,
+;; So we can set default value for different languages.
+;; A list like <https://github.com/editorconfig/editorconfig-emacs/blob/master/editorconfig.el#L177>
+;; can be used.
+
 ;; Emacs have different indent variables for different modes. I'd like to
 ;; control them with one variable, and set it via different hooks.
 ;; Having one variable that holds different values for different buffers is
@@ -253,6 +258,7 @@
   (when (/= tab-width num)
     (setq tab-width num)))
 
+;; FIXME: GTK is TAB 2 8, here is not correct.
 ;; This function is not perfect, it is based on that "if the file is indented
 ;; with tabs, lines are always starts with 0 or 1 tabs, otherwise the shortest
 ;; space prefix length except 0 or 1 is the indent offset".
@@ -298,21 +304,23 @@
           (let (current-char space-length)
             (goto-char (line-beginning-position))
             (setq current-char (char-after))
-            (if (= current-char ?\s)
-                (let ((spaces 0))
-                  (while (= current-char ?\s)
-                    (setq spaces (+ spaces 1))
-                    (forward-char 1)
-                    (setq current-char (char-after)))
-                  ;; (message "Line %d has %d spaces." i spaces)
-                  ;; You may have lines only contains spaces in a file that
-                  ;; indented with tabs. Just ignore those lines.
-                  ;; Let's assume no one uses 1-char indent offset.
-                  (if (and (not (or (= current-char ?\n) (= current-char ?\r)))
-                           (not (or (= spaces 0) (= spaces 1)))
+            (when (= current-char ?\s)
+              (let ((spaces 0))
+                (while (= current-char ?\s)
+                  (setq spaces (+ spaces 1))
+                  (forward-char 1)
+                  (setq current-char (char-after)))
+                ;; (message "Line %d has %d spaces." i spaces)
+                ;; You may have lines only contains spaces in a file that
+                ;; indented with tabs. Just ignore those lines.
+                ;; Let's assume no one uses 1-char indent offset.
+                (when (and (/= current-char ?\n)
+                           (/= current-char ?\r)
+                           (/= spaces 0)
+                           (/= spaces 1)
                            (or (= shortest-spaces 0)
                                (< spaces shortest-spaces)))
-                    (setq shortest-spaces spaces))))
+                  (setq shortest-spaces spaces))))
             (forward-line 1)))))
     ;; When we get no indent level in the first 200 lines, or spaces are not
     ;; used to indent, we have 0 as `shortest-spaces`. For the first, we want to
@@ -320,15 +328,10 @@
     ;; `indent-offset` and use tab to indent. Because we already set default
     ;; `indent-offset` to 8 and use tab to indent, so it's safe to just ignore
     ;; the second condition here.
-    (unless (= shortest-spaces 0)
-      (message "Mark this buffer to indent with spaces and set indent offset to %d chars."
+    (when (/= shortest-spaces 0)
+      (message "Guess and mark this buffer to indent with spaces and set indent offset to %d chars."
                shortest-spaces)
       (indent-spaces shortest-spaces))))
-
-;; TODO: Run `guess-indent` automatically, maybe move mode default settings into
-;; this function (before guess)?
-;; TODO: Save `indent-tabs-mode`/`indent-offset` to `.dir-local.el`.
-;; TODO: Save `tab-width` to `.dir-local.el` when `set-tab-width` is called.
 
 ;; If installed more modes, add them here as `(mode-name . indent-offset)`.
 (defconst
@@ -341,6 +344,7 @@
 (defconst
   alynx/indent-spaces-modes '((lisp-mode . 2)
                               (emacs-lisp-mode . 2)
+                              (lisp-interaction-mode . 2)
                               (js-mode . 2)
                               (js2-mode . 2)
                               (css-mode . 2)
@@ -357,13 +361,36 @@
 ;; In dynamic binding, lambda is self-quoting, and there is no closure, so we
 ;; need to evaluate `(cdr pair)` first.
 ;; Some modes set `tab-width` to other value, correct them to 8.
-(dolist (pair alynx/indent-tabs-modes)
-  (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
-            `(lambda () (indent-tabs ,(cdr pair)) (set-tab-width 8))))
+;; (dolist (pair alynx/indent-tabs-modes)
+;;   (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
+;;             `(lambda () (indent-tabs ,(cdr pair))
+;;                (set-tab-width 8)
+;;                (editorconfig-apply))))
 
-(dolist (pair alynx/indent-spaces-modes)
-  (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
-            `(lambda () (indent-spaces ,(cdr pair)) (set-tab-width 8))))
+;; (dolist (pair alynx/indent-spaces-modes)
+;;   (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
+;;             `(lambda () (indent-spaces ,(cdr pair))
+;;                (set-tab-width 8)
+;;                (editorconfig-apply))))
+
+;; Instead of add hook to different mode, we just use
+;; `change-major-mode-after-body-hook`, Emacs will run this hook first when
+;; changing major mode, then our function is called to set default value, then
+;; we may guess indent from the buffer, and then project's `.editorconfig` is
+;; loaded, and then our custom `.dir-local.el` is loaded, then
+;; `after-change-major-mode-hook` is called.
+;; See <https://github.com/editorconfig/editorconfig-emacs/issues/141>.
+(add-hook 'change-major-mode-after-body-hook
+          (lambda ()
+            ;; Check which list our current `major-mode` is inside.
+            (let ((tabs-pair (assoc major-mode alynx/indent-tabs-modes))
+                  (spaces-pair (assoc major-mode alynx/indent-spaces-modes)))
+            (when tabs-pair
+              (indent-tabs (cdr tabs-pair)))
+            (when spaces-pair
+              (indent-spaces (cdr spaces-pair))))))
+
+;; (add-hook 'change-major-mode-after-body-hook 'guess-indent)
 
 ;; Add a indentation indicator on mode line.
 ;; Must use `:eval`, mode line constructor does not work for numbers.
@@ -982,6 +1009,11 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :disabled
   :defer 1)
+
+(use-package editorconfig
+  :ensure t
+  :config
+  (editorconfig-mode 1))
 
 ;; Modes and tools for different languages.
 (use-package cc-mode
