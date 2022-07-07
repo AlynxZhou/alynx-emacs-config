@@ -253,6 +253,83 @@
   (when (/= tab-width num)
     (setq tab-width num)))
 
+;; This function is not perfect, it is based on that "if the file is indented
+;; with tabs, lines are always starts with 0 or 1 tabs, otherwise the shortest
+;; space prefix length except 0 or 1 is the indent offset".
+;;
+;; For example, projects like GTK uses 2 spaces per indent level, we will have
+;; following lines:
+;; 	1. 0 space prefix (preprocessors).
+;; 	2. 1 space prefix (comment content of the first level comment blocks).
+;; 	3. 2 spaces prefix (1 indent level, indent offset we want).
+;; 	4. 4 spaces prefix (2 indent levels).
+;; 	5. 6 spaces prefix (3 indent levels).
+;; 	6. 1 tab prefix (4 indent levels).
+;; 	7. 1 tab and 2 spaces prefix (5 indent levels).
+;; 	(more...)
+;;
+;; This function cannot handle such condition, that first you use tab to indent,
+;; and you have the following code:
+;;
+;; ```c
+;; int a(int b,
+;;       int c);
+;; ```
+;;
+;; Here you use 5 spaces to align arguments, and this function will use 5 spaces
+;; per indent level. A proper but impossible solution is ignore function header,
+;; but obviously editors cannot understand every languages. Maybe we can also
+;; record space or tab lines and do some comparation, but that's not exact.
+;; Anyway, this function is just guessing indentation, not alignment, so user
+;; should correct it manually.
+(defun guess-indent ()
+  "Guess and set indent-offset and tab/space for current buffer."
+  (interactive)
+  ;; Ideally we should iterate the whole buffer, but that's impossible for big
+  ;; files. Let's assume we always 1 level indented code in the first 200 lines.
+  (let* ((total-lines (count-lines (point-min) (point-max)))
+         (detect-lines (min total-lines 200))
+         (shortest-spaces 0))
+    (save-mark-and-excursion
+      (save-restriction
+        (widen)
+        (goto-char (point-min))
+        (dotimes (i detect-lines)
+          (let (current-char space-length)
+            (goto-char (line-beginning-position))
+            (setq current-char (char-after))
+            (if (= current-char ?\s)
+                (let ((spaces 0))
+                  (while (= current-char ?\s)
+                    (setq spaces (+ spaces 1))
+                    (forward-char 1)
+                    (setq current-char (char-after)))
+                  ;; (message "Line %d has %d spaces." i spaces)
+                  ;; You may have lines only contains spaces in a file that
+                  ;; indented with tabs. Just ignore those lines.
+                  ;; Let's assume no one uses 1-char indent offset.
+                  (if (and (not (or (= current-char ?\n) (= current-char ?\r)))
+                           (not (or (= spaces 0) (= spaces 1)))
+                           (or (= shortest-spaces 0)
+                               (< spaces shortest-spaces)))
+                    (setq shortest-spaces spaces))))
+            (forward-line 1)))))
+    ;; When we get no indent level in the first 200 lines, or spaces are not
+    ;; used to indent, we have 0 as `shortest-spaces`. For the first, we want to
+    ;; use mode specific value, for the second, we want to use 8 as
+    ;; `indent-offset` and use tab to indent. Because we already set default
+    ;; `indent-offset` to 8 and use tab to indent, so it's safe to just ignore
+    ;; the second condition here.
+    (unless (= shortest-spaces 0)
+      (message "Mark this buffer to indent with spaces and set indent offset to %d chars."
+               shortest-spaces)
+      (indent-spaces shortest-spaces))))
+
+;; TODO: Run `guess-indent` automatically, maybe move mode default settings into
+;; this function (before guess)?
+;; TODO: Save `indent-tabs-mode`/`indent-offset` to `.dir-local.el`.
+;; TODO: Save `tab-width` to `.dir-local.el` when `set-tab-width` is called.
+
 ;; If installed more modes, add them here as `(mode-name . indent-offset)`.
 (defconst
   alynx/indent-tabs-modes '((prog-mode . 8)
@@ -308,6 +385,7 @@
 (global-set-key (kbd "C-c i TAB") 'indent-tabs)
 (global-set-key (kbd "C-c i SPC") 'indent-spaces)
 (global-set-key (kbd "C-c i w") 'set-tab-width)
+(global-set-key (kbd "C-c i g") 'guess-indent)
 ;; Atom style indent left or right.
 ;; TODO: Currently they will indent by a `tab-width`, I want to modify them to
 ;; use `indent-offset`.
@@ -828,8 +906,8 @@ point reaches the beginning or end of the buffer, stop there."
   :bind (:map lsp-mode-map
               ("M-." . lsp-find-definition)
               ("M-," . lsp-find-references))
-  ;; Move lsp files into local dir.
   :custom
+  ;; Move lsp files into local dir.
   (lsp-server-install-dir (locate-user-emacs-file ".local/lsp/"))
   (lsp-session-file (locate-user-emacs-file ".local/lsp-session"))
   (lsp-keymap-prefix "C-c l")
@@ -852,7 +930,11 @@ point reaches the beginning or end of the buffer, stop there."
   ;; log in project dir, can MicroSoft stop to let their software put shit in
   ;; front of users?
   (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/tmp/tsserver-log.txt"))
-  (lsp-javascript-format-insert-space-after-opening-and-before-closing-nonempty-braces nil))
+  (lsp-javascript-format-insert-space-after-opening-and-before-closing-nonempty-braces nil)
+  ;; Always let clangd look for compile_commands.json under build dir so it will
+  ;; not make project root dirty.
+  (lsp-clients-clangd-args '
+   ("--header-insertion-decorators=0" "--compile-commands-dir=./build/")))
 
 (use-package lsp-ivy
   :ensure t
@@ -902,6 +984,9 @@ point reaches the beginning or end of the buffer, stop there."
   :defer 1)
 
 ;; Modes and tools for different languages.
+(use-package cc-mode
+  :hook (c-mode . (lambda () (setq comment-start "//"
+                                   comment-end   ""))))
 
 (use-package js2-mode
   :ensure t
