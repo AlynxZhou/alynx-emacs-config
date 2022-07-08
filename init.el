@@ -258,10 +258,9 @@
   (when (/= tab-width num)
     (setq tab-width num)))
 
-;; FIXME: GTK is TAB 2 8, here is not correct.
 ;; This function is not perfect, it is based on that "if the file is indented
-;; with tabs, lines are always starts with 0 or 1 tabs, otherwise the shortest
-;; space prefix length except 0 or 1 is the indent offset".
+;; with spaces, lines are never started with tabs, and the shortest space prefix
+;; length except 0 or 1 is the indent offset".
 ;;
 ;; For example, projects like GTK uses 2 spaces per indent level, we will have
 ;; following lines:
@@ -270,7 +269,7 @@
 ;; 	3. 2 spaces prefix (1 indent level, indent offset we want).
 ;; 	4. 4 spaces prefix (2 indent levels).
 ;; 	5. 6 spaces prefix (3 indent levels).
-;; 	6. 1 tab prefix (4 indent levels).
+;; 	6. 1 tab prefix (4 indent levels, use tab).
 ;; 	7. 1 tab and 2 spaces prefix (5 indent levels).
 ;; 	(more...)
 ;;
@@ -295,7 +294,8 @@
   ;; files. Let's assume we always 1 level indented code in the first 200 lines.
   (let* ((total-lines (count-lines (point-min) (point-max)))
          (detect-lines (min total-lines 200))
-         (shortest-spaces 0))
+         (shortest-spaces 0)
+         (has-tab nil))
     (save-mark-and-excursion
       (save-restriction
         (widen)
@@ -304,7 +304,13 @@
           (let (current-char space-length)
             (goto-char (line-beginning-position))
             (setq current-char (char-after))
-            (when (= current-char ?\s)
+            (cond
+             ;; We assume no one uses indent offset that larger than tab width,
+             ;; so there won't be indent level like 1 tab and 2 spaces. We also
+             ;; assume there is no line only contains tabs.
+             ((= current-char ?\t) (setq has-tab t))
+             ((= current-char ?\s)
+              ;; Calculate how many spaces in prefix.
               (let ((spaces 0))
                 (while (= current-char ?\s)
                   (setq spaces (+ spaces 1))
@@ -320,58 +326,41 @@
                            (/= spaces 1)
                            (or (= shortest-spaces 0)
                                (< spaces shortest-spaces)))
-                  (setq shortest-spaces spaces))))
+                  (setq shortest-spaces spaces)))))
             (forward-line 1)))))
-    ;; When we get no indent level in the first 200 lines, or spaces are not
-    ;; used to indent, we have 0 as `shortest-spaces`. For the first, we want to
-    ;; use mode specific value, for the second, we want to use 8 as
-    ;; `indent-offset` and use tab to indent. Because we already set default
-    ;; `indent-offset` to 8 and use tab to indent, so it's safe to just ignore
-    ;; the second condition here.
-    (when (/= shortest-spaces 0)
-      (message "Guess and mark this buffer to indent with spaces and set indent offset to %d chars."
-               shortest-spaces)
-      (indent-spaces shortest-spaces))))
+    ;; If a file uses tabs to indent, and we cannot get shortest spaces, this
+    ;; file is likely to only use tabs, and the indent offset is tab width,
+    ;; otherwise the shortest spaces length is indent offset.
+    ;; If we don't find tabs, just assume this file does not use tabs, this is
+    ;; not correct because we may just not have tabs in first 200 lines but that
+    ;; is the best we can do. And then if we cannot get shortest spaces, it
+    ;; means that there is no indent level in first 200 lines, so just skip it.
+    (if has-tab
+        (if (/= shortest-spaces 0)
+            (indent-tabs shortest-spaces)
+          (indent-tabs tab-width))
+      (when (/= shortest-spaces 0)
+        (indent-spaces shortest-spaces)))))
 
-;; If installed more modes, add them here as `(mode-name . indent-offset)`.
-(defconst
-  alynx/indent-tabs-modes '((prog-mode . 8)
-                            ;; `markdown-mode` is not a `prog-mode`.
-                            (markdown-mode . 8)
-                            (gfm-mode . 8))
-  "Modes that will use tabs to indent.")
-
-(defconst
-  alynx/indent-spaces-modes '((lisp-mode . 2)
-                              (emacs-lisp-mode . 2)
-                              (lisp-interaction-mode . 2)
-                              (js-mode . 2)
-                              (js2-mode . 2)
-                              (css-mode . 2)
-                              (html-mode . 2)
-                              (nxml-mode . 2)
-                              (web-mode . 2)
-                              (yaml-mode . 2)
-                              (meson-mode . 2)
-                              (lua-mode . 3)
-                              (python-mode . 4))
-  "Modes that will use spaces to indent.")
-
-;; `intern` returns symbol by string. `symbol-name` returns string by symbol.
-;; In dynamic binding, lambda is self-quoting, and there is no closure, so we
-;; need to evaluate `(cdr pair)` first.
-;; Some modes set `tab-width` to other value, correct them to 8.
-;; (dolist (pair alynx/indent-tabs-modes)
-;;   (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
-;;             `(lambda () (indent-tabs ,(cdr pair))
-;;                (set-tab-width 8)
-;;                (editorconfig-apply))))
-
-;; (dolist (pair alynx/indent-spaces-modes)
-;;   (add-hook (intern (concat (symbol-name (car pair)) "-hook"))
-;;             `(lambda () (indent-spaces ,(cdr pair))
-;;                (set-tab-width 8)
-;;                (editorconfig-apply))))
+;; If installed more modes, add them here as
+;; `(mode-name tab/space indent-offset)`.
+(defconst alynx/modes-default-indent '((prog-mode tab 8)
+                                       (markdown-mode tab 8)
+                                       (gfm-mode tab 8)
+                                       (lisp-mode space 2)
+                                       (emacs-lisp-mode space 2)
+                                       (lisp-interaction-mode space 2)
+                                       (js-mode space 2)
+                                       (js2-mode space 2)
+                                       (css-mode space 2)
+                                       (html-mode space 2)
+                                       (nxml-mode space 2)
+                                       (web-mode space 2)
+                                       (yaml-mode space 2)
+                                       (meson-mode space 2)
+                                       (lua-mode space 3)
+                                       (python-mode space 4))
+  "Default indentation for different modes.")
 
 ;; Instead of add hook to different mode, we just use
 ;; `change-major-mode-after-body-hook`, Emacs will run this hook first when
@@ -383,14 +372,14 @@
 (add-hook 'change-major-mode-after-body-hook
           (lambda ()
             ;; Check which list our current `major-mode` is inside.
-            (let ((tabs-pair (assoc major-mode alynx/indent-tabs-modes))
-                  (spaces-pair (assoc major-mode alynx/indent-spaces-modes)))
-            (when tabs-pair
-              (indent-tabs (cdr tabs-pair)))
-            (when spaces-pair
-              (indent-spaces (cdr spaces-pair))))))
+            (let* ((pair (assq major-mode alynx/modes-default-indent))
+                   (mode (nth 1 pair))
+                   (indent-offset (nth 2 pair)))
+              (cond
+               ((eq mode 'tab) (indent-tabs indent-offset))
+               ((eq mode 'space) (indent-spaces indent-offset))))))
 
-;; (add-hook 'change-major-mode-after-body-hook 'guess-indent)
+(add-hook 'change-major-mode-after-body-hook 'guess-indent)
 
 ;; Add a indentation indicator on mode line.
 ;; Must use `:eval`, mode line constructor does not work for numbers.
