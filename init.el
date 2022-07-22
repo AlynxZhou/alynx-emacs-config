@@ -1053,6 +1053,8 @@ point reaches the beginning or end of the buffer, stop there."
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . gfm-mode)
          ("\\.markdown\\'" . gfm-mode))
+  ;; It changes `tab-width` to 4 by default, which is bad.
+  :hook ((gfm-mode . (lambda () (set-tab-width 8))))
   :custom
   (markdown-command "marked")
   (markdown-gfm-use-electric-backquote nil)
