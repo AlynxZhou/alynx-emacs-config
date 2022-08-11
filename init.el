@@ -659,6 +659,19 @@ point reaches the beginning or end of the buffer, stop there."
   :defer t
   :hook ((prog-mode . hl-todo-mode)))
 
+(use-package git-gutter
+  :ensure t
+  :hook (prog-mode . git-gutter-mode)
+  :custom
+  (git-gutter:update-interval 0.02))
+
+(use-package git-gutter-fringe
+  :ensure t
+  :config
+  (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+  (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+  (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
+
 (use-package svg-tag-mode
   :ensure t
   ;; Maybe use with hooks.
@@ -713,6 +726,17 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer t
   :hook ((org-mode . org-bullets-mode)))
+
+;; Not sure why it does not work for me.
+;; It always set to English even I manually switched to RIME.
+;; I also want to use Chinese for `find-file` or `swiper`.
+;; (use-package sis
+;;   :ensure t
+;;   :init
+;;   (setq sis-respect-start nil)
+;;   :config
+;;   (sis-ism-lazyman-config "xkb:us::eng" "rime" 'ibus)
+;;   (sis-global-respect-mode t))
 
 ;; I never use this.
 ;; (use-package avy
@@ -927,6 +951,7 @@ point reaches the beginning or end of the buffer, stop there."
   (lsp-server-install-dir (locate-user-emacs-file ".local/lsp/"))
   (lsp-session-file (locate-user-emacs-file ".local/lsp-session"))
   (lsp-keymap-prefix "C-c l")
+  (lsp-auto-guess-root t)
   ;; Only enable log for debug.
   ;; This controls `*lsp-log*` buffer.
   (lsp-log-io nil)
@@ -958,11 +983,16 @@ point reaches the beginning or end of the buffer, stop there."
   :commands lsp-ivy-workspace-symbol)
 
 ;; High CPU usage on scrolling.
-;; (use-package lsp-ui
-;;   :ensure t
+(use-package lsp-ui
+  :ensure t
 ;;   :disabled
-;;   :defer 1
-;;   :commands lsp-ui-mode)
+  :defer 1
+  :commands lsp-ui-mode
+  :custom
+  (lsp-ui-doc-enable nil)
+  (lsp-ui-doc-header t)
+  (lsp-ui-doc-include-signature t)
+  (lsp-ui-sideline-show-code-actions t))
 
 (use-package lsp-treemacs
   :ensure t
