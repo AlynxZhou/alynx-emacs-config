@@ -12,6 +12,9 @@
 
 ;; Disable startup buffer.
 (setq inhibit-startup-message t)
+;; Disable annoying bell.
+;; (setq visible-bell t)
+(setq ring-bell-function 'ignore)
 
 ;; Show loading details after startup.
 (add-hook 'emacs-startup-hook
