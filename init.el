@@ -975,7 +975,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Always let clangd look for compile_commands.json under build dir so it will
   ;; not make project root dirty.
   (lsp-clients-clangd-args '
-   ("--header-insertion-decorators=0" "--compile-commands-dir=./build/")))
+   ("--header-insertion-decorators=0" "--compile-commands-dir=./build/" "--enable-config")))
 
 (use-package lsp-ivy
   :ensure t
@@ -992,7 +992,8 @@ point reaches the beginning or end of the buffer, stop there."
   (lsp-ui-doc-enable nil)
   (lsp-ui-doc-header t)
   (lsp-ui-doc-include-signature t)
-  (lsp-ui-sideline-show-code-actions t))
+  (lsp-ui-sideline-show-code-actions t)
+  (lsp-ui-sideline-diagnostic-max-lines 3))
 
 (use-package lsp-treemacs
   :ensure t
