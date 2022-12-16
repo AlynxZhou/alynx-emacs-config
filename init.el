@@ -520,6 +520,11 @@ point reaches the beginning or end of the buffer, stop there."
       '(("gnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
         ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
         ("melpa" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
+;; Always prefer MELPA.
+(setq package-archive-priorities
+      '(("gnu" . 0)
+        ("nongnu" . 0)
+        ("melpa" . 100)))
 
 ;; Enable `package-quickstart`, it will cache autoload files of all packages
 ;; into a single file cache to speed up loading. This reduces only 0.1s for me,
@@ -561,6 +566,83 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Difference between `:defer t` and `:defer 1`: `:defer 1` will load package
 ;; after 1 second, but `:defer t` does not load package, expects other options
 ;; load it.
+
+;; Built-in packages.
+
+(use-package emacs
+  :config
+  ;; Add prompt indicator to `completing-read-multiple`.
+  ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
+  (defun crm-indicator (args)
+    (cons (format "[CRM%s] %s"
+                  (replace-regexp-in-string
+                   "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+                   crm-separator)
+                  (car args))
+          (cdr args)))
+  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+  :hook
+  (minibuffer-setup . cursor-intangible-mode)
+  :custom
+  ;; Do not allow the cursor in the minibuffer prompt.
+  (minibuffer-prompt-properties
+        '(read-only t cursor-intangible t face minibuffer-prompt))
+  ;; Enable recursive minibuffers.
+  (enable-recursive-minibuffers t))
+
+;; Finally after I try Swiper and Consult I notice that search/replace is
+;; different from filter/complete, and ISearch could provide an Atom like
+;; experience. First press `C-s` to start a search and use `C-s`/`C-r` to search
+;; forward and backward, press `M-\\` to toggle regexp, and then you could press
+;; `M-r` if you need to replace, if you are in regexp mode, it will use regexp.
+(use-package isearch
+  ;; The default ISearch keybindings are too hard to press.
+  :bind (:map isearch-mode-map
+              ("M-\\" . isearch-toggle-regexp)
+              ("M-r" . isearch-query-replace)))
+
+;; Built-in minor mode to save recent files.
+(use-package recentf
+  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
+  ;; using `package-activate-all` instead of `package-initialize`.
+  ;; This is not needed in startup so we defer it for 1 second.
+  ;; Only `ivy-use-virtual-buffers` need it.
+  :defer 1
+  :config
+  (recentf-mode 1)
+  :custom
+  (recentf-save-file (locate-user-emacs-file ".local/recentf")))
+
+;; Built-in minor mode to open files at last-edited position.
+(use-package saveplace
+  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
+  ;; using `package-activate-all` instead of `package-initialize`.
+  ;; Don't defer this if you want it to work on the first file you opened.
+  :config
+  (save-place-mode 1)
+  :custom
+  (save-place-file (locate-user-emacs-file ".local/places")))
+
+(use-package savehist
+  :config
+  (savehist-mode 1)
+  :custom
+  (savehist-file (locate-user-emacs-file ".local/history")))
+
+(use-package treesit
+  :custom
+  (treesit-extra-load-path `(,(locate-user-emacs-file ".local/treesit"))))
+
+;; Built-in shell written in Emacs Lisp.
+;; I hardly use this, but it has a data dir.
+(use-package eshell
+  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
+  ;; using `package-activate-all` instead of `package-initialize`.
+  ;; This is not needed in startup so we defer it for 1 second.
+  :defer 1
+  :custom
+  ;; Redirect its data dir.
+  (eshell-directory-name (locate-user-emacs-file ".local/eshell/")))
 
 ;; Simple packages that have no dependencies.
 
@@ -693,6 +775,10 @@ point reaches the beginning or end of the buffer, stop there."
   :defer t
   ;; I only use this in `prog-mode`.
   :hook ((prog-mode . display-fill-column-indicator-mode))
+  :mode (("COMMIT_EDITMSG\\'" . (lambda ()
+                                  (display-fill-column-indicator-mode 1)
+                                  (setq display-fill-column-indicator-column 72)
+                                  (setq show-trailing-whitespace t))))
   :custom
   ;; Set column ruler at 80 columns.
   (display-fill-column-indicator-column 80))
@@ -755,39 +841,6 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer 1)
 
-;; Built-in minor mode to save recent files.
-(use-package recentf
-  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
-  ;; using `package-activate-all` instead of `package-initialize`.
-  ;; This is not needed in startup so we defer it for 1 second.
-  ;; Only `ivy-use-virtual-buffers` need it.
-  :defer 1
-  :config
-  (recentf-mode 1)
-  :custom
-  (recentf-save-file (locate-user-emacs-file ".local/recentf")))
-
-;; Built-in minor mode to open files at last-edited position.
-(use-package saveplace
-  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
-  ;; using `package-activate-all` instead of `package-initialize`.
-  ;; Don't defer this if you want it to work on the first file you opened.
-  :config
-  (save-place-mode 1)
-  :custom
-  (save-place-file (locate-user-emacs-file ".local/places")))
-
-;; Built-in shell written in Emacs Lisp.
-;; I hardly use this, but it has a data dir.
-(use-package eshell
-  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
-  ;; using `package-activate-all` instead of `package-initialize`.
-  ;; This is not needed in startup so we defer it for 1 second.
-  :defer 1
-  :custom
-  ;; Redirect its data dir.
-  (eshell-directory-name (locate-user-emacs-file ".local/eshell/")))
-
 ;; I hardly use this. I use GNOME Terminal.
 ;; (use-package better-shell
 ;;   :ensure t
@@ -806,6 +859,94 @@ point reaches the beginning or end of the buffer, stop there."
 ;; sequence is easiest.
 ;; See <https://github.com/jwiegley/use-package/issues/976#issuecomment-1056017784>.
 
+;; Vertico and Consult need this to behave like `ivy--regex-plus`.
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+
+(use-package vertico
+  :ensure t
+  :config
+  (vertico-mode 1)
+  :custom
+  (vertico-resize t)
+  (vertico-cycle t))
+
+(use-package consult
+  :ensure t
+  :bind (("C-S-s" . consult-line)
+         ("C-S-r" . consult-ripgrep)
+         ([remap repeat-complex-command] . consult-complex-command)
+         ([remap switch-to-buffer] . consult-buffer)
+         ([remap switch-to-buffer-other-window] . consult-buffer-other-window)
+         ([remap switch-to-buffer-other-frame] . consult-buffer-other-frame)
+         ([remap bookmark-jump] . consult-bookmark)
+         ([remap project-switch-to-buffer] . consult-project-buffer)
+         ([remap yank-pop] . consult-yank-pop)
+         ([remap goto-line] . consult-goto-line)
+         ([remap imenu] . consult-imenu)
+         ("M-g I" . consult-imenu-multi)
+         ;; M-s bindings (search-map).
+         ("M-s d" . consult-find)
+         ("M-s D" . consult-locate)
+         ("M-s g" . consult-grep)
+         ("M-s G" . consult-git-grep)
+         ("M-s r" . consult-ripgrep)
+         ("M-s l" . consult-line)
+         ("M-s L" . consult-line-multi)
+         ("M-s m" . consult-multi-occur)
+         ("M-s k" . consult-keep-lines)
+         ("M-s u" . consult-focus-lines)
+         ;; Isearch integration.
+         :map isearch-mode-map
+         ([remap isearch-edit-string] . consult-isearch-history)
+         ;; Needed by consult-line to detect isearch.
+         ("M-s l" . consult-line)
+         ;; Needed by consult-line to detect isearch.
+         ("M-s L" . consult-line-multi)
+         ;; Minibuffer history
+         :map minibuffer-local-map
+         ([remap next-matching-history-element] . consult-history)
+         ([remap previous-matching-history-element] . consult-history)
+         ;; ("M-g e" . consult-compile-error)
+         ;; Alternative: consult-flymake.
+         ;; ("M-g f" . consult-flycheck)
+         ;; Alternative: consult-outline.
+         ;; ("M-g o" . consult-org-heading)
+         ;; ("M-g m" . consult-mark)
+         ;; ("M-g k" . consult-global-mark)
+         ;; ;; C-c bindings (mode-specific-map)
+         ;; ("C-c h" . consult-history)
+         ;; ("C-c m" . consult-mode-command)
+         ;; ("C-c k" . consult-kmacro)
+         ;; ;; Custom M-# bindings for fast register access
+         ;; ("M-#" . consult-register-load)
+         ;; ("M-'" . consult-register-store)
+         ;; ("C-M-#" . consult-register)
+         )
+  ;; Enable automatic preview at point in the *Completions* buffer. This is
+  ;; relevant when you use the default completion UI.
+  :hook (completion-list-mode . consult-preview-at-point-mode)
+  :config
+  ;; Optionally tweak the register preview window.
+  ;; This adds thin lines, sorting and hides the mode line of the window.
+  (advice-add #'register-preview :override #'consult-register-window)
+  :custom
+  ;; Optionally configure the register formatting. This improves the register
+  ;; preview for `consult-register`, `consult-register-load`,
+  ;; `consult-register-store` and the Emacs built-ins.
+  (register-preview-delay 0.5)
+  (register-preview-function #'consult-register-format)
+  ;; Use Consult to select xref locations with preview.
+  (xref-show-xrefs-function #'consult-xref)
+  (xref-show-definitions-function #'consult-xref)
+  ;; Optionally configure the narrowing key.
+  ;; Both `<` and `C-+` work reasonably well.
+  (consult-narrow-key "<")
+)
+
 (use-package company
   :ensure t
   :defer t
@@ -813,45 +954,6 @@ point reaches the beginning or end of the buffer, stop there."
   :custom
   (debug-on-error nil)
   (lsp-completion-provider :capf))
-
-(use-package ivy
-  :ensure t
-  :config
-  (ivy-mode 1)
-  :custom
-  (ivy-use-virtual-buffers t)
-  (ivy-display-style 'fancy)
-  (enable-recursive-minibuffers t)
-  (ivy-count-format "(%d/%d) ")
-  (ivy-wrap t)
-  (ivy-use-selectable-prompt t)
-  ;; I don't want ivy to add `/` after I press `~`.
-  (ivy-magic-tilde nil))
-
-(use-package counsel
-  :ensure t
-  :config
-  (counsel-mode 1)
-  :bind (("C-c g" . counsel-git)
-         ("C-c j" . counsel-git-grep)
-         ("C-c k" . counsel-rg)
-         ("C-c l" . counsel-locate)
-         ;; ("C-S-o" . counsel-rhythmbox)
-         :map minibuffer-local-map
-         ("C-r" . counsel-minibuffer-history)))
-
-(use-package swiper
-  :ensure t
-  :config
-  (defun swiper-region ()
-    "Use current region if active for swiper search."
-    (interactive)
-    (if (use-region-p)
-        (swiper (format "%s" (buffer-substring
-                              (region-beginning) (region-end))))
-      (swiper)))
-  :bind (("C-s" . swiper)
-         ("C-r" . swiper-region)))
 
 (use-package treemacs
   :ensure t
@@ -866,20 +968,6 @@ point reaches the beginning or end of the buffer, stop there."
   (treemacs-persist-file (locate-user-emacs-file ".local/treemacs-persist"))
   (treemacs-last-error-persist-file
    (locate-user-emacs-file ".local/treemacs-persist-at-last-error")))
-
-(use-package projectile
-  :ensure t
-  :config
-  (projectile-mode 1)
-  :bind (("M-s" . projectile-ripgrep))
-  ;; See <https://github.com/jwiegley/use-package#binding-to-keymaps>.
-  :bind-keymap (("C-x p" . projectile-command-map))
-  :custom
-  (projectile-completion-system 'ivy)
-  (projectile-cache-file
-   (locate-user-emacs-file ".local/cache/projectile.cache"))
-  (projectile-known-projects-file
-   (locate-user-emacs-file ".local/projectile-bookmarks.eld")))
 
 (use-package flycheck
   :ensure t
@@ -958,7 +1046,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Only enable log for debug.
   ;; This controls `*lsp-log*` buffer.
   (lsp-log-io nil)
-  ;; For better performance
+  ;; For better performance.
   (lsp-enable-symbol-highlighting nil)
   (lsp-enable-on-type-formatting nil)
   (lsp-lens-enable nil)
@@ -984,11 +1072,6 @@ point reaches the beginning or end of the buffer, stop there."
   (lsp-clients-clangd-args '
    ("--header-insertion-decorators=0" "--compile-commands-dir=./build/" "--enable-config")))
 
-(use-package lsp-ivy
-  :ensure t
-  :defer 1
-  :commands lsp-ivy-workspace-symbol)
-
 ;; High CPU usage on scrolling.
 (use-package lsp-ui
   :ensure t
@@ -1006,19 +1089,6 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer 1
   :commands lsp-treemacs-errors-list)
-
-(use-package counsel-projectile
-  :ensure t
-  :config
-  (counsel-projectile-mode 1))
-
-(use-package treemacs-projectile
-  :ensure t
-  :defer 1)
-
-(use-package treesit
-  :custom
-  (treesit-extra-load-path `(,(locate-user-emacs-file ".local/treesit"))))
 
 (use-package editorconfig
   :ensure t
