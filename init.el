@@ -814,7 +814,6 @@ point reaches the beginning or end of the buffer, stop there."
   (debug-on-error nil)
   (lsp-completion-provider :capf))
 
-;; I remove `:diminish` here because `mood-line` hides minor modes by default.
 (use-package ivy
   :ensure t
   :config
@@ -824,6 +823,7 @@ point reaches the beginning or end of the buffer, stop there."
   (ivy-display-style 'fancy)
   (enable-recursive-minibuffers t)
   (ivy-count-format "(%d/%d) ")
+  (ivy-wrap t)
   (ivy-use-selectable-prompt t)
   ;; I don't want ivy to add `/` after I press `~`.
   (ivy-magic-tilde nil))
@@ -969,6 +969,10 @@ point reaches the beginning or end of the buffer, stop there."
   (lsp-enable-imenu nil)
   (lsp-enable-snippet nil)
   (lsp-enable-file-watchers nil)
+  ;; Oh God please don't modify code by default, most open source projects don't
+  ;; like this because it will mess up commits.
+  (lsp-trim-final-newlines nil)
+  (lsp-trim-trailing-whitespace nil)
   ;; JavaScript (ts-ls) settings.
   ;; OMG, the FUCKING EVIL SHITTY VSCode TypeScript language server generates
   ;; log in project dir, can MicroSoft stop to let their software put shit in
@@ -1012,26 +1016,9 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer 1)
 
-;; High CPU usage on scrolling.
-(use-package tree-sitter
-  :ensure t
-  :disabled
-  :defer 1
-  :config
-  ;; Enable `tree-sitter` for all supported major modes.
-  (global-tree-sitter-mode 1)
-  ;; Use `tree-sitter` for highlight on supported major modes.
-  ;; `tree-sitter` currently does not support multi-language files,
-  ;; for example JSDoc comments and HTML with CSS and JS.
-  ;; I use `web-mode` for HTML, which is not supported by `tree-sitter`,
-  ;; but I am not sure how to disable it for `js2-mode`. Anyway, no highlight in
-  ;; comments is fine.
-  :hook ((tree-sitter-after-on . tree-sitter-hl-mode)))
-
-(use-package tree-sitter-langs
-  :ensure t
-  :disabled
-  :defer 1)
+(use-package treesit
+  :custom
+  (treesit-extra-load-path `(,(locate-user-emacs-file ".local/treesit"))))
 
 (use-package editorconfig
   :ensure t
