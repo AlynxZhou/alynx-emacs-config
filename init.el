@@ -66,6 +66,7 @@
 ;; (column-number-mode 1)
 
 ;; Use y or n instead yes or no.
+(setq use-short-answers t)
 (fset 'yes-or-no-p 'y-or-n-p)
 
 ;; Typing chars will replace selection, this is the default behavior of most
@@ -84,6 +85,8 @@
 ;; Disable line spacing.
 ;; Line space makes `highlight-indent-guides` wired.
 ;; (setq-default line-spacing nil)
+
+(put 'narrow-to-region 'disabled nil)
 
 ;; High CPU usage on scrolling.
 ;; Enable `pixel-scroll-precision-mode` added in Emacs 29.
@@ -590,16 +593,10 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Enable recursive minibuffers.
   (enable-recursive-minibuffers t))
 
-;; Finally after I try Swiper and Consult I notice that search/replace is
-;; different from filter/complete, and ISearch could provide an Atom like
-;; experience. First press `C-s` to start a search and use `C-s`/`C-r` to search
-;; forward and backward, press `M-\\` to toggle regexp, and then you could press
-;; `M-r` if you need to replace, if you are in regexp mode, it will use regexp.
-(use-package isearch
-  ;; The default ISearch keybindings are too hard to press.
-  :bind (:map isearch-mode-map
-              ("M-\\" . isearch-toggle-regexp)
-              ("M-r" . isearch-query-replace)))
+;; Better keybindings for replace, because `isearch-backward` is hardly used.
+(use-package replace
+  :bind (("C-r" . query-replace)
+         ("C-M-r" . query-replace-regexp)))
 
 ;; Built-in minor mode to save recent files.
 (use-package recentf
@@ -778,6 +775,11 @@ point reaches the beginning or end of the buffer, stop there."
   :mode (("COMMIT_EDITMSG\\'" . (lambda ()
                                   (display-fill-column-indicator-mode 1)
                                   (setq display-fill-column-indicator-column 72)
+                                  (setq show-trailing-whitespace t)))
+         ;; It's a little bit strange that SUSE use 67 in changes files.
+         ("\\.changes\\'" . (lambda ()
+                                  (display-fill-column-indicator-mode 1)
+                                  (setq display-fill-column-indicator-column 67)
                                   (setq show-trailing-whitespace t))))
   :custom
   ;; Set column ruler at 80 columns.
@@ -864,7 +866,8 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :custom
   (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion)))))
+  (completion-category-overrides '((file (styles basic partial-completion))))
+  (orderless-component-separator 'orderless-escapable-split-on-space))
 
 (use-package vertico
   :ensure t
@@ -876,8 +879,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package consult
   :ensure t
-  :bind (("C-S-s" . consult-line)
-         ("C-S-r" . consult-ripgrep)
+  :bind (("C-s" . consult-line)
+         ("C-M-s" . consult-ripgrep)
          ([remap repeat-complex-command] . consult-complex-command)
          ([remap switch-to-buffer] . consult-buffer)
          ([remap switch-to-buffer-other-window] . consult-buffer-other-window)
@@ -1168,5 +1171,9 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package meson-mode
   :ensure t
   :mode (("meson\\.build\\'" . meson-mode)))
+
+(use-package rpm-spec-mode
+  :ensure t
+  :mode (("\\.spec\\'" . rpm-spec-mode)))
 
 ;;; init.el ends here.

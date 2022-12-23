@@ -37,7 +37,9 @@
 (setq-default mode-line-format nil)
 ;; Start every frame maximized.
 ;; See <https://emacsredux.com/blog/2020/12/04/maximize-the-emacs-frame-on-startup/>.
-(add-to-list 'default-frame-alist '(fullscreen . maximized))
+;; Well, `maximized` should be the correct value, but at least it does not work
+;; with `emacsclient`. (It's in maximized mode, but size is incorrect.)
+(add-to-list 'default-frame-alist '(fullscreen . fullboth))
 
 ;; Initial package settings, put here because package manager are called before
 ;; `init.el`.
