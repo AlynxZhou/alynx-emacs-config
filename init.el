@@ -450,16 +450,16 @@
 ;; By default, `join-line` will join current line into previous line.
 ;; In Atom, I typically join next line into current line.
 ;; See <https://emacsredux.com/blog/2013/05/30/joining-lines/>.
-(defun alynx/join-next-line ()
+(defun join-next-line ()
   "Join the current line with the next line."
   (interactive)
   (join-line 1))
 ;; `C-j` is used to insert evaluated value in `lisp-interaction-mode`, maybe I
 ;; should find another keybinding for this.
-(global-set-key (kbd "C-j") 'alynx/join-next-line)
+(global-set-key (kbd "C-j") 'join-next-line)
 
 ;; See <https://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/>.
-(defun alynx/smarter-move-beginning-of-line (arg)
+(defun smarter-move-beginning-of-line (arg)
   "Move point back to indentation of beginning of line.
 
 Move point to the first non-whitespace character on this line.
@@ -483,7 +483,22 @@ point reaches the beginning or end of the buffer, stop there."
       (move-beginning-of-line 1))))
 ;; Remap `C-a`, `Home` to `smarter-move-beginning-of-line`.
 (global-set-key [remap move-beginning-of-line]
-                'alynx/smarter-move-beginning-of-line)
+                'smarter-move-beginning-of-line)
+
+;; I found that vim style line insert commands helpful.
+(defun open-next-line ()
+  "Insert an empty line below the current line."
+  (interactive)
+  (end-of-line)
+  (newline-and-indent))
+(defun open-previous-line ()
+  "Insert an empty line above the current line."
+  (interactive)
+  (forward-line -1)
+  (end-of-line)
+  (newline-and-indent))
+(global-set-key (kbd "C-o") 'open-next-line)
+(global-set-key (kbd "C-S-o") 'open-previous-line)
 
 (global-set-key (kbd "C-c n") 'windmove-down)
 (global-set-key (kbd "C-c p") 'windmove-up)
@@ -864,9 +879,13 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Vertico and Consult need this to behave like `ivy--regex-plus`.
 (use-package orderless
   :ensure t
+  ;; Orderless always returns too many unrelated results, especially for auto
+  ;; completing, so only use it in minibuffer.
+  ;; See <https://emacs-china.org/t/orderless-completion/20455/3>.
+  :hook ((minibuffer-setup . (lambda ()
+                               (setq-local completion-styles '(orderless basic)
+                                           completion-category-overrides '((file . ((styles . (partial-completion)))))))))
   :custom
-  (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion))))
   (orderless-component-separator 'orderless-escapable-split-on-space))
 
 (use-package vertico
@@ -1172,8 +1191,10 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :mode (("meson\\.build\\'" . meson-mode)))
 
-(use-package rpm-spec-mode
-  :ensure t
-  :mode (("\\.spec\\'" . rpm-spec-mode)))
+;; See <https://github.com/stigbjorlykke/rpm-spec-mode/issues/16>.
+;; Currently this package does not work with Emacs after 28.1.
+;; (use-package rpm-spec-mode
+;;   :ensure t
+;;   :mode (("\\.spec\\'" . rpm-spec-mode)))
 
 ;;; init.el ends here.
