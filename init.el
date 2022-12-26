@@ -5,16 +5,12 @@
 
 ;;; Code:
 
-;; If a function/variable is not used for direct calling (only via keybinding),
-;; add a `alynx/` prefix for it.
+;; If a function/variable is not used for direct calling, add a `alynx/` prefix
+;; for it.
 
-;; Internal tweaks.
+;; Tweaks.
 
-;; Disable startup buffer.
-(setq inhibit-startup-message t)
-;; Disable annoying bell.
-;; (setq visible-bell t)
-(setq ring-bell-function 'ignore)
+;; Those belong to no package and should be done during initialization.
 
 ;; Show loading details after startup.
 (add-hook 'emacs-startup-hook
@@ -29,6 +25,12 @@
                        gcs-done
                        (if (> gcs-done 1) "collections" "collection"))
                (emacs-init-time "%.2fs")))))
+
+;; Disable startup buffer.
+(setq inhibit-startup-screen t)
+;; Disable annoying bell.
+;; (setq visible-bell t)
+(setq ring-bell-function 'ignore)
 
 ;; Contrary to what many Emacs users have in their configs, you only need this
 ;; to make UTF-8 the default coding system.
@@ -49,79 +51,32 @@
 ;; Backup dir which contains backup files and auto save lists.
 (make-directory (locate-user-emacs-file ".local/backup/") t)
 
-;; Disable menu bar, tool bar, scroll bar and cursor blink.
-(menu-bar-mode -1)
-(tool-bar-mode -1)
-;; Scroll bar is too narrow to click, better to disable it.
-(scroll-bar-mode -1)
-(blink-cursor-mode -1)
-
-;; Display line number (gutter) and highlight current line.
-(global-display-line-numbers-mode 1)
-(global-hl-line-mode 1)
-
-;; Display line number and column number of cursor in mode line.
-;; `mood-line` shows those by default, this only works for built-in mode line.
-;; (line-number-mode 1)
-;; (column-number-mode 1)
+;; Move autosave files and list into backup dir.
+(setq auto-save-list-file-prefix (locate-user-emacs-file ".local/backup/.saves-"))
 
 ;; Use y or n instead yes or no.
 (setq use-short-answers t)
-(fset 'yes-or-no-p 'y-or-n-p)
-
-;; Typing chars will replace selection, this is the default behavior of most
-;; editors.
-(delete-selection-mode 1)
+;; (fset 'yes-or-no-p 'y-or-n-p)
 
 ;; Set cursor to underline.
 (setq-default cursor-type 'hbar)
 
-;; High CPU usage on scrolling.
-;; Highlight trailing whitespace in `prog-mode` only.
-(add-hook 'prog-mode-hook
-          (lambda ()
-            (setq show-trailing-whitespace t)))
-
 ;; Disable line spacing.
 ;; Line space makes `highlight-indent-guides` wired.
-;; (setq-default line-spacing nil)
+;; (setq-default lineq-spacing nil)
 
 (put 'narrow-to-region 'disabled nil)
 
 ;; High CPU usage on scrolling.
-;; Enable `pixel-scroll-precision-mode` added in Emacs 29.
-(when (>= emacs-major-version 29)
-  (pixel-scroll-precision-mode 1))
 ;; By default Emacs will jump a half screen if your cursor is out of screen,
 ;; this makes it behave like other editors, but sometimes it still jumps.
 (setq scroll-margin 0)
 (setq scroll-conservatively 101)
 (setq scroll-preserve-screen-position t)
 (setq auto-window-vscroll nil)
-
-;; Always follow symlinks instead of asking, because the minibuffer prompt might
-;; be covered by other messages.
-(setq vc-follow-symlinks t)
-;; Backup file is generated when you save file. Autosave file is generated
-;; every few seconds or every few characters.
-;; See <https://emacsredux.com/blog/2013/05/09/keep-backup-and-auto-save-files-out-of-the-way/>.
-;; Disable backup files.
-(setq make-backup-files nil)
-;; Move backup files into backup dir.
-(setq backup-directory-alist
-      `(("." . ,(locate-user-emacs-file ".local/backup/"))))
-;; Move autosave files and list into backup dir.
-(setq auto-save-list-file-prefix
-      (locate-user-emacs-file ".local/backup/.saves-"))
-(setq auto-save-file-name-transforms
-      `((".*" ,(locate-user-emacs-file ".local/backup/") t)))
-
-;; Set customization data in a specific file, without littering my init files.
-;; `locate-user-emacs-file` will create file if it does not exist.
-(setq custom-file (locate-user-emacs-file "custom-file.el"))
-(unless (file-exists-p custom-file)
-  (make-empty-file custom-file))
-(load-file custom-file)
+;; Decrease scrolling CPU usage.
+(setq fast-but-imprecise-scrolling t)
+(setq jit-lock-defer-time 0)
 
 ;; Fonts.
 
@@ -159,11 +114,10 @@
 ;; Don't clean font-caches during GC.
 (setq inhibit-compacting-font-caches t)
 
-;; Decrease scrolling CPU usage.
-(setq fast-but-imprecise-scrolling t)
-(setq jit-lock-defer-time 0)
-
 ;; Indentations.
+
+;; A total resolution to set different indent offset to different modes, and
+;; automatically guess it from file content.
 
 ;; Making tab other length than 8 sounds like define PI to 3, if you don't want
 ;; 8, you should also not use tabs, but use spaces.
@@ -174,11 +128,6 @@
 ;; `indent-tabs-mode` does not mean use tabs only, it means if the indent level
 ;; can be divided by `tab-width`, use tabs, and use spaces for the remaining.
 (setq-default indent-tabs-mode t)
-
-;; I prefer linux coding style for C, not gnu.
-(customize-set-variable 'c-default-style '((java-mode . "java")
-                                           (awk-mode . "awk")
-                                           (other . "linux")))
 
 ;; TODO: Don't use alias, just use different variables for different modes,
 ;; So we can set default value for different languages.
@@ -394,13 +343,6 @@
                                           alynx/indent-offset
                                           tab-width)))
 
-;; See <https://dougie.io/emacs/indentation/>.
-;; Auto-indent line when pressing enter.
-(setq-default electric-indent-inhibit nil)
-;; By default if you press backspace on indentations, Emacs will turn a tab into
-;; spaces and delete one space, I think no one will like this.
-(setq backward-delete-char-untabify-method nil)
-
 ;; Keymaps.
 
 ;; Keybindings for setting indentations.
@@ -514,7 +456,7 @@ point reaches the beginning or end of the buffer, stop there."
   "Show the full file path of current buffer in the minibuffer."
   (interactive)
   (message "%s" buffer-file-name))
-(global-set-key (kbd "C-c s") 'alynx/show-file-path)
+(global-set-key (kbd "C-c s") 'show-file-path)
 
 (defun edit-config ()
   "Open init.el to edit."
@@ -553,6 +495,7 @@ point reaches the beginning or end of the buffer, stop there."
 (setq package-quickstart-file
       (locate-user-emacs-file ".local/cache/package-quickstart.el"))
 ;; Cache will not enable until we call `package-quickstart-refresh` manually.
+;; FIXME: Maybe this is not enough.
 (unless (file-exists-p package-quickstart-file)
   (package-quickstart-refresh))
 ;; Make sure quick start cache is refreshed after operations in package menu,
@@ -569,10 +512,11 @@ point reaches the beginning or end of the buffer, stop there."
   (package-refresh-contents)
   (package-install 'use-package))
 (require 'use-package)
-;; Don't set `:ensure t` for built-in packages, it will mess things up when
-;; using `package-activate-all` instead of `package-initialize`.
+
 ;; Setting `use-package-always-ensure` to `t` will also set `:ensure t` for
 ;; built-in packages.
+;; However, never set `:ensure t` for built-in packages, it will mess things up
+;; when using `package-activate-all` instead of `package-initialize`.
 ;; See <https://github.com/jwiegley/use-package/issues/977>.
 ;; Let `use-package` always install packages.
 ;; (setq use-package-always-ensure t)
@@ -587,7 +531,10 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Built-in packages.
 
+;; Vertico requires this.
 (use-package emacs
+  :hook
+  ((minibuffer-setup . cursor-intangible-mode))
   :config
   ;; Add prompt indicator to `completing-read-multiple`.
   ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
@@ -599,14 +546,88 @@ point reaches the beginning or end of the buffer, stop there."
                   (car args))
           (cdr args)))
   (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
-  :hook
-  (minibuffer-setup . cursor-intangible-mode)
   :custom
-  ;; Do not allow the cursor in the minibuffer prompt.
   (minibuffer-prompt-properties
         '(read-only t cursor-intangible t face minibuffer-prompt))
   ;; Enable recursive minibuffers.
   (enable-recursive-minibuffers t))
+
+;; Disable menu bar, tool bar, scroll bar and cursor blink.
+
+(use-package menu-bar
+  :config
+  (menu-bar-mode -1))
+
+(use-package tool-bar
+  :config
+  (tool-bar-mode -1))
+
+;; Scroll bar is too narrow to click, better to disable it.
+(use-package scroll-bar
+  :config
+  (scroll-bar-mode -1))
+
+(use-package frame
+  :config
+  (blink-cursor-mode -1))
+
+;; Display line number and column number of cursor in mode line.
+(use-package simple
+  :config
+  ;; `mood-line` shows those by default, this only works for built-in mode line.
+  ;; (line-number-mode 1)
+  ;; (column-number-mode 1)
+  :custom
+  ;; By default if you press backspace on indentations, Emacs will turn a tab
+  ;; into spaces and delete one space, I think no one likes this.
+  (backward-delete-char-untabify-method nil))
+
+;; See <https://dougie.io/emacs/indentation/>.
+;; Auto-indent line when pressing enter.
+(use-package electric
+  :custom
+  ;; XXX: Maybe use `setq-default`?
+  (electric-indent-inhibit nil))
+
+(use-package files
+  :custom
+  ;; Backup file is generated when you save file. Autosave file is generated
+  ;; every few seconds or every few characters.
+  ;; See <https://emacsredux.com/blog/2013/05/09/keep-backup-and-auto-save-files-out-of-the-way/>.
+  ;; Disable backup files.
+  (make-backup-files nil)
+  ;; Move backup files into backup dir.
+  (backup-directory-alist
+   `(("." . ,(locate-user-emacs-file ".local/backup/"))))
+  (auto-save-file-name-transforms
+   `((".*" ,(locate-user-emacs-file ".local/backup/") t))))
+
+;; Typing chars will replace selection, this is the default behavior of most
+;; editors.
+(use-package delsel
+  :config
+  (delete-selection-mode 1))
+
+;; Display line number (gutter) and highlight current line.
+
+(use-package display-line-numbers
+  :config
+  (global-display-line-numbers-mode 1))
+
+(use-package hl-line
+  :config
+  (global-hl-line-mode 1))
+
+;; Enable `pixel-scroll-precision-mode` added in Emacs 29.
+(use-package pixel-scroll
+  :config
+  (pixel-scroll-precision-mode 1))
+
+;; Always follow symlinks instead of asking, because the minibuffer prompt might
+;; be covered by other messages.
+(use-package vc-hooks
+  :custom
+  (vc-follow-symlinks t))
 
 ;; Better keybindings for replace, because `isearch-backward` is hardly used.
 (use-package replace
@@ -645,6 +666,15 @@ point reaches the beginning or end of the buffer, stop there."
   :custom
   (treesit-extra-load-path `(,(locate-user-emacs-file ".local/treesit"))))
 
+;; Set customization data in a specific file, without littering my init files.
+(use-package cus-edit
+  :config
+  (unless (file-exists-p custom-file)
+  (make-empty-file custom-file))
+  (load-file custom-file)
+  :custom
+  (custom-file (locate-user-emacs-file "custom-file.el")))
+
 ;; Built-in shell written in Emacs Lisp.
 ;; I hardly use this, but it has a data dir.
 (use-package eshell
@@ -655,6 +685,17 @@ point reaches the beginning or end of the buffer, stop there."
   :custom
   ;; Redirect its data dir.
   (eshell-directory-name (locate-user-emacs-file ".local/eshell/")))
+
+(use-package prog-mode
+  ;; Highlight trailing whitespace in `prog-mode` only.
+  :hook ((prog-mode . (lambda () (setq show-trailing-whitespace t)))))
+
+;; I prefer linux coding style for C, not gnu.
+(use-package cc-vars
+  :custom
+  (c-default-style '((java-mode . "java")
+                     (awk-mode . "awk")
+                     (other . "linux"))))
 
 ;; Simple packages that have no dependencies.
 
@@ -704,6 +745,17 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   :ensure t
 ;;   :config
 ;;   (nano-modeline-mode 1))
+
+(use-package olivetti
+  :ensure t
+  :bind (("C-c o" . olivetti-mode))
+  ;; Just disable line numbers and column ruler in olivetti mode.
+  :hook ((olivetti-mode . (lambda () (if olivetti-mode
+                                         (progn
+                                           (display-line-numbers-mode -1)
+                                           (display-fill-column-indicator-mode -1))
+                                       (display-line-numbers-mode 1)
+                                       (display-fill-column-indicator-mode 1))))))
 
 ;; Atom-like move regine/current line up and down.
 (use-package move-text
@@ -983,7 +1035,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; I never use internal input method so bind this to `treemacs`.
   :bind (("C-\\" . treemacs))
   ;; Disable line number for `treemacs` window.
-  :hook ((treemacs-mode . (lambda() (display-line-numbers-mode -1))))
+  :hook ((treemacs-mode . (lambda () (display-line-numbers-mode -1))))
   :custom
   ;; Default `treemacs` window is too wide.
   (treemacs-width 20)

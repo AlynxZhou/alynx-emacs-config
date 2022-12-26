@@ -40,6 +40,10 @@
 ;; Well, `maximized` should be the correct value, but at least it does not work
 ;; with `emacsclient`. (It's in maximized mode, but size is incorrect.)
 (add-to-list 'default-frame-alist '(fullscreen . fullboth))
+;; Do not resize the frame at this early stage.
+(setq frame-inhibit-implied-resize t)
+;; Resize in pixels, not chars.
+(setq frame-resize-pixelwise t)
 
 ;; Initial package settings, put here because package manager are called before
 ;; `init.el`.
