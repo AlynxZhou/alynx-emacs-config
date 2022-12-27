@@ -12,20 +12,26 @@ This repo is very personalized and may not be suitable for everyone, I use it fo
 
 If you really want to try, first backup your configuration files.
 
-```
+```shell
 $ mv ~/.emacs ~/.emacs.backup
 $ mv ~/.emacs.d ~/.emacs.d.backup
 ```
 
 Then clone it.
 
-```
+```shell
 $ git clone https://github.com/AlynxZhou/alynx-emacs-config.git ~/.emacs.d
 ```
 
 And run Emacs.
 
-I am using Emacs 29 with pgtk and native-comp from <https://aur.archlinux.org/packages/emacs-pgtk-native-comp-git>, if you are not using the latest version, it may not work.
+I am using Emacs master branch with pgtk and native-comp from <https://aur.archlinux.org/packages/emacs-pgtk-native-comp-git>, if you are not using the latest version, it may not work.
+
+To flush all installed packages and re-installed them, run the following command:
+
+```shell
+$ rm -rf ~/.emacs.d/{elpa,eln-cache} && rm ~/.emacs.d/.local/cache/package-quickstart.el*
+```
 
 # Notice
 
