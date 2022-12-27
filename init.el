@@ -26,18 +26,6 @@
                        (if (> gcs-done 1) "collections" "collection"))
                (emacs-init-time "%.2fs")))))
 
-;; Disable startup buffer.
-(setq inhibit-startup-screen t)
-;; Disable annoying bell.
-(setq ring-bell-function 'ignore)
-;; (setq visible-bell nil)
-
-;; Contrary to what many Emacs users have in their configs, you only need this
-;; to make UTF-8 the default coding system.
-(set-language-environment "UTF-8")
-;; `set-language-enviornment` sets `default-input-method`, which is unwanted.
-(setq default-input-method nil)
-
 ;; Create local dir to redirect package-generated files.
 ;; It's better not to move `eln-cache` and `elpa` into local dir, `eln-cache` is
 ;; defined in `native-comp-eln-load-path`, which is a list contains user one and
@@ -50,36 +38,6 @@
 (make-directory (locate-user-emacs-file ".local/cache/") t)
 ;; Backup dir which contains backup files and auto save lists.
 (make-directory (locate-user-emacs-file ".local/backup/") t)
-
-;; Move autosave files and list into backup dir.
-(setq auto-save-list-file-prefix (locate-user-emacs-file ".local/backup/.saves-"))
-
-;; Use y or n instead yes or no.
-(setq use-short-answers t)
-;; (fset 'yes-or-no-p 'y-or-n-p)
-
-;; Set cursor to underline.
-(setq-default cursor-type 'hbar)
-
-;; Disable line spacing.
-;; Line space makes `highlight-indent-guides` wired.
-;; (setq-default line-spacing nil)
-
-(put 'narrow-to-region 'disabled nil)
-
-;; High CPU usage on scrolling.
-;; By default Emacs will jump a half screen if your cursor is out of screen,
-;; this makes it behave like other editors, but sometimes it still jumps.
-(setq scroll-margin 3)
-(setq scroll-conservatively 101)
-(setq scroll-preserve-screen-position t)
-(setq auto-window-vscroll nil)
-;; Decrease scrolling CPU usage.
-(setq fast-but-imprecise-scrolling t)
-(setq jit-lock-defer-time 0)
-
-;; Resize in pixels, not chars.
-(setq frame-resize-pixelwise t)
 
 ;; Fonts.
 
@@ -349,7 +307,7 @@
                                           alynx/indent-offset
                                           tab-width)))
 
-;; Keymaps.
+;; Keybindings.
 
 ;; Keybindings for setting indentations.
 (global-set-key (kbd "C-c i TAB") 'indent-tabs)
@@ -564,6 +522,10 @@ point reaches the beginning or end of the buffer, stop there."
                               (setq show-trailing-whitespace t))))
   ;; Vertico requires those.
   :config
+  ;; Contrary to what many Emacs users have in their configs, you only need this
+  ;; to make UTF-8 the default coding system.
+  (set-language-environment "UTF-8")
+  (put 'narrow-to-region 'disabled nil)
   ;; Add prompt indicator to `completing-read-multiple`.
   ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
   ;; (defun crm-indicator (args)
@@ -575,10 +537,38 @@ point reaches the beginning or end of the buffer, stop there."
   ;;         (cdr args)))
   ;; (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
   :custom
+  ;; Disable startup buffer.
+  (inhibit-startup-screen t)
+  ;; Disable annoying bell.
+  (ring-bell-function 'ignore)
+  ;; (visible-bell nil)
+  ;; `set-language-enviornment` sets `default-input-method`, which is unwanted.
+  (default-input-method nil)
+  ;; Use y or n instead of yes or no.
+  (use-short-answers t)
+  ;; Set cursor to underline.
+  (cursor-type 'hbar)
+  ;; Disable line spacing.
+  ;; Line space makes `highlight-indent-guides` wired.
+  ;; (line-spacing nil)
+  ;; High CPU usage on scrolling.
+  ;; By default Emacs will jump a half screen if your cursor is out of screen,
+  ;; this makes it behave like other editors, but sometimes it still jumps.
+  (scroll-margin 3)
+  (scroll-conservatively 101)
+  (scroll-preserve-screen-position t)
+  (auto-window-vscroll nil)
+  ;; Decrease scrolling CPU usage.
+  (fast-but-imprecise-scrolling t)
+  (jit-lock-defer-time 0)
+  ;; Resize in pixels, not chars.
+  (frame-resize-pixelwise t)
   (minibuffer-prompt-properties
         '(read-only t cursor-intangible t face minibuffer-prompt))
   ;; Enable recursive minibuffers.
-  (enable-recursive-minibuffers t))
+  (enable-recursive-minibuffers t)
+  ;; Move autosave files and list into backup dir.
+  (auto-save-list-file-prefix (locate-user-emacs-file ".local/backup/.saves-")))
 
 ;; Disable menu bar, tool bar, scroll bar and cursor blink.
 
@@ -907,18 +897,6 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   :config
 ;;   (sis-ism-lazyman-config "xkb:us::eng" "rime" 'ibus)
 ;;   (sis-global-respect-mode t))
-
-(use-package yasnippet
-  :ensure t
-  :defer t
-  :hook ((prog-mode . yas-minor-mode))
-  :custom
-  ;; Don't make my root dir dirty!
-  (yas-snippet-dirs `(,(locate-user-emacs-file ".local/snippets"))))
-
-(use-package yasnippet-snippets
-  :ensure t
-  :defer 1)
 
 ;; Complex packages that have dependencies.
 ;; Don't change the sequence, because the latter needs to obey the former's
