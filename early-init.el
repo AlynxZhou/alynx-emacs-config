@@ -1,4 +1,4 @@
-;;; early-init.el --- Alynx's early-init configurations.
+;;; early-init.el --- Alynx's early-init configurations. -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; This file will be run before GUI start, only put configurations that really
@@ -27,8 +27,10 @@
 ;; Set colors before window showing up to avoid white screen flash, those values
 ;; match atom-one-dark theme. Should keep updated with theme.
 ;; See <https://github.com/jonathanchu/atom-one-dark-theme/blob/master/atom-one-dark-theme.el#L36-L37>.
-;; Should only used if `(display-grapic-p)` is `t`, but I am not sure why it not
-;; work with that. Anyway, I don't use Emacs in terminal.
+;; Should only used if `(display-graphic-p)` is `t`, but I am not sure why it
+;; does not work with that. Anyway, I don't use Emacs in terminal.
+;; See <https://github.com/radian-software/radian/blob/develop/emacs/early-init.el#L16-L23>.
+;; It seems that `display-graphic-p` has some bugs.
 (set-face-attribute 'default nil
                     :foreground "#ABB2BF"
                     :background "#282C34")
@@ -39,7 +41,10 @@
 ;; See <https://emacsredux.com/blog/2020/12/04/maximize-the-emacs-frame-on-startup/>.
 ;; Well, `maximized` should be the correct value, but at least it does not work
 ;; with `emacsclient`. (It's in maximized mode, but size is incorrect.)
-(add-to-list 'default-frame-alist '(fullscreen . fullboth))
+(modify-all-frames-parameters '((fullscreen . fullboth)
+                                (menu-bar-lines . 0)
+                                (tool-bar-lines . 0)
+                                (internal-border-width . 0)))
 ;; Do not resize the frame at this early stage.
 (setq frame-inhibit-implied-resize t)
 ;; Resize in pixels, not chars.

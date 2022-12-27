@@ -1,4 +1,4 @@
-;;; init.el --- Alynx's init configurations.
+;;; init.el --- Alynx's init configurations. -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; Most configurations should be in this file.
@@ -29,8 +29,8 @@
 ;; Disable startup buffer.
 (setq inhibit-startup-screen t)
 ;; Disable annoying bell.
-;; (setq visible-bell t)
 (setq ring-bell-function 'ignore)
+;; (setq visible-bell nil)
 
 ;; Contrary to what many Emacs users have in their configs, you only need this
 ;; to make UTF-8 the default coding system.
@@ -63,14 +63,14 @@
 
 ;; Disable line spacing.
 ;; Line space makes `highlight-indent-guides` wired.
-;; (setq-default lineq-spacing nil)
+;; (setq-default line-spacing nil)
 
 (put 'narrow-to-region 'disabled nil)
 
 ;; High CPU usage on scrolling.
 ;; By default Emacs will jump a half screen if your cursor is out of screen,
 ;; this makes it behave like other editors, but sometimes it still jumps.
-(setq scroll-margin 0)
+(setq scroll-margin 3)
 (setq scroll-conservatively 101)
 (setq scroll-preserve-screen-position t)
 (setq auto-window-vscroll nil)
@@ -256,7 +256,7 @@
         (widen)
         (goto-char (point-min))
         (dotimes (i detect-lines)
-          (let (current-char space-length)
+          (let (current-char)
             (goto-char (line-beginning-position))
             (setq current-char (char-after))
             (cond
@@ -282,7 +282,8 @@
                            (or (= shortest-spaces 0)
                                (< spaces shortest-spaces)))
                   (setq shortest-spaces spaces)))))
-            (forward-line 1)))))
+            (forward-line 1))
+          i)))
     ;; If a file uses tabs to indent, and we cannot get shortest spaces, this
     ;; file is likely to only use tabs, and the indent offset is tab width,
     ;; otherwise the shortest spaces length is indent offset.
@@ -324,6 +325,10 @@
 ;; loaded, and then our custom `.dir-local.el` is loaded, then
 ;; `after-change-major-mode-hook` is called.
 ;; See <https://github.com/editorconfig/editorconfig-emacs/issues/141>.
+;; `add-hook` by default adds function to the beginning of hook, so add
+;; `guess-indent` first.
+(add-hook 'change-major-mode-after-body-hook 'guess-indent)
+
 (add-hook 'change-major-mode-after-body-hook
           (lambda ()
             ;; Check which list our current `major-mode` is inside.
@@ -333,8 +338,6 @@
               (cond
                ((eq mode 'tab) (indent-tabs indent-offset))
                ((eq mode 'space) (indent-spaces indent-offset))))))
-
-(add-hook 'change-major-mode-after-body-hook 'guess-indent)
 
 ;; Add a indentation indicator on mode line.
 ;; Must use `:eval`, mode line constructor does not work for numbers.
@@ -538,14 +541,14 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   ;; Add prompt indicator to `completing-read-multiple`.
   ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
-  (defun crm-indicator (args)
-    (cons (format "[CRM%s] %s"
-                  (replace-regexp-in-string
-                   "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
-                   crm-separator)
-                  (car args))
-          (cdr args)))
-  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+  ;; (defun crm-indicator (args)
+  ;;   (cons (format "[CRM%s] %s"
+  ;;                 (replace-regexp-in-string
+  ;;                  "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+  ;;                  crm-separator)
+  ;;                 (car args))
+  ;;         (cdr args)))
+  ;; (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
   :custom
   (minibuffer-prompt-properties
         '(read-only t cursor-intangible t face minibuffer-prompt))
@@ -612,7 +615,10 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package display-line-numbers
   :config
-  (global-display-line-numbers-mode 1))
+  (global-display-line-numbers-mode 1)
+  :custom
+  ;; Use the max line number width to prevent shaking.
+  (display-line-numbers-width-start t))
 
 (use-package hl-line
   :config
