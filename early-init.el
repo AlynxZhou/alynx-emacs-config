@@ -47,8 +47,6 @@
                                 (internal-border-width . 0)))
 ;; Do not resize the frame at this early stage.
 (setq frame-inhibit-implied-resize t)
-;; Resize in pixels, not chars.
-(setq frame-resize-pixelwise t)
 
 ;; Initial package settings, put here because package manager are called before
 ;; `init.el`.

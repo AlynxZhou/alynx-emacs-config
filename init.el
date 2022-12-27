@@ -78,6 +78,9 @@
 (setq fast-but-imprecise-scrolling t)
 (setq jit-lock-defer-time 0)
 
+;; Resize in pixels, not chars.
+(setq frame-resize-pixelwise t)
+
 ;; Fonts.
 
 ;; (setq font-use-system-font t)
@@ -373,7 +376,7 @@
 ;; generate another code which is bound to forward delete.
 ;; Also GNOME Terminal makes Backspace generate `DEL` code by default, too.
 ;; Another problem is that GNOME Terminal makes Delete generate escape sequence
-;; by default, Emacs cannot handle it, but there are also conflict with other
+;; by default, Emacs cannot handle it. But there are also conflict with other
 ;; keybindings, so I just suggest not to use Emacs in terminal.
 ;; It's not good to translate Delete to `DEL` code and bind Backspace to
 ;; functions like `backward-delete-char`, since many backward delete related
@@ -473,10 +476,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Packages.
 
-;; Before we can require packages, there are two things to do, first is loading
-;; packages and second is activating packages, `package-initialize` does both,
-;; but you can pass a `no-activate` argument to let it only load packages and,
-;; then call `package-activate-all` manually.
+;; This is needed for first running because we will install `use-package`.
 (require 'package)
 ;; Use TUNA mirrors for faster downloading.
 (setq package-archives
@@ -489,32 +489,41 @@ point reaches the beginning or end of the buffer, stop there."
         ("nongnu" . 0)
         ("melpa" . 100)))
 
-;; Enable `package-quickstart`, it will cache autoload files of all packages
-;; into a single file cache to speed up loading. This reduces only 0.1s for me,
-;; but maybe very helpful for HDD users.
+;; About `package-initialize`, `package-activate-all` and `package-quickstart`:
+;; If I am not wrong, you should never call `package-initialize`, because since
+;; Emacs 27.1, the old `package-initialize` is splitted into two parts:
+;; - `package-initialize`: load all lisp files of all packages (expensive) and
+;;   call `package-activate-all`.
+;; - `package-activate-all`: load autoloads for all packages (cheap).
+;; And what about `package-quickstart`? It just writes all autoloads in a single
+;; file when you call `package-quickstart-refresh`, and if you have such a file,
+;; `package-activate-all` will load it instead of many files. This reduces only
+;; 0.1s for me, but maybe very helpful for HDD users.
 ;; See <https://git.savannah.gnu.org/cgit/emacs.git/commit/?id=6dfdf0c9e8e4aca77b148db8d009c862389c64d3>.
+;; So basically you only need `package-activate-all`, and autoloads will load
+;; the actual packages when you call them. Any articles telling you write
+;; `package-initialize` before Emacs 27.1 is wrong now.
+;; Also, Emacs now call `package-activate-all` between `early-init.el` and
+;; `init.el`, so if you want to control package loading in `init.el` like me,
+;; you need to set `package-enable-at-startup` to `nil` in `early-init.el`.
 (setq package-quickstart t)
 ;; Put quick start cache into cache dir.
 (setq package-quickstart-file
       (locate-user-emacs-file ".local/cache/package-quickstart.el"))
-;; Cache will not enable until we call `package-quickstart-refresh` manually.
-;; FIXME: Maybe this is not enough.
+;; Cache will not be used until we call `package-quickstart-refresh` manually.
 (unless (file-exists-p package-quickstart-file)
   (package-quickstart-refresh))
 ;; Make sure quick start cache is refreshed after operations in package menu,
 ;; for example upgrading packages.
 ;; See <https://www.manueluberti.eu/emacs/2021/03/08/package/>.
 (advice-add 'package-menu-execute :after-while #'package-quickstart-refresh)
-;; It should be enough to run `package-activate-all` only if we enable quick
-;; start, because we won't load packages with `package-initialize` and only load
-;; quick start cache.
+
 (package-activate-all)
 
-;; Load `use-package`.
+;; Install `use-package`.
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
-(require 'use-package)
 
 ;; Setting `use-package-always-ensure` to `t` will also set `:ensure t` for
 ;; built-in packages.
@@ -534,10 +543,26 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Built-in packages.
 
-;; Vertico requires this.
+;; There is actually no `emacs` package, but it is useful if you have some
+;; config that does not belong to any package and you want to manage them with
+;; `use-package`.
 (use-package emacs
   :hook
   ((minibuffer-setup . cursor-intangible-mode))
+  ;; Some files does not have a major mode, and I don't want to define a major
+  ;; mode for it, so just use some `lambda` for them.
+  ;; Note that `auto-mode-alist` can only run a function for each regex, so just
+  ;; add all needed settings here.
+  :mode (("COMMIT_EDITMSG\\'" . (lambda ()
+                                  (display-fill-column-indicator-mode 1)
+                                  (setq display-fill-column-indicator-column 72)
+                                  (setq show-trailing-whitespace t)))
+         ;; It's a little bit strange that SUSE use 67 in changes files.
+         ("\\.changes\\'" . (lambda ()
+                              (display-fill-column-indicator-mode 1)
+                              (setq display-fill-column-indicator-column 67)
+                              (setq show-trailing-whitespace t))))
+  ;; Vertico requires those.
   :config
   ;; Add prompt indicator to `completing-read-multiple`.
   ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
@@ -624,6 +649,21 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (global-hl-line-mode 1))
 
+(use-package whitespace
+  ;; Highlight trailing whitespace in `prog-mode` only.
+  :hook ((prog-mode . (lambda () (setq show-trailing-whitespace t)))))
+
+;; Built-in minor mode to display column ruler.
+(use-package display-fill-column-indicator
+  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
+  ;; using `package-activate-all` instead of `package-initialize`.
+  :defer t
+  ;; I only use this in `prog-mode`.
+  :hook ((prog-mode . display-fill-column-indicator-mode))
+  :custom
+  ;; Set column ruler at 80 columns.
+  (display-fill-column-indicator-column 80))
+
 ;; Enable `pixel-scroll-precision-mode` added in Emacs 29.
 (use-package pixel-scroll
   :config
@@ -692,16 +732,16 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Redirect its data dir.
   (eshell-directory-name (locate-user-emacs-file ".local/eshell/")))
 
-(use-package prog-mode
-  ;; Highlight trailing whitespace in `prog-mode` only.
-  :hook ((prog-mode . (lambda () (setq show-trailing-whitespace t)))))
-
 ;; I prefer linux coding style for C, not gnu.
 (use-package cc-vars
   :custom
   (c-default-style '((java-mode . "java")
                      (awk-mode . "awk")
                      (other . "linux"))))
+
+(use-package cc-mode
+  :hook (c-mode . (lambda () (setq comment-start "//"
+                                   comment-end   ""))))
 
 ;; Simple packages that have no dependencies.
 
@@ -716,14 +756,6 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :config
   (load-theme 'atom-one-dark t))
-
-;; Or if you like `mood-one-theme`.
-;; (use-package mood-one-theme
-;;   :ensure t
-;;   :config
-;;   (load-theme 'mood-one t)
-;;   (mood-one-theme-arrow-fringe-bmp-enable)
-;;   (eval-after-load 'flycheck #'mood-one-theme-flycheck-fringe-bmp-enable))
 
 ;; Or if you like `nano-theme`.
 ;; (use-package nano-theme
@@ -740,12 +772,6 @@ point reaches the beginning or end of the buffer, stop there."
   :custom
   (mood-line-show-encoding-information t)
   (mood-line-show-eol-style t))
-
-;; (use-package doom-modeline
-;;   :ensure t
-;;   :disabled
-;;   :config
-;;   (doom-modeline-mode 1))
 
 ;; (use-package nano-modeline
 ;;   :ensure t
@@ -838,26 +864,6 @@ point reaches the beginning or end of the buffer, stop there."
       '(("\\(:[A-Z]+:\\)" . ((lambda (tag)
                                (svg-tag-make tag :beg 1 :end -1)))))))
 
-;; Built-in minor mode to display column ruler.
-(use-package display-fill-column-indicator
-  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
-  ;; using `package-activate-all` instead of `package-initialize`.
-  :defer t
-  ;; I only use this in `prog-mode`.
-  :hook ((prog-mode . display-fill-column-indicator-mode))
-  :mode (("COMMIT_EDITMSG\\'" . (lambda ()
-                                  (display-fill-column-indicator-mode 1)
-                                  (setq display-fill-column-indicator-column 72)
-                                  (setq show-trailing-whitespace t)))
-         ;; It's a little bit strange that SUSE use 67 in changes files.
-         ("\\.changes\\'" . (lambda ()
-                                  (display-fill-column-indicator-mode 1)
-                                  (setq display-fill-column-indicator-column 67)
-                                  (setq show-trailing-whitespace t))))
-  :custom
-  ;; Set column ruler at 80 columns.
-  (display-fill-column-indicator-column 80))
-
 (use-package which-key
   :ensure t
   :config
@@ -902,25 +908,17 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   (sis-ism-lazyman-config "xkb:us::eng" "rime" 'ibus)
 ;;   (sis-global-respect-mode t))
 
-;; I never use this.
-;; (use-package avy
-;;   :ensure t
-;;   :bind (("M-g a" . avy-goto-char)))
-
 (use-package yasnippet
   :ensure t
   :defer t
-  :hook ((prog-mode . yas-minor-mode)))
+  :hook ((prog-mode . yas-minor-mode))
+  :custom
+  ;; Don't make my root dir dirty!
+  (yas-snippet-dirs `(,(locate-user-emacs-file ".local/snippets"))))
 
 (use-package yasnippet-snippets
   :ensure t
   :defer 1)
-
-;; I hardly use this. I use GNOME Terminal.
-;; (use-package better-shell
-;;   :ensure t
-;;   :bind (("C-\"" . better-shell-shell)
-;;          ("C-:" . better-shell-remote-open)))
 
 ;; Complex packages that have dependencies.
 ;; Don't change the sequence, because the latter needs to obey the former's
@@ -931,7 +929,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; you need to first press both keybindings of those 2 dependencies, then the
 ;; package will be loaded, it won't be loaded before those keybindings. I don't
 ;; want this, I just want to run dependencies' `:custom` first, so keep the
-;; sequence is easiest.
+;; sequence is the easiest.
 ;; See <https://github.com/jwiegley/use-package/issues/976#issuecomment-1056017784>.
 
 ;; Vertico and Consult need this to behave like `ivy--regex-plus`.
@@ -944,6 +942,7 @@ point reaches the beginning or end of the buffer, stop there."
                                (setq-local completion-styles '(orderless basic)
                                            completion-category-overrides '((file . ((styles . (partial-completion)))))))))
   :custom
+  ;; Allow escape space with backslash.
   (orderless-component-separator 'orderless-escapable-split-on-space))
 
 (use-package vertico
@@ -956,6 +955,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package consult
   :ensure t
+  ;; TODO: I may not need so much keybindings.
   :bind (("C-s" . consult-line)
          ("C-M-s" . consult-ripgrep)
          ([remap repeat-complex-command] . consult-complex-command)
@@ -976,7 +976,6 @@ point reaches the beginning or end of the buffer, stop there."
          ("M-s r" . consult-ripgrep)
          ("M-s l" . consult-line)
          ("M-s L" . consult-line-multi)
-         ("M-s m" . consult-multi-occur)
          ("M-s k" . consult-keep-lines)
          ("M-s u" . consult-focus-lines)
          ;; Isearch integration.
@@ -1088,11 +1087,11 @@ point reaches the beginning or end of the buffer, stop there."
 ;;            :javascript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces
 ;;            :json-false)))
 ;; Cons I got from VSCode TypeScript language server:
-;;   - I like CommonJS instead of ES module, but it asks me to replace `require`
-;;     with `import` like I am killing Jesus.
+;;   - I prefer CommonJS to ES module, but it warns me to replace `require` with
+;;    `import` like I am killing Jesus.
 ;;   - Asking for type hints for my own JavaScript library.
 ;;   - Showing type hints with inline completion.
-;;   - Doing "formatting" when I am want "indentation".
+;;   - Doing "formatting" when I just want "indentation".
 ;; Pros I got from VSCode TypeScript language server:
 ;;   - Nothing.
 ;; OK, finally I modified `lsp-mode`'s code and send a PR.
@@ -1143,19 +1142,18 @@ point reaches the beginning or end of the buffer, stop there."
   (lsp-trim-trailing-whitespace nil)
   ;; JavaScript (ts-ls) settings.
   ;; OMG, the FUCKING EVIL SHITTY VSCode TypeScript language server generates
-  ;; log in project dir, can MicroSoft stop to let their software put shit in
+  ;; log in project dir, can MicroSoft stop to let their software make shit in
   ;; front of users?
   (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/tmp/tsserver-log.txt"))
   (lsp-javascript-format-insert-space-after-opening-and-before-closing-nonempty-braces nil)
-  ;; Always let clangd look for compile_commands.json under build dir so it will
-  ;; not make project root dirty.
+  ;; Always let clangd look for `compile_commands.json` under build dir so it
+  ;; will not make project root dirty.
   (lsp-clients-clangd-args '
    ("--header-insertion-decorators=0" "--compile-commands-dir=./build/" "--enable-config")))
 
 ;; High CPU usage on scrolling.
 (use-package lsp-ui
   :ensure t
-;;   :disabled
   :defer 1
   :commands lsp-ui-mode
   :custom
@@ -1175,10 +1173,7 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (editorconfig-mode 1))
 
-;; Modes and tools for different languages.
-(use-package cc-mode
-  :hook (c-mode . (lambda () (setq comment-start "//"
-                                   comment-end   ""))))
+;; External modes and tools for different languages.
 
 (use-package js2-mode
   :ensure t
