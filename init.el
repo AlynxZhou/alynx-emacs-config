@@ -26,6 +26,9 @@
                        (if (> gcs-done 1) "collections" "collection"))
                (emacs-init-time "%.2fs")))))
 
+;; Git submodule packages.
+(add-to-list 'load-path (locate-user-emacs-file "site-lisp/"))
+
 ;; Create local dir to redirect package-generated files.
 ;; It's better not to move `eln-cache` and `elpa` into local dir, `eln-cache` is
 ;; defined in `native-comp-eln-load-path`, which is a list contains user one and
@@ -105,6 +108,7 @@
 ;; See <https://github.com/seagle0128/doom-modeline/blob/master/doom-modeline-core.el#L310-L418>.
 (defconst
   alynx/mode-indent-offsets '(c-basic-offset
+                              ;; lisp-indent-offset
                               ;; `js2-mode` redirect indentations to
                               ;; `js-mode`, so they have the same variable.
                               js-indent-level
@@ -302,10 +306,10 @@
 
 ;; Add a indentation indicator on mode line.
 ;; Must use `:eval`, mode line constructor does not work for numbers.
-(setq mode-line-misc-info '(:eval (format "%s %d %d"
+(setq mode-line-misc-info '((:eval (format "%s %d %d"
                                           (if indent-tabs-mode "TAB" "SPC")
                                           alynx/indent-offset
-                                          tab-width)))
+                                          tab-width))))
 
 ;; Keybindings.
 
@@ -570,6 +574,11 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Move autosave files and list into backup dir.
   (auto-save-list-file-prefix (locate-user-emacs-file ".local/backup/.saves-")))
 
+(use-package comp
+  :custom
+  ;; Silence compiler warnings as they can be pretty disruptive.
+  (native-comp-async-report-warnings-errors 'slient))
+
 ;; Disable menu bar, tool bar, scroll bar and cursor blink.
 
 (use-package menu-bar
@@ -733,6 +742,83 @@ point reaches the beginning or end of the buffer, stop there."
   :hook (c-mode . (lambda () (setq comment-start "//"
                                    comment-end   ""))))
 
+;; External modes and tools for different languages.
+
+(use-package js2-mode
+  :ensure t
+  :hook ((js2-mode . js2-imenu-extras-mode))
+  :mode (("\\.js\\'" . js2-mode)))
+
+(use-package js2-refactor
+  :ensure t
+  :config
+  (js2r-add-keybindings-with-prefix "C-c C-r")
+  :hook ((js2-mode . js2-refactor-mode))
+  :bind (:map js2-mode-map ("C-k" . js2r-kill)))
+
+(use-package xref-js2
+  :ensure t
+  :hook ((js2-mode . (lambda ()
+                      (add-hook 'xref-backend-functions
+                                #'xref-js2-xref-backend nil t))))
+  :bind (:map js-mode-map ("M-." . nil))
+  :custom (xref-js2-search-program 'rg))
+
+(use-package json-mode
+  :ensure t
+  :bind (:map json-mode-map ("C-c <tab>" . json-mode-beautify))
+  :mode (("\\.bowerrc\\'" . json-mode)
+         ("\\.jshintrc\\'" . json-mode)
+         ("\\.json_schema\\'" . json-mode)
+         ("\\.json\\'" . json-mode)))
+
+(use-package lua-mode
+  :ensure t
+  :mode (("\\.lua\\'" . lua-mode)
+         ;; DaVinci Resolve's fuse scripts, it uses lua.
+         ("\\.fuse\\'" . lua-mode)))
+
+(use-package markdown-mode
+  :ensure t
+  :commands (markdown-mode gfm-mode)
+  ;; Don't cover my `move-text` keybindings! They are more useful.
+  :bind (:map gfm-mode-map
+              ("M-n" . nil)
+              ("M-p" . nil))
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . gfm-mode)
+         ("\\.markdown\\'" . gfm-mode))
+  ;; It changes `tab-width` to 4 by default, which is bad.
+  :hook ((gfm-mode . (lambda () (set-tab-width 8))))
+  :custom
+  (markdown-command "marked")
+  (markdown-gfm-use-electric-backquote nil)
+  (markdown-indent-on-enter nil))
+
+(use-package web-mode
+  :ensure t
+  :mode (("\\.njk\\'" . web-mode)
+         ("\\.j2\\'" . web-mode)
+         ;; `web-mode` can highlight JavaScript and CSS inside HTML.
+         ("\\.html\\'" . web-mode))
+  :custom
+  ;; I prefer not to indent control blocks of templating.
+  (web-mode-enable-control-block-indentation nil))
+
+(use-package yaml-mode
+  :ensure t
+  :mode (("\\.yml\\'" . yaml-mode) ("\\.yaml\\'" . yaml-mode)))
+
+(use-package meson-mode
+  :ensure t
+  :mode (("meson\\.build\\'" . meson-mode)))
+
+;; See <https://github.com/stigbjorlykke/rpm-spec-mode/issues/16>.
+;; Currently this package does not work with Emacs after 28.1.
+;; (use-package rpm-spec-mode
+;;   :ensure t
+;;   :mode (("\\.spec\\'" . rpm-spec-mode)))
+
 ;; Simple packages that have no dependencies.
 
 ;; I hardly try.
@@ -757,11 +843,16 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Don't defer this because I need it since starting.
 (use-package mood-line
   :ensure t
+  ;; :load-path "~/Projects/mood-line.alynx/"
   :config
   (mood-line-mode 1)
   :custom
+  ;; (mood-line-show-indentation-information t)
+  (mood-line-show-eol-style t)
   (mood-line-show-encoding-information t)
-  (mood-line-show-eol-style t))
+  (mood-line-show-cursor-point t)
+  ;; Fancy. But why Fira Code works better than unicode on my system?
+  (mood-line-glyph-alist mood-line-glyphs-fira-code))
 
 ;; (use-package nano-modeline
 ;;   :ensure t
@@ -887,6 +978,11 @@ point reaches the beginning or end of the buffer, stop there."
   :defer t
   :hook ((org-mode . org-bullets-mode)))
 
+(use-package editorconfig
+  :ensure t
+  :config
+  (editorconfig-mode 1))
+
 ;; Not sure why it does not work for me.
 ;; It always set to English even I manually switched to RIME.
 ;; I also want to use Chinese for `find-file` or `swiper`.
@@ -1004,14 +1100,6 @@ point reaches the beginning or end of the buffer, stop there."
   (consult-narrow-key "<")
 )
 
-(use-package company
-  :ensure t
-  :defer t
-  :hook ((prog-mode . company-mode))
-  :custom
-  (debug-on-error nil)
-  (lsp-completion-provider :capf))
-
 (use-package treemacs
   :ensure t
   :defer 1
@@ -1026,6 +1114,10 @@ point reaches the beginning or end of the buffer, stop there."
   (treemacs-last-error-persist-file
    (locate-user-emacs-file ".local/treemacs-persist-at-last-error")))
 
+;; Dependency of `flycheck-posframe` and `lsp-bridge`.
+(use-package posframe
+  :ensure t)
+
 (use-package flycheck
   :ensure t
   :defer t
@@ -1038,194 +1130,33 @@ point reaches the beginning or end of the buffer, stop there."
   ;; (flycheck-javascript-standard-executable "/usr/bin/standardx")
   )
 
-;; The FUCKING EVIL SHITTY VSCode TypeScript language server does auto
-;; formatting on indentation, which makes your code looks like a piece of
-;; shit. And you have 4 options to solve this:
-;; 1. Use a non-evil but silly server, like Eslint.
-;; 2. Don't hook `lsp-mode` with `js-mode` and `js2-mode`.
-;; 3. Just disable all indentation provided by `lsp-mode`.
-;; (lsp-enable-indentation nil)
-;; 4. Do you see those crazy codes? VSCode TypeScript language server's
-;; formatting options can only be tweaked via
-;; `workspace/didChangeConfiguration`.
-;; See <https://github.com/typescript-language-server/typescript-language-server#workspacedidchangeconfiguration>.
-;; Damn it, there is no properly exported way to set those shits for only one
-;; server, unless you modify `lsp-mode` itself.
-;; See <https://github.com/emacs-lsp/lsp-mode/issues/167>.
-;; Just in case if you want to solve this problem by modify `lsp-mode`.
-;; See <https://github.com/emacs-lsp/lsp-mode/blob/master/clients/lsp-javascript.el#L71>.
-;; When using Emacs's `json-encode`, keyword arguments will become key in
-;; `String` type, `t` will become `true`, but `nil` will become `null`! To get
-;; `false`, `:json-false` is needed.
-;; (lsp--set-configuration
-;;  '(:ts-ls (:javascript.format.insertSpaceBeforeFunctionParenthesis
-;;            :json-false
-;;            :javascript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces
-;;            :json-false
-;;            :javascript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces
-;;            :json-false)))
-;; Cons I got from VSCode TypeScript language server:
-;;   - I prefer CommonJS to ES module, but it warns me to replace `require` with
-;;    `import` like I am killing Jesus.
-;;   - Asking for type hints for my own JavaScript library.
-;;   - Showing type hints with inline completion.
-;;   - Doing "formatting" when I just want "indentation".
-;; Pros I got from VSCode TypeScript language server:
-;;   - Nothing.
-;; OK, finally I modified `lsp-mode`'s code and send a PR.
-;; See <https://github.com/emacs-lsp/lsp-mode/pull/3409>.
-(use-package lsp-mode
-  :ensure t
-  :commands lsp
-  :hook ((c-mode . lsp-deferred)
-         (c++-mode . lsp-deferred)
-         (c-or-c++-mode . lsp-deferred)
-         (css-mode . lsp-deferred)
-         (cuda-mode . lsp-deferred)
-         (objc-mode . lsp-deferred)
-         (html-mode . lsp-deferred)
-         (java-mode . lsp-deferred)
-         (js-mode . lsp-deferred)
-         (js2-mode . lsp-deferred)
-         (python-mode . lsp-deferred)
-         ;; Don't enable lsp for `web-mode`, lsp cannot understand nunjucks.
-         ;; (web-mode . lsp-deferred)
-         (lsp-mode . lsp-enable-which-key-integration))
-  :bind (:map lsp-mode-map
-              ("M-." . lsp-find-definition)
-              ("M-," . lsp-find-references))
-  :custom
-  ;; Move lsp files into local dir.
-  (lsp-server-install-dir (locate-user-emacs-file ".local/lsp/"))
-  (lsp-session-file (locate-user-emacs-file ".local/lsp-session"))
-  (lsp-keymap-prefix "C-c l")
-  (lsp-auto-guess-root t)
-  ;; Only enable log for debug.
-  ;; This controls `*lsp-log*` buffer.
-  (lsp-log-io nil)
-  ;; For better performance.
-  (lsp-enable-symbol-highlighting nil)
-  (lsp-enable-on-type-formatting nil)
-  (lsp-lens-enable nil)
-  (lsp-signature-auto-activate nil)
-  (lsp-signature-render-documentation nil)
-  (lsp-semantic-tokens-enable nil)
-  (lsp-enable-folding nil)
-  (lsp-enable-imenu nil)
-  (lsp-enable-snippet nil)
-  (lsp-enable-file-watchers nil)
-  ;; Oh God please don't modify code by default, most open source projects don't
-  ;; like this because it will mess up commits.
-  (lsp-trim-final-newlines nil)
-  (lsp-trim-trailing-whitespace nil)
-  ;; JavaScript (ts-ls) settings.
-  ;; OMG, the FUCKING EVIL SHITTY VSCode TypeScript language server generates
-  ;; log in project dir, can MicroSoft stop to let their software make shit in
-  ;; front of users?
-  (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/tmp/tsserver-log.txt"))
-  (lsp-javascript-format-insert-space-after-opening-and-before-closing-nonempty-braces nil)
-  ;; Always let clangd look for `compile_commands.json` under build dir so it
-  ;; will not make project root dirty.
-  (lsp-clients-clangd-args '
-   ("--header-insertion-decorators=0" "--compile-commands-dir=./build/" "--enable-config")))
-
-;; High CPU usage on scrolling.
-(use-package lsp-ui
-  :ensure t
-  :defer 1
-  :commands lsp-ui-mode
-  :custom
-  (lsp-ui-doc-enable nil)
-  (lsp-ui-doc-header t)
-  (lsp-ui-doc-include-signature t)
-  (lsp-ui-sideline-show-code-actions t)
-  (lsp-ui-sideline-diagnostic-max-lines 3))
-
-(use-package lsp-treemacs
-  :ensure t
-  :defer 1
-  :commands lsp-treemacs-errors-list)
-
-(use-package editorconfig
-  :ensure t
-  :config
-  (editorconfig-mode 1))
-
-;; External modes and tools for different languages.
-
-(use-package js2-mode
-  :ensure t
-  :hook ((js2-mode . js2-imenu-extras-mode))
-  :mode (("\\.js\\'" . js2-mode)))
-
-(use-package js2-refactor
-  :ensure t
-  :config
-  (js2r-add-keybindings-with-prefix "C-c C-r")
-  :hook ((js2-mode . js2-refactor-mode))
-  :bind (:map js2-mode-map ("C-k" . js2r-kill)))
-
-(use-package xref-js2
-  :ensure t
-  :hook ((js2-mode . (lambda ()
-                      (add-hook 'xref-backend-functions
-                                #'xref-js2-xref-backend nil t))))
-  :bind (:map js-mode-map ("M-." . nil))
-  :custom (xref-js2-search-program 'rg))
-
-(use-package json-mode
-  :ensure t
-  :bind (:map json-mode-map ("C-c <tab>" . json-mode-beautify))
-  :mode (("\\.bowerrc\\'" . json-mode)
-         ("\\.jshintrc\\'" . json-mode)
-         ("\\.json_schema\\'" . json-mode)
-         ("\\.json\\'" . json-mode)))
-
-(use-package lua-mode
-  :ensure t
-  :mode (("\\.lua\\'" . lua-mode)
-         ;; DaVinci Resolve's fuse scripts, it uses lua.
-         ("\\.fuse\\'" . lua-mode)))
-
-(use-package markdown-mode
-  :ensure t
-  :commands (markdown-mode gfm-mode)
-  ;; Don't cover my `move-text` keybindings! They are more useful.
-  :bind (:map gfm-mode-map
-              ("M-n" . nil)
-              ("M-p" . nil))
-  :mode (("README\\.md\\'" . gfm-mode)
-         ("\\.md\\'" . gfm-mode)
-         ("\\.markdown\\'" . gfm-mode))
-  ;; It changes `tab-width` to 4 by default, which is bad.
-  :hook ((gfm-mode . (lambda () (set-tab-width 8))))
-  :custom
-  (markdown-command "marked")
-  (markdown-gfm-use-electric-backquote nil)
-  (markdown-indent-on-enter nil))
-
-(use-package web-mode
-  :ensure t
-  :mode (("\\.njk\\'" . web-mode)
-         ("\\.j2\\'" . web-mode)
-         ;; `web-mode` can highlight JavaScript and CSS inside HTML.
-         ("\\.html\\'" . web-mode))
-  :custom
-  ;; I prefer not to indent control blocks of templating.
-  (web-mode-enable-control-block-indentation nil))
-
-(use-package yaml-mode
-  :ensure t
-  :mode (("\\.yml\\'" . yaml-mode) ("\\.yaml\\'" . yaml-mode)))
-
-(use-package meson-mode
-  :ensure t
-  :mode (("meson\\.build\\'" . meson-mode)))
-
-;; See <https://github.com/stigbjorlykke/rpm-spec-mode/issues/16>.
-;; Currently this package does not work with Emacs after 28.1.
-;; (use-package rpm-spec-mode
+;; `lsp-bridge` also has error popup and looks better than it.
+;; (use-package flycheck-posframe
 ;;   :ensure t
-;;   :mode (("\\.spec\\'" . rpm-spec-mode)))
+;;   :disabled
+;;   :hook ((flycheck-mode . flycheck-posframe-mode))
+;;   :config2
+;;   (flycheck-posframe-configure-pretty-defaults))
+
+;; Dependency of `lsp-bridge`.
+(use-package yasnippet
+  :ensure t
+  :hook ((prog-mode . yas-minor-mode))
+  ;; To prevent it create `~/.emacs.d/snippets/`, this is needed before loading.
+  :init
+  (make-directory (locate-user-emacs-file ".local/snippets/") t)
+  (setq yas-snippet-dirs `(,(locate-user-emacs-file ".local/snippets/"))))
+
+;; Dependency of `lsp-bridge`.
+(use-package yasnippet-snippets
+  :ensure t)
+
+(use-package lsp-bridge
+  ;; This is not in MELPA and installed as submodules.
+  :load-path "site-lisp/lsp-bridge"
+  :hook ((prog-mode . lsp-bridge-mode))
+  :custom
+  (lsp-bridge-enable-hover-diagnostic t)
+  (lsp-bridge-signature-show-function 'lsp-bridge-signature-posframe))
 
 ;;; init.el ends here.

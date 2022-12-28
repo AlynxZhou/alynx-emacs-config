@@ -10,7 +10,7 @@ This repo is very personalized and may not be suitable for everyone, I use it fo
 
 # Usage
 
-If you really want to try, first backup your configuration files.
+Just in case I forget how to use it, and if you really want to try, first backup your configuration files.
 
 ```shell
 $ mv ~/.emacs ~/.emacs.backup
@@ -20,7 +20,15 @@ $ mv ~/.emacs.d ~/.emacs.d.backup
 Then clone it.
 
 ```shell
-$ git clone https://github.com/AlynxZhou/alynx-emacs-config.git ~/.emacs.d
+$ git clone https://github.com/AlynxZhou/alynx-emacs-config.git ~/.emacs.d && cd $_
+$ git submodule init && git submodule update --recursive
+```
+
+Install dependencies and language servers for `lsp-bridge` (`clangd` is included by `clang` package):
+
+```shell
+# pacman -S python-orjson python-six typescript-language-server clang
+$ paru -S python-epc python-sexpdata
 ```
 
 And run Emacs.
