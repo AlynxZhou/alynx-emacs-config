@@ -42,6 +42,9 @@
 ;; Well, `maximized` should be the correct value, but at least it does not work
 ;; with `emacsclient`. (It's in maximized mode, but size is incorrect.)
 (modify-all-frames-parameters '((fullscreen . fullboth)
+                                ;; Alpha background does not work will
+                                ;; fullscreen.
+                                ;; (alpha-background . 85)
                                 (menu-bar-lines . 0)
                                 (tool-bar-lines . 0)
                                 (internal-border-width . 0)))

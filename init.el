@@ -93,46 +93,118 @@
 ;; can be divided by `tab-width`, use tabs, and use spaces for the remaining.
 (setq-default indent-tabs-mode t)
 
-;; TODO: Don't use alias, just use different variables for different modes,
-;; So we can set default value for different languages.
-;; A list like <https://github.com/editorconfig/editorconfig-emacs/blob/master/editorconfig.el#L177>
-;; can be used.
+;; Based on `editorconfig-indentation-alist' and `doom-modeline-indent-alist'.
+;; See <https://github.com/editorconfig/editorconfig-emacs/blob/master/editorconfig.el#L175>.
+;; See <https://github.com/seagle0128/doom-modeline/blob/master/doom-modeline-core.el#L282>.
+(defconst alynx/mode-indent-offsets
+  '((apache-mode apache-indent-level)
+    (awk-mode c-basic-offset)
+    (bpftrace-mode c-basic-offset)
+    (c++-mode c-basic-offset)
+    (c-mode c-basic-offset)
+    (cmake-mode cmake-tab-width)
+    (coffee-mode coffee-tab-width)
+    (cperl-mode cperl-indent-level)
+    (crystal-mode crystal-indent-level)
+    (csharp-mode c-basic-offset)
+    (css-mode css-indent-offset)
+    (d-mode c-basic-offset)
+    (emacs-lisp-mode lisp-indent-offset)
+    (enh-ruby-mode enh-ruby-indent-level)
+    (erlang-mode erlang-indent-level)
+    (ess-mode ess-indent-offset)
+    (f90-mode f90-associate-indent
+              f90-continuation-indent
+              f90-critical-indent
+              f90-do-indent
+              f90-if-indent
+              f90-program-indent
+              f90-type-indent)
+    (feature-mode feature-indent-offset
+                  feature-indent-level)
+    (fsharp-mode fsharp-continuation-offset
+                 fsharp-indent-level
+                 fsharp-indent-offset)
+    (groovy-mode groovy-indent-offset)
+    (haskell-mode haskell-indent-spaces
+                  haskell-indent-offset
+                  haskell-indentation-layout-offset
+                  haskell-indentation-left-offset
+                  haskell-indentation-starter-offset
+                  haskell-indentation-where-post-offset
+                  haskell-indentation-where-pre-offset
+                  shm-indent-spaces)
+    (haxor-mode haxor-tab-width)
+    (idl-mode c-basic-offset)
+    (jade-mode jade-tab-width)
+    (java-mode c-basic-offset)
+    (js-mode js-indent-level)
+    (js-jsx-mode js-indent-level sgml-basic-offset)
+    (js2-mode js2-basic-offset)
+    (js2-jsx-mode js2-basic-offset sgml-basic-offset)
+    (js3-mode js3-indent-level)
+    (json-mode js-indent-level)
+    (json-ts-mode json-ts-mode-indent-offset)
+    (julia-mode julia-indent-offset)
+    (kotlin-mode kotlin-tab-width)
+    (latex-mode tex-indent-basic)
+    (lisp-mode lisp-indent-offset)
+    (livescript-mode livescript-tab-width)
+    (lua-mode lua-indent-level)
+    (matlab-mode matlab-indent-level)
+    (meson-mode meson-indent-basic)
+    (mips-mode mips-tab-width)
+    (mustache-mode mustache-basic-offset)
+    (nasm-mode nasm-basic-offset)
+    (nginx-mode nginx-indent-level)
+    (nxml-mode nxml-child-indent)
+    (objc-mode c-basic-offset)
+    (octave-mode octave-block-offset)
+    (perl-mode perl-indent-level)
+    (php-mode c-basic-offset)
+    (pike-mode c-basic-offset)
+    (ps-mode ps-mode-tab)
+    (pug-mode pug-tab-width)
+    (puppet-mode puppet-indent-level)
+    (python-mode python-indent-offset)
+    (rjsx-mode js-indent-level sgml-basic-offset)
+    (ruby-mode ruby-indent-level)
+    (rust-mode rust-indent-offset)
+    (rustic-mode rustic-indent-offset)
+    (scala-mode scala-indent:step)
+    (scss-mode css-indent-offset)
+    (sgml-mode sgml-basic-offset)
+    (sh-mode sh-basic-offset sh-indentation)
+    (slim-mode slim-indent-offset)
+    (sml-mode sml-indent-level)
+    (tcl-mode tcl-indent-level
+              tcl-continued-indent-level)
+    (terra-mode terra-indent-level)
+    (typescript-mode typescript-indent-level)
+    (typescript-ts-base-mode typescript-ts-mode-indent-offset)
+    (verilog-mode verilog-indent-level
+                  verilog-indent-level-behavioral
+                  verilog-indent-level-declaration
+                  verilog-indent-level-module
+                  verilog-cexp-indent
+                  verilog-case-indent)
+    (web-mode web-mode-attr-indent-offset
+              web-mode-attr-value-indent-offset
+              web-mode-code-indent-offset
+              web-mode-css-indent-offset
+              web-mode-markup-indent-offset
+              web-mode-sql-indent-offset
+              web-mode-block-padding
+              web-mode-script-padding
+              web-mode-style-padding)
+    (yaml-mode yaml-indent-offset))
+  "Indent offset variables of different major modes.
+If a major mode has different indent offset variables, all of them will be set
+in order.")
 
-;; Emacs have different indent variables for different modes. I'd like to
-;; control them with one variable, and set it via different hooks.
-;; Having one variable that holds different values for different buffers is
-;; better than setting different variables for different buffers, so just make
-;; aliases between `indent-offset` and mode-specific variables.
-;; If installed more modes, add their indent variables here.
-;; Maybe I can get indent variables of all known modes from `doom-modeline`.
-;; See <https://github.com/seagle0128/doom-modeline/blob/master/doom-modeline-core.el#L310-L418>.
-(defconst
-  alynx/mode-indent-offsets '(c-basic-offset
-                              ;; lisp-indent-offset
-                              ;; `js2-mode` redirect indentations to
-                              ;; `js-mode`, so they have the same variable.
-                              js-indent-level
-                              sh-basic-offset
-                              css-indent-offset
-                              sgml-basic-offset
-                              nxml-child-indent
-                              nxml-attribute-indent
-                              python-indent-offset
-                              lua-indent-level
-                              web-mode-code-indent-offset
-                              web-mode-css-indent-offset
-                              web-mode-markup-indent-offset
-                              web-mode-style-padding
-                              web-mode-script-padding
-                              markdown-list-indent-width
-                              meson-indent-basic)
-  "Indent variables of different modes to make alias to indent-offset.")
-
-(dolist (mode-indent-offset alynx/mode-indent-offsets)
-  (defvaralias mode-indent-offset 'alynx/indent-offset))
-
-;; Make `indent-offset` a buffer-local variable.
-(defvar-local alynx/indent-offset tab-width)
+(defun alynx/get-mode-indent-offsets ()
+  "Get indent offset variables of current major mode."
+  (cdr (assoc major-mode alynx/mode-indent-offsets)))
 
 ;; If you quote a list, not only itself, but it's elements will not be eval.
 ;; Using `list` will eval elements and return a list.
@@ -143,20 +215,28 @@
 ;; Don't use `setq-default`, because every time we start a new major mode we set
 ;; those values, and if we open two files with different modes, the latter one
 ;; will cover the former one's value with `setq-default`.
-;; By default those functions do not modify buffer's `indent-offset`.
+(defun set-indent-offset (num)
+  "Set indent offset to NUM chars.
+If NUM is negative, indent offset will be nil."
+  (interactive `(,(read-number "Indent offset (chars): ")))
+  (dolist (mode-indent-offset (alynx/get-mode-indent-offsets))
+    (if (< num 0)
+        (set mode-indent-offset nil)
+      (set mode-indent-offset num))))
+
 (defun indent-tabs (num)
-  "Mark this buffer to indent with tabs and set indent offset to NUM chars."
-  (interactive `(,(read-number "Indent offset (chars): " alynx/indent-offset)))
+  "Mark this buffer to indent with tabs and set indent offset to NUM chars.
+If NUM is negative, indent offset will be nil."
+  (interactive `(,(read-number "Indent offset (chars): ")))
   (indent-tabs-mode 1)
-  (when (/= alynx/indent-offset num)
-    (setq alynx/indent-offset num)))
+  (set-indent-offset num))
 
 (defun indent-spaces (num)
-  "Mark this buffer to indent with spaces and set indent offset to NUM chars."
-  (interactive `(,(read-number "Indent offset (chars): " alynx/indent-offset)))
+  "Mark this buffer to indent with spaces and set indent offset to NUM chars.
+If NUM is negative, indent offset will be nil."
+  (interactive `(,(read-number "Indent offset (chars): ")))
   (indent-tabs-mode -1)
-  (when (/= alynx/indent-offset num)
-    (setq alynx/indent-offset num)))
+  (set-indent-offset num))
 
 ;; Most projects saying that they are using 2 as `tab-width` actually means they
 ;; are using 2 as `indent-offset`. If you don't use spaces to indent,
@@ -207,70 +287,79 @@
 ;; record space or tab lines and do some comparation, but that's not exact.
 ;; Anyway, this function is just guessing indentation, not alignment, so user
 ;; should correct it manually.
+(defconst alynx/skip-guess-indent-modes '(lisp-mode
+                                          emacs-lisp-mode
+                                          lisp-interaction-mode)
+  "Don't guess indent for those major modes.")
+
 (defun guess-indent ()
   "Guess and set indent-offset and tab/space for current buffer."
   (interactive)
-  ;; Ideally we should iterate the whole buffer, but that's impossible for big
-  ;; files. Let's assume we always 1 level indented code in the first 200 lines.
-  (let* ((total-lines (count-lines (point-min) (point-max)))
-         (detect-lines (min total-lines 200))
-         (shortest-spaces 0)
-         (has-tab nil))
-    (save-mark-and-excursion
-      (save-restriction
-        (widen)
-        (goto-char (point-min))
-        (dotimes (i detect-lines)
-          (let (current-char)
-            (goto-char (line-beginning-position))
-            (setq current-char (char-after))
-            (cond
-             ;; We assume no one uses indent offset that larger than tab width,
-             ;; so there won't be indent level like 1 tab and 2 spaces. We also
-             ;; assume there is no line only contains tabs.
-             ((= current-char ?\t) (setq has-tab t))
-             ((= current-char ?\s)
-              ;; Calculate how many spaces in prefix.
-              (let ((spaces 0))
-                (while (= current-char ?\s)
-                  (setq spaces (+ spaces 1))
-                  (forward-char 1)
-                  (setq current-char (char-after)))
-                ;; (message "Line %d has %d spaces." i spaces)
-                ;; You may have lines only contains spaces in a file that
-                ;; indented with tabs. Just ignore those lines.
-                ;; Let's assume no one uses 1-char indent offset.
-                (when (and (/= current-char ?\n)
-                           (/= current-char ?\r)
-                           (/= spaces 0)
-                           (/= spaces 1)
-                           (or (= shortest-spaces 0)
-                               (< spaces shortest-spaces)))
-                  (setq shortest-spaces spaces)))))
-            (forward-line 1))
-          i)))
-    ;; If a file uses tabs to indent, and we cannot get shortest spaces, this
-    ;; file is likely to only use tabs, and the indent offset is tab width,
-    ;; otherwise the shortest spaces length is indent offset.
-    ;; If we don't find tabs, just assume this file does not use tabs, this is
-    ;; not correct because we may just not have tabs in first 200 lines but that
-    ;; is the best we can do. And then if we cannot get shortest spaces, it
-    ;; means that there is no indent level in first 200 lines, so just skip it.
-    (if has-tab
-        (if (/= shortest-spaces 0)
-            (indent-tabs shortest-spaces)
-          (indent-tabs tab-width))
-      (when (/= shortest-spaces 0)
-        (indent-spaces shortest-spaces)))))
+  (if (member major-mode alynx/skip-guess-indent-modes)
+      (message (format "Skip guess-indent for %s." (symbol-name major-mode)))
+    ;; Ideally we should iterate the whole buffer, but that's impossible for big
+    ;; files. Let's assume we always 1 level indented code in the first 200 lines.
+    (let* ((total-lines (count-lines (point-min) (point-max)))
+           (detect-lines (min total-lines 200))
+           (shortest-spaces 0)
+           (has-tab nil))
+      (save-mark-and-excursion
+        (save-restriction
+          (widen)
+          (goto-char (point-min))
+          (dotimes (i detect-lines)
+            (let (current-char)
+              (goto-char (line-beginning-position))
+              (setq current-char (char-after))
+              (cond
+               ;; We assume no one uses indent offset that larger than tab width,
+               ;; so there won't be indent level like 1 tab and 2 spaces. We also
+               ;; assume there is no line only contains tabs.
+               ((= current-char ?\t) (setq has-tab t))
+               ((= current-char ?\s)
+                ;; Calculate how many spaces in prefix.
+                (let ((spaces 0))
+                  (while (= current-char ?\s)
+                    (setq spaces (+ spaces 1))
+                    (forward-char 1)
+                    (setq current-char (char-after)))
+                  ;; (message "Line %d has %d spaces." i spaces)
+                  ;; You may have lines only contains spaces in a file that
+                  ;; indented with tabs. Just ignore those lines.
+                  ;; Let's assume no one uses 1-char indent offset.
+                  (when (and (/= current-char ?\n)
+                             (/= current-char ?\r)
+                             (/= spaces 0)
+                             (/= spaces 1)
+                             (or (= shortest-spaces 0)
+                                 (< spaces shortest-spaces)))
+                    (setq shortest-spaces spaces)))))
+              (forward-line 1))
+            i)))
+      ;; If a file uses tabs to indent, and we cannot get shortest spaces, this
+      ;; file is likely to only use tabs, and the indent offset is tab width,
+      ;; otherwise the shortest spaces length is indent offset.
+      ;; If we don't find tabs, just assume this file does not use tabs, this is
+      ;; not correct because we may just not have tabs in first 200 lines but that
+      ;; is the best we can do. And then if we cannot get shortest spaces, it
+      ;; means that there is no indent level in first 200 lines, so just skip it.
+      (if has-tab
+          (if (/= shortest-spaces 0)
+              (indent-tabs shortest-spaces)
+            (indent-tabs tab-width))
+        (when (/= shortest-spaces 0)
+          (indent-spaces shortest-spaces))))))
 
 ;; If installed more modes, add them here as
 ;; `(mode-name tab/space indent-offset)`.
 (defconst alynx/modes-default-indent '((prog-mode tab 8)
                                        (markdown-mode tab 8)
                                        (gfm-mode tab 8)
-                                       (lisp-mode space 2)
-                                       (emacs-lisp-mode space 2)
-                                       (lisp-interaction-mode space 2)
+                                       ;; By default `lisp-indent-offset` is
+                                       ;; `nil`, which works better.
+                                       (lisp-mode space -1)
+                                       (emacs-lisp-mode space -1)
+                                       (lisp-interaction-mode space -1)
                                        (js-mode space 2)
                                        (js2-mode space 2)
                                        (css-mode space 2)
@@ -303,13 +392,6 @@
               (cond
                ((eq mode 'tab) (indent-tabs indent-offset))
                ((eq mode 'space) (indent-spaces indent-offset))))))
-
-;; Add a indentation indicator on mode line.
-;; Must use `:eval`, mode line constructor does not work for numbers.
-(setq mode-line-misc-info '((:eval (format "%s %d %d"
-                                          (if indent-tabs-mode "TAB" "SPC")
-                                          alynx/indent-offset
-                                          tab-width))))
 
 ;; Keybindings.
 
@@ -847,7 +929,7 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (mood-line-mode 1)
   :custom
-  ;; (mood-line-show-indentation-information t)
+  (mood-line-show-indentation-information t)
   (mood-line-show-eol-style t)
   (mood-line-show-encoding-information t)
   (mood-line-show-cursor-point t)
@@ -1152,6 +1234,7 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t)
 
 (use-package lsp-bridge
+  ;; :ensure t
   ;; This is not in MELPA and installed as submodules.
   :load-path "site-lisp/lsp-bridge"
   :hook ((prog-mode . lsp-bridge-mode))
