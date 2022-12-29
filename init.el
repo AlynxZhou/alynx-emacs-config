@@ -398,6 +398,7 @@ If NUM is negative, indent offset will be nil."
 ;; Keybindings for setting indentations.
 (global-set-key (kbd "C-c i TAB") 'indent-tabs)
 (global-set-key (kbd "C-c i SPC") 'indent-spaces)
+(global-set-key (kbd "C-c i o") 'set-indent-offset)
 (global-set-key (kbd "C-c i w") 'set-tab-width)
 (global-set-key (kbd "C-c i g") 'guess-indent)
 ;; Atom style indent left or right.
@@ -657,9 +658,9 @@ point reaches the beginning or end of the buffer, stop there."
   (auto-save-list-file-prefix (locate-user-emacs-file ".local/backup/.saves-")))
 
 (use-package comp
-  :custom
+  :init
   ;; Silence compiler warnings as they can be pretty disruptive.
-  (native-comp-async-report-warnings-errors 'slient))
+  (setq native-comp-async-report-warnings-errors 'slient))
 
 ;; Disable menu bar, tool bar, scroll bar and cursor blink.
 
@@ -732,7 +733,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package whitespace
   ;; Highlight trailing whitespace in `prog-mode` only.
-  :hook ((prog-mode . (lambda () (setq show-trailing-whitespace t)))))
+  :hook ((prog-mode . (lambda () (setq show-trailing-whitespace t)))
+         (yaml-mode . (lambda () (setq show-trailing-whitespace t)))))
 
 ;; Built-in minor mode to display column ruler.
 (use-package display-fill-column-indicator
@@ -740,7 +742,8 @@ point reaches the beginning or end of the buffer, stop there."
   ;; using `package-activate-all` instead of `package-initialize`.
   :defer t
   ;; I only use this in `prog-mode`.
-  :hook ((prog-mode . display-fill-column-indicator-mode))
+  :hook ((prog-mode . display-fill-column-indicator-mode)
+         (yaml-mode . display-fill-column-indicator-mode))
   :custom
   ;; Set column ruler at 80 columns.
   (display-fill-column-indicator-column 80))
@@ -918,6 +921,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Or if you like `nano-theme`.
 ;; (use-package nano-theme
 ;;   :ensure t
+;;   :disabled
 ;;   :config
 ;;   (load-theme 'nano-dark t))
 
@@ -938,8 +942,11 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; (use-package nano-modeline
 ;;   :ensure t
+;;   :disabled
 ;;   :config
-;;   (nano-modeline-mode 1))
+;;   (nano-modeline-mode 1)
+;;   :custom
+;;   (nano-modeline-position 'bottom))
 
 (use-package olivetti
   :ensure t
@@ -990,7 +997,9 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer t
   ;; I only use this in `prog-mode`.
-  :hook ((prog-mode . highlight-indent-guides-mode))
+  :hook ((prog-mode . highlight-indent-guides-mode)
+         ;; `yaml-mode` should be `prog-mode`, anyway.
+         (yaml-mode . highlight-indent-guides-mode))
   :custom
   (highlight-indent-guides-method 'bitmap)
   ;; (highlight-indent-guides-character ?│)
@@ -1001,11 +1010,13 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package hl-todo
   :ensure t
   :defer t
-  :hook ((prog-mode . hl-todo-mode)))
+  :hook ((prog-mode . hl-todo-mode)
+         (yaml-mode . hl-todo-mode)))
 
 (use-package git-gutter
   :ensure t
-  :hook (prog-mode . git-gutter-mode)
+  :hook ((prog-mode . git-gutter-mode)
+         (yaml-mode . git-gutter-mode))
   :custom
   (git-gutter:update-interval 0.02))
 
@@ -1114,17 +1125,18 @@ point reaches the beginning or end of the buffer, stop there."
   ;; TODO: I may not need so much keybindings.
   :bind (("C-s" . consult-line)
          ("C-M-s" . consult-ripgrep)
-         ([remap repeat-complex-command] . consult-complex-command)
          ([remap switch-to-buffer] . consult-buffer)
          ([remap switch-to-buffer-other-window] . consult-buffer-other-window)
          ([remap switch-to-buffer-other-frame] . consult-buffer-other-frame)
-         ([remap bookmark-jump] . consult-bookmark)
          ([remap project-switch-to-buffer] . consult-project-buffer)
+         ([remap recentf-open] . consult-recent-file)
          ([remap yank-pop] . consult-yank-pop)
          ([remap goto-line] . consult-goto-line)
+         ([remap repeat-complex-command] . consult-complex-command)
+         ([remap bookmark-jump] . consult-bookmark)
          ([remap imenu] . consult-imenu)
          ("M-g I" . consult-imenu-multi)
-         ;; M-s bindings (search-map).
+         ;; `M-s` bindings (`search-map`).
          ("M-s d" . consult-find)
          ("M-s D" . consult-locate)
          ("M-s g" . consult-grep)
@@ -1137,22 +1149,24 @@ point reaches the beginning or end of the buffer, stop there."
          ;; Isearch integration.
          :map isearch-mode-map
          ([remap isearch-edit-string] . consult-isearch-history)
-         ;; Needed by consult-line to detect isearch.
+         ;; Needed by `consult-line` to detect isearch.
          ("M-s l" . consult-line)
-         ;; Needed by consult-line to detect isearch.
+         ;; Needed by `consult-line` to detect isearch.
          ("M-s L" . consult-line-multi)
          ;; Minibuffer history
          :map minibuffer-local-map
+         ;; `M-s`.
          ([remap next-matching-history-element] . consult-history)
+         ;; `M-r`.
          ([remap previous-matching-history-element] . consult-history)
          ;; ("M-g e" . consult-compile-error)
-         ;; Alternative: consult-flymake.
-         ;; ("M-g f" . consult-flycheck)
-         ;; Alternative: consult-outline.
+         ;; Alternative: `consult-flymake`.
+         ("M-g f" . consult-flycheck)
+         ;; Alternative: `consult-outline`.
          ;; ("M-g o" . consult-org-heading)
          ;; ("M-g m" . consult-mark)
          ;; ("M-g k" . consult-global-mark)
-         ;; ;; C-c bindings (mode-specific-map)
+         ;; ;; `C-c` bindings (`mode-specific-map`)
          ;; ("C-c h" . consult-history)
          ;; ("C-c m" . consult-mode-command)
          ;; ("C-c k" . consult-kmacro)
@@ -1163,7 +1177,7 @@ point reaches the beginning or end of the buffer, stop there."
          )
   ;; Enable automatic preview at point in the *Completions* buffer. This is
   ;; relevant when you use the default completion UI.
-  :hook (completion-list-mode . consult-preview-at-point-mode)
+  :hook ((completion-list-mode . consult-preview-at-point-mode))
   :config
   ;; Optionally tweak the register preview window.
   ;; This adds thin lines, sorting and hides the mode line of the window.
@@ -1204,6 +1218,7 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer t
   :hook ((prog-mode . flycheck-mode)
+         (yaml-mode . flycheck-mode)
          (markdown-mode . flycheck-mode)
          (org-mode . flycheck-mode))
   ;; :custom
@@ -1233,11 +1248,17 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package yasnippet-snippets
   :ensure t)
 
+;; Looks like that I need to alter JSON files under `langserver` to add
+;; parameters to `clangd`, but I can also modify `~/.config/clangd/config.yaml`
+;; to let it find `compile_commands.json` under `build/`.
+;; Or maybe a little bit hack is needed.
+;; See <https://github.com/manateelazycat/lsp-bridge/wiki/Python-virtualenv>.
 (use-package lsp-bridge
   ;; :ensure t
   ;; This is not in MELPA and installed as submodules.
   :load-path "site-lisp/lsp-bridge"
-  :hook ((prog-mode . lsp-bridge-mode))
+  :hook ((prog-mode . lsp-bridge-mode)
+         (yaml-mode . lsp-bridge-mode))
   :custom
   (lsp-bridge-enable-hover-diagnostic t)
   (lsp-bridge-signature-show-function 'lsp-bridge-signature-posframe))

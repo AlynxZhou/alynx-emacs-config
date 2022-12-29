@@ -1,0 +1,9 @@
+# See <https://github.com/clangd/clangd/issues/650#issuecomment-811059569>.
+# `bugprogn-sizeof-expression` always warns me about `size(*A)`, I know what I
+# am doing. `g_clear_pointer()` also get warning, which is really annoying.
+Diagnostics:
+  ClangTidy:
+    Add: modernize*
+    Remove: bugprone-sizeof-expression
+CompileFlags:
+  CompilationDatabase: build/
