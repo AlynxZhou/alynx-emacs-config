@@ -93,7 +93,7 @@
 ;; can be divided by `tab-width`, use tabs, and use spaces for the remaining.
 (setq-default indent-tabs-mode t)
 
-;; Based on `editorconfig-indentation-alist' and `doom-modeline-indent-alist'.
+;; Based on `editorconfig-indentation-alist` and `doom-modeline-indent-alist`.
 ;; See <https://github.com/editorconfig/editorconfig-emacs/blob/master/editorconfig.el#L175>.
 ;; See <https://github.com/seagle0128/doom-modeline/blob/master/doom-modeline-core.el#L282>.
 (defconst alynx/mode-indent-offsets
@@ -1024,38 +1024,31 @@ point reaches the beginning or end of the buffer, stop there."
   :hook ((prog-mode . hl-todo-mode)
          (yaml-mode . hl-todo-mode)))
 
-;; (use-package git-gutter
-;;   :ensure t
-;;   :disabled
-;;   :config
-;;   (global-git-gutter-mode 1)
-;;   :custom
-;;   (git-gutter:update-interval 0.02))
-
-;; ;; Add fancy displays for `git-gutter`.
-;; (use-package git-gutter-fringe
-;;   :ensure t
-;;   :disabled
-;;   :config
-;;   (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
-;;   (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
-;;   (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
-
-;; Or maybe use `diff-hl` to replace `git-gutter`, which support more VCS.
+;; `diff-hl` supports more VCS than `git-gutter` and `git-gutter-fringe`.
 (use-package diff-hl
   :ensure t
   :config
-  (define-fringe-bitmap 'alynx/diff-hl-bmp-insert [224] nil nil '(center repeated))
-  (define-fringe-bitmap 'alynx/diff-hl-bmp-change [224] nil nil '(center repeated))
-  ;; It's on different side from `git-gutter-fringe`.
-  (define-fringe-bitmap 'alynx/diff-hl-bmp-delete [240 224 192 128] nil nil 'top)
-  ;; Don't use `diff-hl`'s font face, it's ugly.
+  ;; TODO: Maybe add a hi-res version that takes 16 bits.
+  (define-fringe-bitmap 'alynx/diff-hl-bmp-insert
+    [#b11100000]
+    nil nil '(center repeated))
+  (define-fringe-bitmap 'alynx/diff-hl-bmp-change
+    [#b11100000]
+    nil nil '(center repeated))
+  (define-fringe-bitmap 'alynx/diff-hl-bmp-delete
+    [#b11110000
+     #b11100000
+     #b11000000
+     #b10000000]
+    nil nil 'top)
+  ;; Don't use `diff-hl`'s background, it's ugly.
   (set-face-background 'diff-hl-insert nil)
   (set-face-background 'diff-hl-delete nil)
   (set-face-background 'diff-hl-change nil)
   (global-diff-hl-mode 1)
   :custom
-  (diff-hl-fringe-bmp-function (lambda (type pos) (intern (format "alynx/diff-hl-bmp-%s" type))))
+  (diff-hl-fringe-bmp-function (lambda (type pos)
+                                 (intern (format "alynx/diff-hl-bmp-%s" type))))
   (diff-hl-draw-borders nil))
 
 (use-package svg-tag-mode
@@ -1266,18 +1259,52 @@ point reaches the beginning or end of the buffer, stop there."
          (yaml-mode . flycheck-mode)
          (markdown-mode . flycheck-mode)
          (org-mode . flycheck-mode))
-  ;; :custom
+  :config
+  ;; There is no hi-res version of `flycheck-fringe-bitmap-continuation`, on
+  ;; normal screen the lower 8 bits are used.
+  (define-fringe-bitmap 'flycheck-fringe-bitmap-continuation
+    [#b0111000001110000
+     #b0011100000111000
+     #b0001110000011100
+     #b0000111000001110]
+    nil nil '(top repeated))
+  ;; By default right double arrow is used, let's draw left arrow.
+  (define-fringe-bitmap 'flycheck-fringe-bitmap-double-arrow
+    [#b00001110
+     #b00011100
+     #b00111000
+     #b01110000
+     #b00111000
+     #b00011100
+     #b00001110]
+    nil nil 'center)
+  (define-fringe-bitmap 'flycheck-fringe-bitmap-double-left-arrow-hi-res
+    [#b0000001111111110
+     #b0000011111111100
+     #b0000111111111000
+     #b0001111111110000
+     #b0011111111100000
+     #b0111111111000000
+     #b0111111111000000
+     #b0011111111100000
+     #b0001111111110000
+     #b0000111111111000
+     #b0000011111111100
+     #b0000001111111110]
+    nil nil 'center)
+  :custom
   ;; Currently `flycheck` is unable to run local `standardx` with `npx`.
   ;; See <https://github.com/flycheck/flycheck/issues/1428>.
   ;; (flycheck-javascript-standard-executable "/usr/bin/standardx")
-  )
+  ;; Leave left fringe to VCS states.
+  (flycheck-indication-mode 'right-fringe))
 
 ;; `lsp-bridge` also has error popup and looks better than it.
 ;; (use-package flycheck-posframe
 ;;   :ensure t
 ;;   :disabled
 ;;   :hook ((flycheck-mode . flycheck-posframe-mode))
-;;   :config2
+;;   :config
 ;;   (flycheck-posframe-configure-pretty-defaults))
 
 ;; Dependency of `lsp-bridge`.
