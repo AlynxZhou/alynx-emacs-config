@@ -491,7 +491,7 @@ point reaches the beginning or end of the buffer, stop there."
   (end-of-line)
   (newline-and-indent))
 (global-set-key (kbd "C-o") 'open-next-line)
-(global-set-key (kbd "C-S-o") 'open-previous-line)
+(global-set-key (kbd "C-O") 'open-previous-line)
 
 (global-set-key (kbd "C-c n") 'windmove-down)
 (global-set-key (kbd "C-c p") 'windmove-up)
@@ -658,9 +658,10 @@ point reaches the beginning or end of the buffer, stop there."
   (auto-save-list-file-prefix (locate-user-emacs-file ".local/backup/.saves-")))
 
 (use-package comp
-  :init
+  :custom
   ;; Silence compiler warnings as they can be pretty disruptive.
-  (setq native-comp-async-report-warnings-errors 'slient))
+  ;; Not sure why this does not work.
+  (native-comp-async-report-warnings-errors 'silent))
 
 ;; Disable menu bar, tool bar, scroll bar and cursor blink.
 
@@ -791,6 +792,10 @@ point reaches the beginning or end of the buffer, stop there."
   (savehist-mode 1)
   :custom
   (savehist-file (locate-user-emacs-file ".local/history")))
+
+(use-package autorevert
+  :config
+  (global-auto-revert-mode 1))
 
 (use-package treesit
   :custom
@@ -928,12 +933,14 @@ point reaches the beginning or end of the buffer, stop there."
 ;; `doom-modeline` is good, but `mood-line` is enough for me.
 ;; Don't defer this because I need it since starting.
 (use-package mood-line
-  :ensure t
-  ;; :load-path "~/Projects/mood-line.alynx/"
+  ;; :ensure t
+  :load-path "~/Projects/mood-line.alynx/"
   :config
   (mood-line-mode 1)
   :custom
-  (mood-line-show-indentation-information t)
+  (mood-line-show-indentation-style t)
+  ;; Indent offset and tab width are different things.
+  (mood-line-segment-indentation-always-show-offset t)
   (mood-line-show-eol-style t)
   (mood-line-show-encoding-information t)
   (mood-line-show-cursor-point t)
@@ -951,13 +958,17 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package olivetti
   :ensure t
   :bind (("C-c o" . olivetti-mode))
-  ;; Just disable line numbers and column ruler in olivetti mode.
+  ;; Just disable eye-attracting things in olivetti mode.
   :hook ((olivetti-mode . (lambda () (if olivetti-mode
                                          (progn
                                            (display-line-numbers-mode -1)
-                                           (display-fill-column-indicator-mode -1))
+                                           (display-fill-column-indicator-mode -1)
+                                           ;; (git-gutter-mode -1)
+                                           (diff-hl-mode -1))
                                        (display-line-numbers-mode 1)
-                                       (display-fill-column-indicator-mode 1))))))
+                                       (display-fill-column-indicator-mode 1)
+                                       ;; (git-gutter-mode 1)
+                                       (diff-hl-mode 1))))))
 
 ;; Atom-like move regine/current line up and down.
 (use-package move-text
@@ -1013,19 +1024,39 @@ point reaches the beginning or end of the buffer, stop there."
   :hook ((prog-mode . hl-todo-mode)
          (yaml-mode . hl-todo-mode)))
 
-(use-package git-gutter
-  :ensure t
-  :hook ((prog-mode . git-gutter-mode)
-         (yaml-mode . git-gutter-mode))
-  :custom
-  (git-gutter:update-interval 0.02))
+;; (use-package git-gutter
+;;   :ensure t
+;;   :disabled
+;;   :config
+;;   (global-git-gutter-mode 1)
+;;   :custom
+;;   (git-gutter:update-interval 0.02))
 
-(use-package git-gutter-fringe
+;; ;; Add fancy displays for `git-gutter`.
+;; (use-package git-gutter-fringe
+;;   :ensure t
+;;   :disabled
+;;   :config
+;;   (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+;;   (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+;;   (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
+
+;; Or maybe use `diff-hl` to replace `git-gutter`, which support more VCS.
+(use-package diff-hl
   :ensure t
   :config
-  (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
-  (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
-  (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
+  (define-fringe-bitmap 'alynx/diff-hl-bmp-insert [224] nil nil '(center repeated))
+  (define-fringe-bitmap 'alynx/diff-hl-bmp-change [224] nil nil '(center repeated))
+  ;; It's on different side from `git-gutter-fringe`.
+  (define-fringe-bitmap 'alynx/diff-hl-bmp-delete [240 224 192 128] nil nil 'top)
+  ;; Don't use `diff-hl`'s font face, it's ugly.
+  (set-face-background 'diff-hl-insert nil)
+  (set-face-background 'diff-hl-delete nil)
+  (set-face-background 'diff-hl-change nil)
+  (global-diff-hl-mode 1)
+  :custom
+  (diff-hl-fringe-bmp-function (lambda (type pos) (intern (format "alynx/diff-hl-bmp-%s" type))))
+  (diff-hl-draw-borders nil))
 
 (use-package svg-tag-mode
   :ensure t
@@ -1112,6 +1143,15 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Allow escape space with backslash.
   (orderless-component-separator 'orderless-escapable-split-on-space))
 
+(use-package marginalia
+  :ensure t
+  :bind (:map minibuffer-local-map
+              ("M-A" . marginalia-cycle))
+  ;; Always load it instead of wait for first time keybinding pressed.
+  :demand
+  :config
+  (marginalia-mode 1))
+
 (use-package vertico
   :ensure t
   :config
@@ -1122,7 +1162,6 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package consult
   :ensure t
-  ;; TODO: I may not need so much keybindings.
   :bind (("C-s" . consult-line)
          ("C-M-s" . consult-ripgrep)
          ([remap switch-to-buffer] . consult-buffer)
@@ -1182,6 +1221,12 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Optionally tweak the register preview window.
   ;; This adds thin lines, sorting and hides the mode line of the window.
   (advice-add #'register-preview :override #'consult-register-window)
+  ;; Press `C-s` twice to search last item.
+  (defvar my-consult-line-map
+    (let ((map (make-sparse-keymap)))
+      (define-key map (kbd "C-s") #'previous-history-element)
+    map))
+  (consult-customize consult-line :keymap my-consult-line-map)
   :custom
   ;; Optionally configure the register formatting. This improves the register
   ;; preview for `consult-register`, `consult-register-load`,
