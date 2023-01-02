@@ -34,8 +34,8 @@
 (set-face-attribute 'default nil
                     :foreground "#ABB2BF"
                     :background "#282C34")
-;; Hide default mode line until `mood-line` is loaded, because the default style
-;; is ugly and it's useless during startup.
+;; Hide default mode line until custom mode line is loaded, because the default
+;; style is ugly and it's useless during startup.
 (setq-default mode-line-format nil)
 ;; Start every frame maximized.
 ;; See <https://emacsredux.com/blog/2020/12/04/maximize-the-emacs-frame-on-startup/>.

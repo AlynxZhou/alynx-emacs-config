@@ -1,10 +1,32 @@
-;;; unused.el -- Unused config with interesting comments. -*- lexical-binding: t -*-
+;;; unused.el --- Unused config with interesting comments. -*- lexical-binding: t -*-
 
 ;;; Commentary:
 ;; Some config are dropped by some reason, but I have useful comments for them,
 ;; or maybe one day I'll copy some custom value from them, so I put them here.
 
 ;;; Code:
+
+;; `doom-modeline` is good, but `mood-line` is enough for me.
+;; Don't defer this because I need it since starting.
+;; (use-package mood-line
+;;   ;; :ensure t
+;;   :load-path "~/Projects/mood-line.alynx/"
+;;   :config
+;;   (mood-line-mode 1)
+;;   :custom
+;;   (mood-line-show-indentation-style t)
+;;   ;; Indent offset and tab width are different things.
+;;   (mood-line-segment-indentation-always-show-offset t)
+;;   (mood-line-show-eol-style t)
+;;   (mood-line-show-encoding-information t)
+;;   (mood-line-show-cursor-point t)
+;;   ;; Fancy. But why Fira Code works better than unicode on my system?
+;;   (mood-line-glyph-alist mood-line-glyphs-fira-code)
+;;   ;; HACK: `mood-line` uses custom faces inherited from shadow, which changes
+;;   ;; foreground color and breaks active/inactive switch, so reset them.
+;;   :custom-face
+;;   (mood-line-encoding ((t (:inherit nil))))
+;;   (mood-line-unimportant ((t (:inherit nil)))))
 
 ;; The FUCKING EVIL SHITTY VSCode TypeScript language server does auto
 ;; formatting on indentation, which makes your code looks like a piece of

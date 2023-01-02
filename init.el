@@ -28,6 +28,7 @@
 
 ;; Git submodule packages.
 (add-to-list 'load-path (locate-user-emacs-file "site-lisp/"))
+(add-to-list 'load-path (locate-user-emacs-file "lisp/"))
 
 ;; Create local dir to redirect package-generated files.
 ;; It's better not to move `eln-cache` and `elpa` into local dir, `eln-cache` is
@@ -685,7 +686,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Display line number and column number of cursor in mode line.
 (use-package simple
   :config
-  ;; `mood-line` shows those by default, this only works for built-in mode line.
+  ;; This only affects the built-in mode line.
   ;; (line-number-mode 1)
   ;; (column-number-mode 1)
   :custom
@@ -930,22 +931,17 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   :config
 ;;   (load-theme 'nano-dark t))
 
-;; `doom-modeline` is good, but `mood-line` is enough for me.
-;; Don't defer this because I need it since starting.
-(use-package mood-line
-  ;; :ensure t
-  :load-path "~/Projects/mood-line.alynx/"
+;; Finally I decide to write my own mode line so I can modify it easily.
+(use-package alynx-mode-line
+  ;; `:commands` lazy load this package, I don't want that.
+  :demand
+  ;; Well, Emacs does not generate autoloads for local library, to make flycheck
+  ;; happy, load package with this so it knows this function.
+  :commands alynx-mode-line-mode
   :config
-  (mood-line-mode 1)
+  (alynx-mode-line-mode 1)
   :custom
-  (mood-line-show-indentation-style t)
-  ;; Indent offset and tab width are different things.
-  (mood-line-segment-indentation-always-show-offset t)
-  (mood-line-show-eol-style t)
-  (mood-line-show-encoding-information t)
-  (mood-line-show-cursor-point t)
-  ;; Fancy. But why Fira Code works better than unicode on my system?
-  (mood-line-glyph-alist mood-line-glyphs-fira-code))
+  (alynx-mode-line-glyph-alist alynx-mode-line-glyphs-fira-code))
 
 ;; (use-package nano-modeline
 ;;   :ensure t
@@ -1326,9 +1322,8 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Or maybe a little bit hack is needed.
 ;; See <https://github.com/manateelazycat/lsp-bridge/wiki/Python-virtualenv>.
 (use-package lsp-bridge
-  ;; :ensure t
   ;; This is not in MELPA and installed as submodules.
-  :load-path "site-lisp/lsp-bridge"
+  :load-path "site-lisp/lsp-bridge/"
   :hook ((prog-mode . lsp-bridge-mode)
          (yaml-mode . lsp-bridge-mode))
   :custom
