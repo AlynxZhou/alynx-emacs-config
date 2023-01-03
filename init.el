@@ -453,6 +453,8 @@ If NUM is negative, indent offset will be nil."
 (global-set-key (kbd "C-j") 'join-next-line)
 
 ;; See <https://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/>.
+;; Maybe `mwim` package is better? But do I really to move between code and
+;; trailing comment?
 (defun smarter-move-beginning-of-line (arg)
   "Move point back to indentation of beginning of line.
 
@@ -493,16 +495,6 @@ point reaches the beginning or end of the buffer, stop there."
   (newline-and-indent))
 (global-set-key (kbd "C-o") 'open-next-line)
 (global-set-key (kbd "C-O") 'open-previous-line)
-
-(global-set-key (kbd "C-c n") 'windmove-down)
-(global-set-key (kbd "C-c p") 'windmove-up)
-(global-set-key (kbd "C-c f") 'windmove-right)
-(global-set-key (kbd "C-c b") 'windmove-left)
-;; `S-<arrow>` to move between windows (`S` means Shift).
-(windmove-default-keybindings)
-;; The default Buffer List is ugly, replace it with IBuffer.
-;; However I don't use them both.
-(global-set-key (kbd "C-x C-b") 'ibuffer-other-window)
 
 (defun show-file-path ()
   "Show the full file path of current buffer in the minibuffer."
@@ -656,7 +648,22 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Enable recursive minibuffers.
   (enable-recursive-minibuffers t)
   ;; Move autosave files and list into backup dir.
-  (auto-save-list-file-prefix (locate-user-emacs-file ".local/backup/.saves-")))
+  (auto-save-list-file-prefix (locate-user-emacs-file ".local/backup/.saves-"))
+  ;; Prevent `.#` lock files, so we won't mess up project if crashed.
+  (create-lockfiles nil)
+  (fill-column 80)
+  (sentence-end-double-space nil))
+
+(use-package windmove
+  :demand
+  :config
+  ;; `S-<arrow>` to move between windows (`S` means Shift).
+  (windmove-default-keybindings)
+  :bind
+  (("C-c n" . windmove-down)
+   ("C-c p" . windmove-up)
+   ("C-c f" . windmove-right)
+   ("C-c b" . windmove-left)))
 
 (use-package comp
   :custom
@@ -683,6 +690,11 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (blink-cursor-mode -1))
 
+(use-package window
+  :demand
+  :bind (("C-c C-v" . scroll-other-window)
+         ("C-c M-v" . scroll-other-window-down)))
+
 ;; Display line number and column number of cursor in mode line.
 (use-package simple
   :config
@@ -703,6 +715,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package files
   :custom
+  (find-file-visit-truename t)
+  (find-file-suppress-same-file-warnings nil)
   ;; Backup file is generated when you save file. Autosave file is generated
   ;; every few seconds or every few characters.
   ;; See <https://emacsredux.com/blog/2013/05/09/keep-backup-and-auto-save-files-out-of-the-way/>.
@@ -713,6 +727,10 @@ point reaches the beginning or end of the buffer, stop there."
    `(("." . ,(locate-user-emacs-file ".local/backup/"))))
   (auto-save-file-name-transforms
    `((".*" ,(locate-user-emacs-file ".local/backup/") t))))
+
+(use-package uniquify
+  :custom
+  (uniquify-buffer-name-style 'forward))
 
 ;; Typing chars will replace selection, this is the default behavior of most
 ;; editors.
@@ -749,6 +767,10 @@ point reaches the beginning or end of the buffer, stop there."
   :custom
   ;; Set column ruler at 80 columns.
   (display-fill-column-indicator-column 80))
+
+(use-package paren
+  :custom
+  (show-paren-when-point-inside-paren t))
 
 ;; Enable `pixel-scroll-precision-mode` added in Emacs 29.
 (use-package pixel-scroll
@@ -821,6 +843,14 @@ point reaches the beginning or end of the buffer, stop there."
   :custom
   ;; Redirect its data dir.
   (eshell-directory-name (locate-user-emacs-file ".local/eshell/")))
+
+(use-package ibuffer
+  ;; The default Buffer List is ugly, it is said no one uses it except RMS, so
+  ;; replace it with IBuffer.
+  ;; However I don't use them either.
+  :bind (("C-x C-b" . ibuffer))
+  :config
+  (ibuffer-use-other-window t))
 
 ;; I prefer linux coding style for C, not gnu.
 (use-package cc-vars
@@ -933,11 +963,9 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Finally I decide to write my own mode line so I can modify it easily.
 (use-package alynx-mode-line
-  ;; `:commands` lazy load this package, I don't want that.
-  :demand
   ;; Well, Emacs does not generate autoloads for local library, to make flycheck
-  ;; happy, load package with this so it knows this function.
-  :commands alynx-mode-line-mode
+  ;; happy, let `use-package` declare it.
+  :functions (alynx-mode-line-mode)
   :config
   (alynx-mode-line-mode 1)
   :custom
@@ -976,13 +1004,13 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Works on indent/outdent, comment block, cut (kill), copy, paste (yank).
 (use-package whole-line-or-region
   :ensure t
-  :config
-  (whole-line-or-region-global-mode 1)
   ;; If you use `:bind`, `use-package` will create lazy loading for package,
   ;; however I don't want to lazy load this, I just want to add some
   ;; keybindings. In this case, use `:demand`.
   ;; See <https://github.com/jwiegley/use-package#notes-about-lazy-loading>.
   :demand
+  :config
+  (whole-line-or-region-global-mode 1)
   ;; See <https://github.com/purcell/whole-line-or-region/commit/ba193b2034388bbc384cb04093150fca56f7e262>.
   :bind (:map whole-line-or-region-local-mode-map
               ([remap indent-rigidly-left-to-tab-stop] . whole-line-or-region-indent-rigidly-left-to-tab-stop)
@@ -1134,10 +1162,10 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package marginalia
   :ensure t
-  :bind (:map minibuffer-local-map
-              ("M-A" . marginalia-cycle))
   ;; Always load it instead of wait for first time keybinding pressed.
   :demand
+  :bind (:map minibuffer-local-map
+              ("M-A" . marginalia-cycle))
   :config
   (marginalia-mode 1))
 
