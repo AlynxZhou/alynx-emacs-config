@@ -289,13 +289,8 @@ order provided)."
   "Face used for the major mode indicator."
   :group 'alynx-mode-line-faces)
 
-(defface alynx-mode-line-face-status-neutral
-  '((t (:inherit (mode-line))))
-  "Face used for neutral or inactive status indicators."
-  :group 'alynx-mode-line-faces)
-
 (defface alynx-mode-line-face-status-info
-  '((t (:inherit (shadow) :weight normal)))
+  '((t (:inherit (link) :weight normal :underline nil)))
   "Face used for generic status indicators."
   :group 'alynx-mode-line-faces)
 
@@ -438,7 +433,7 @@ The mode line should fit the `window-width' with space between the lists."
                                                      2)))
                  (state (vc-state buffer-file-name
                                   (vc-backend buffer-file-name)))
-                 (face 'alynx-mode-line-face-status-neutral)
+                 (face 'alynx-mode-line-face-status-success)
                  (glyph :vc-good))
             (cond
              ((memq state '(edited added))
@@ -454,7 +449,7 @@ The mode line should fit the `window-width' with space between the lists."
               (setq face 'alynx-mode-line-face-status-error
                     glyph :vc-conflict))
              (t
-              (setq face 'alynx-mode-line-face-status-neutral
+              (setq face 'alynx-mode-line-face-status-success
                     glyph :vc-good)))
             (alynx-mode-line--concat-with-sperator
                     (propertize (concat (alynx-mode-line--get-glyph glyph)
@@ -527,10 +522,9 @@ Counts will be returned in an alist as the `cdr' of the following keys:
                                    'face 'alynx-mode-line-face-status-success))))))
           ('running
            (alynx-mode-line--concat-with-sperator
-                   (propertize (concat (alynx-mode-line--get-glyph :checker-checking)
-                                       " "
-                                       "Checking")
-                               'face 'alynx-mode-line-face-status-info)))
+            (alynx-mode-line--get-glyph :checker-checking)
+            " "
+            "Checking"))
           ('errored
            (alynx-mode-line--concat-with-sperator
                    (propertize (concat (alynx-mode-line--get-glyph :checker-errored)
@@ -539,10 +533,9 @@ Counts will be returned in an alist as the `cdr' of the following keys:
                                'face 'alynx-mode-line-face-status-error)))
           ('interrupted
            (alynx-mode-line--concat-with-sperator
-                   (propertize (concat (alynx-mode-line--get-glyph :checker-interrupted)
-                                       " "
-                                       "Paused")
-                               'face 'alynx-mode-line-face-status-neutral)))
+            (alynx-mode-line--get-glyph :checker-interrupted)
+            " "
+            "Paused"))
           ;; Hide this and its sperators if not running.
           ('no-checker ""))))
 
@@ -594,10 +587,9 @@ Counts will be returned in an alist as the cdr of the following keys:
              ((seq-difference (flymake-running-backends)
                               (flymake-reporting-backends))
               (alynx-mode-line--concat-with-sperator
-                      (propertize (concat (alynx-mode-line--get-glyph :checker-checking)
-                                          " "
-                                          "Checking")
-                                  'face 'alynx-mode-line-face-status-info)))
+               (alynx-mode-line--get-glyph :checker-checking)
+               " "
+               "Checking"))
              ((> .error-count 0)
               (alynx-mode-line--concat-with-sperator
                       (propertize (concat (alynx-mode-line--get-glyph :checker-issues)
