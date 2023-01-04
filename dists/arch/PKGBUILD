@@ -1,0 +1,130 @@
+# Maintainer: Alynx Zhou <alynx.zhou@gmail.com>
+
+# This is just used to record my building options, it may be not OK for you. I
+# even do not upload it to AUR.
+
+# Based on <https://aur.archlinux.org/packages/emacs-pgtk-native-comp-git>.
+
+# To remind me why I have those:
+#   - Unstable branch, because of PGTK and native compilation.
+#   - Use PGTK by default. (No more GUI toolkit hacks and Wayland support!)
+#   - Native compilation, and AOT compile all Emacs lisp files. (Why not?)
+#   - ALSA support. (Why not?)
+#   - XInput2. (But it seems that PGTK does not use it.)
+#   - No CLI or NOX build, I'm a desktop engineer and always have GUI.
+#   - I don't use xwidgets, but may be useful in future.
+#   - No PDF or HTML docs, I just read them directly in Emacs.
+
+pkgname=emacs-alynx
+pkgver=30.0.50.162768
+pkgrel=1
+pkgdesc="GNU Emacs. Alynx's build."
+arch=("x86_64")
+url="http://www.gnu.org/software/emacs/"
+license=("GPL3")
+# `gmp` is mouse support in Linux console.
+depends=("gnutls" "libxml2" "jansson" "harfbuzz" "libgccjit" "libxi" "gtk3" "libsm" "xcb-util" "libxcb" "libjpeg-turbo" "libpng" "giflib" "libwebp" "libtiff" "libxpm" "alsa-lib" "cairo" "webkit2gtk" "tree-sitter" "sqlite3" "gpm")
+makedepends=("git" "xorgproto")
+provides=("emacs")
+replaces=("emacs")
+conflicts=("emacs")
+# Well, actually this is not a `-git` package, I should manually update this to
+# the latest commit and test whether it works fine. I have to sync my tools
+# between different machines and this makes sure that I always get the same
+# working copy.
+_commit="c1a3e8830bb2fa8c3e8056bb42360f3504c434e9"
+# source=("emacs-git::git+https://git.savannah.gnu.org/git/emacs.git#commit=$_commit")
+# GitHub mirror is easier to access.
+source=("emacs-git::git+https://github.com/emacs-mirror/emacs.git#commit=$_commit")
+options=(!strip)
+sha512sums=("SKIP")
+
+pkgver() {
+  cd emacs-git
+  printf "%s.%s" \
+    $(grep AC_INIT configure.ac | \
+    awk -F',' '{ gsub("[ \\[\\]]","",$2); print $2 }') \
+    $(git rev-list --count HEAD)
+}
+
+prepare() {
+  cd emacs-git
+  [[ -x configure ]] || ( ./autogen.sh git && ./autogen.sh autoconf )
+  mkdir -p build
+}
+
+build() {
+  cd emacs-git/build
+
+  local _options=(
+    --prefix=/usr
+    --sysconfdir=/etc
+    --libexecdir=/usr/lib
+    --localstatedir=/var
+    --mandir=/usr/share/man
+    --with-gameuser=:games
+    # See <https://emacs-china.org/t/emacs-29/21495/24>.
+    # It's enabled by default.
+    # --with-modules
+    # I guess GTK will handle those so don't use them directly.
+    --without-libotf
+    --without-m17n-flt
+    # Beware <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=25228>.
+    # `dconf` and `gconf` break font settings you set in `~/.emacs`.
+    # If you insist you'll need to read that bug report in *full*. Good luck!
+    --without-gconf
+    # Native compiling bundled Emacs lisp files while building, not runtime.
+    --with-native-compilation=aot
+    --with-xinput2
+    --with-pgtk
+    # It seems that this is useless with PGTK.
+    --without-xaw3d
+    --with-sound=alsa
+    --with-xwidgets
+    --with-tree-sitter
+    # Don't GZip compress bundled Emacs lisp files.
+    --without-compress-install
+    # `ctags` / `etags` may be provided by other packages, for example
+    # `universal-ctags`.
+    --program-transform-name="s/\([ec]tags\)/\1.emacs/"
+  )
+
+  ../configure "${_options[@]}"
+
+  # You may need to run this if 'loaddefs.el' files become corrupt.
+  # cd ../lisp
+  # make autoloads
+  # cd ../build
+
+  # Using "make" instead of "make bootstrap" enables incremental compiling.
+  # But you may need to use bootstrap sometimes to unbreak the build, then just
+  # add it to the command line.
+  #
+  # Please note that incremental compilation implies that you are reusing your
+  # src directory!
+  #
+  # Don't set `-j$(nprocs)` here, I prefer set `MAKEFLAGS="-j$(nproc)"` in
+  # `/etc/makepkg.conf`.
+  make
+}
+
+# I am using unstable version and tests may be not updated.
+# check() {
+#   cd emacs-git/build
+#   make check
+# }
+
+package() {
+  cd emacs-git/build
+
+  make DESTDIR="${pkgdir}" install
+
+  # Fix user/root permissions on `/usr/share` files.
+  find "${pkgdir}/usr/share/emacs/" | xargs chown root:root
+
+  # Fix permssions on `/var/games`.
+  mkdir -p "${pkgdir}/var/games/emacs"
+  chmod 775 "${pkgdir}/var/games"
+  chmod 775 "${pkgdir}/var/games/emacs"
+  chown -R root:games "${pkgdir}/var/games"
+}

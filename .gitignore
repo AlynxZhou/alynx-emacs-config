@@ -5,3 +5,8 @@ custom-file.el
 # Some flycheck checkers generate files in source dir with prefix `flycheck_`,
 # we can't change this behavior, so prevent it from adding into git commit here.
 flycheck_*
+# Files about building Arch package.
+dists/arch/emacs-git/
+dists/arch/pkg/
+dists/arch/src/
+dists/arch/emacs-alynx-*.pkg.tar.zst

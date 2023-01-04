@@ -710,7 +710,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Auto-indent line when pressing enter.
 (use-package electric
   :custom
-  ;; XXX: Maybe use `setq-default`?
+  ;; Looks like `:custom` can handle `setq-default` correctly.
   (electric-indent-inhibit nil))
 
 (use-package files
@@ -820,6 +820,9 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (global-auto-revert-mode 1))
 
+;; See <https://git.savannah.gnu.org/cgit/emacs.git/tree/admin/notes/tree-sitter/starter-guide?h=feature/tree-sitter>.
+;; Building <https://github.com/casouri/tree-sitter-module/> is needed, because
+;; the release is not up to date sometimes.
 (use-package treesit
   :custom
   (treesit-extra-load-path `(,(locate-user-emacs-file ".local/treesit"))))
@@ -849,7 +852,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; replace it with IBuffer.
   ;; However I don't use them either.
   :bind (("C-x C-b" . ibuffer))
-  :config
+  :custom
   (ibuffer-use-other-window t))
 
 ;; I prefer linux coding style for C, not gnu.
@@ -1052,12 +1055,17 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package diff-hl
   :ensure t
   :config
-  ;; TODO: Maybe add a hi-res version that takes 16 bits.
   (define-fringe-bitmap 'alynx/diff-hl-bmp-insert
     [#b11100000]
     nil nil '(center repeated))
+  (define-fringe-bitmap 'alynx/diff-hl-bmp-insert-hi-res
+    [#b1111110000000000]
+    nil nil '(center repeated))
   (define-fringe-bitmap 'alynx/diff-hl-bmp-change
     [#b11100000]
+    nil nil '(center repeated))
+  (define-fringe-bitmap 'alynx/diff-hl-bmp-change-hi-res
+    [#b1111110000000000]
     nil nil '(center repeated))
   (define-fringe-bitmap 'alynx/diff-hl-bmp-delete
     [#b11110000
@@ -1065,14 +1073,34 @@ point reaches the beginning or end of the buffer, stop there."
      #b11000000
      #b10000000]
     nil nil 'top)
+  (define-fringe-bitmap 'alynx/diff-hl-bmp-delete-hi-res
+    [#b1111111100000000
+     #b1111111000000000
+     #b1111110000000000
+     #b1111100000000000
+     #b1111000000000000
+     #b1110000000000000
+     #b1100000000000000
+     #b1000000000000000]
+    nil nil 'top)
   ;; Don't use `diff-hl`'s background, it's ugly.
   (set-face-background 'diff-hl-insert nil)
   (set-face-background 'diff-hl-delete nil)
   (set-face-background 'diff-hl-change nil)
   (global-diff-hl-mode 1)
   :custom
+  ;; Like `flycheck`, we choose bigger icons if needed.
   (diff-hl-fringe-bmp-function (lambda (type pos)
-                                 (intern (format "alynx/diff-hl-bmp-%s" type))))
+                                 (let* ((fringe-width
+                                         (pcase diff-hl-side
+                                           (`left (car (window-fringes)))
+                                           (`right (cadr (window-fringes)))))
+                                        (hi-res (>= fringe-width 16)))
+                                   (intern (format
+                                            (if hi-res
+                                                "alynx/diff-hl-bmp-%s-hi-res"
+                                              "alynx/diff-hl-bmp-%s")
+                                            type)))))
   (diff-hl-draw-borders nil))
 
 (use-package svg-tag-mode
@@ -1292,30 +1320,37 @@ point reaches the beginning or end of the buffer, stop there."
      #b0001110000011100
      #b0000111000001110]
     nil nil '(top repeated))
-  ;; By default right double arrow is used, let's draw left arrow.
+  ;; By default right double arrow is used, let's draw custom icon.
   (define-fringe-bitmap 'flycheck-fringe-bitmap-double-arrow
-    [#b00001110
-     #b00011100
-     #b00111000
-     #b01110000
-     #b00111000
-     #b00011100
-     #b00001110]
-    nil nil 'center)
+    [#b00000111]
+    nil nil '(center repeated))
   (define-fringe-bitmap 'flycheck-fringe-bitmap-double-left-arrow-hi-res
-    [#b0000001111111110
-     #b0000011111111100
-     #b0000111111111000
-     #b0001111111110000
-     #b0011111111100000
-     #b0111111111000000
-     #b0111111111000000
-     #b0011111111100000
-     #b0001111111110000
-     #b0000111111111000
-     #b0000011111111100
-     #b0000001111111110]
-    nil nil 'center)
+    [#b0000000000111111]
+    nil nil '(center repeated))
+  ;; (define-fringe-bitmap 'flycheck-fringe-bitmap-double-arrow
+  ;;   [#b00000100
+  ;;    #b00001100
+  ;;    #b00011100
+  ;;    #b00111100
+  ;;    #b00111100
+  ;;    #b00011100
+  ;;    #b00001100
+  ;;    #b00000100]
+  ;;   nil nil 'center)
+  ;; (define-fringe-bitmap 'flycheck-fringe-bitmap-double-left-arrow-hi-res
+  ;;   [#b0000000000000100
+  ;;    #b0000000000011100
+  ;;    #b0000000001111100
+  ;;    #b0000000111111100
+  ;;    #b0000011111111100
+  ;;    #b0001111111111100
+  ;;    #b0001111111111100
+  ;;    #b0000011111111100
+  ;;    #b0000000111111100
+  ;;    #b0000000001111100
+  ;;    #b0000000000011100
+  ;;    #b0000000000000100]
+  ;;   nil nil 'center)
   :custom
   ;; Currently `flycheck` is unable to run local `standardx` with `npx`.
   ;; See <https://github.com/flycheck/flycheck/issues/1428>.

@@ -27,13 +27,13 @@ $ git submodule init && git submodule update --recursive
 Install dependencies and language servers for `lsp-bridge` (`clangd` is included by `clang` package):
 
 ```shell
-# pacman -S python-orjson python-six typescript-language-server clang
+# pacman -S python-orjson python-six clang typescript-language-server bash-language-server pyright
 $ paru -S python-epc python-sexpdata
 ```
 
 And run Emacs.
 
-I am using Emacs master branch with pgtk and native-comp from <https://aur.archlinux.org/packages/emacs-pgtk-native-comp-git>, if you are not using the latest version, it may not work.
+I am using Emacs master branch with pgtk and native-comp, if you are not using the latest version, it may not work. You may read my [PKGBUILD](./dists/arch/PKGBUILD) for my Emacs building options, but it may be not OK for you.
 
 To flush all installed packages and re-installed them, run the following command:
 
