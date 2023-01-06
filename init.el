@@ -530,9 +530,9 @@ point reaches the beginning or end of the buffer, stop there."
 ;; About `package-initialize`, `package-activate-all` and `package-quickstart`:
 ;; If I am not wrong, you should never call `package-initialize`, because since
 ;; Emacs 27.1, the old `package-initialize` is splitted into two parts:
-;; - `package-initialize`: load all lisp files of all packages (expensive) and
-;;   call `package-activate-all`.
-;; - `package-activate-all`: load autoloads for all packages (cheap).
+;;   - `package-initialize`: load all lisp files of all packages (expensive) and
+;;     call `package-activate-all`.
+;;   - `package-activate-all`: load autoloads for all packages (cheap).
 ;; And what about `package-quickstart`? It just writes all autoloads in a single
 ;; file when you call `package-quickstart-refresh`, and if you have such a file,
 ;; `package-activate-all` will load it instead of many files. This reduces only
@@ -655,7 +655,7 @@ point reaches the beginning or end of the buffer, stop there."
   (sentence-end-double-space nil))
 
 (use-package windmove
-  :demand
+  :demand t
   :config
   ;; `S-<arrow>` to move between windows (`S` means Shift).
   (windmove-default-keybindings)
@@ -691,7 +691,7 @@ point reaches the beginning or end of the buffer, stop there."
   (blink-cursor-mode -1))
 
 (use-package window
-  :demand
+  :demand t
   :bind (("C-c C-v" . scroll-other-window)
          ("C-c M-v" . scroll-other-window-down)))
 
@@ -770,7 +770,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package paren
   :custom
-  (show-paren-when-point-inside-paren t))
+  ;; Using `t` for this is confusing.
+  (show-paren-when-point-inside-paren nil))
 
 ;; Enable `pixel-scroll-precision-mode` added in Emacs 29.
 (use-package pixel-scroll
@@ -950,17 +951,22 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   :ensure t
 ;;   :defer 1)
 
-;; My favorite theme.
-;; Don't defer this, I need it all time.
-(use-package atom-one-dark-theme
-  :ensure t
+;; My favorite themes with my own tweaks.
+;; Don't defer themes, I need them all time.
+(use-package alynx-one-dark-theme
+  :disabled t
   :config
-  (load-theme 'atom-one-dark t))
+  (load-theme 'alynx-one-dark t))
+
+;; Or sometimes I want light theme, then move `:disabled` to the dark theme.
+(use-package alynx-one-light-theme
+  :config
+  (load-theme 'alynx-one-light t))
 
 ;; Or if you like `nano-theme`.
 ;; (use-package nano-theme
 ;;   :ensure t
-;;   :disabled
+;;   :disabled t
 ;;   :config
 ;;   (load-theme 'nano-dark t))
 
@@ -976,7 +982,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; (use-package nano-modeline
 ;;   :ensure t
-;;   :disabled
+;;   :disabled t
 ;;   :config
 ;;   (nano-modeline-mode 1)
 ;;   :custom
@@ -1011,7 +1017,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; however I don't want to lazy load this, I just want to add some
   ;; keybindings. In this case, use `:demand`.
   ;; See <https://github.com/jwiegley/use-package#notes-about-lazy-loading>.
-  :demand
+  :demand t
   :config
   (whole-line-or-region-global-mode 1)
   ;; See <https://github.com/purcell/whole-line-or-region/commit/ba193b2034388bbc384cb04093150fca56f7e262>.
@@ -1039,8 +1045,10 @@ point reaches the beginning or end of the buffer, stop there."
          ;; `yaml-mode` should be `prog-mode`, anyway.
          (yaml-mode . highlight-indent-guides-mode))
   :custom
-  (highlight-indent-guides-method 'bitmap)
+  ;; Character is faster, but bitmap is modern.
+  ;; (highlight-indent-guides-method 'character)
   ;; (highlight-indent-guides-character ?│)
+  (highlight-indent-guides-method 'bitmap)
   (highlight-indent-guides-bitmap-function
    'highlight-indent-guides--bitmap-line))
 
@@ -1084,9 +1092,9 @@ point reaches the beginning or end of the buffer, stop there."
      #b1000000000000000]
     nil nil 'top)
   ;; Don't use `diff-hl`'s background, it's ugly.
-  (set-face-background 'diff-hl-insert nil)
-  (set-face-background 'diff-hl-delete nil)
-  (set-face-background 'diff-hl-change nil)
+  ;; (set-face-background 'diff-hl-insert nil)
+  ;; (set-face-background 'diff-hl-delete nil)
+  ;; (set-face-background 'diff-hl-change nil)
   (global-diff-hl-mode 1)
   :custom
   ;; Like `flycheck`, we choose bigger icons if needed.
@@ -1122,7 +1130,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; High CPU usage on scrolling.
 ;; (use-package rainbow-delimiters
 ;;   :ensure t
-;;   :disabled
+;;   :disabled t
 ;;   :defer t
 ;;   :hook ((prog-mode . rainbow-delimiters-mode)))
 
@@ -1151,6 +1159,26 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :config
   (editorconfig-mode 1))
+
+;; I use this to control popup window position and behavior.
+(use-package popper
+  :ensure t
+  ;; Prevent lazy loading so it can manage popup earlier.
+  :demand t
+  :bind (("C-'" . popper-toggle-latest)
+         ("M-'" . popper-cycle)
+         ("C-M-'" . popper-toggle-type))
+  :config
+  (popper-mode 1)
+  (popper-echo-mode 1)
+  :custom
+  (popper-reference-buffers '("\\*Backtrace\\*"
+                              "\\*IBuffer\\*"
+                              "\\*Warnings\\*"
+                              "Output\\*$"
+                              "\\*Async Shell Command\\*"
+                              help-mode
+                              compilation-mode)))
 
 ;; Not sure why it does not work for me.
 ;; It always set to English even I manually switched to RIME.
@@ -1191,7 +1219,7 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package marginalia
   :ensure t
   ;; Always load it instead of wait for first time keybinding pressed.
-  :demand
+  :demand t
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle))
   :config
@@ -1361,7 +1389,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; `lsp-bridge` also has error popup and looks better than it.
 ;; (use-package flycheck-posframe
 ;;   :ensure t
-;;   :disabled
+;;   :disabled t
 ;;   :hook ((flycheck-mode . flycheck-posframe-mode))
 ;;   :config
 ;;   (flycheck-posframe-configure-pretty-defaults))

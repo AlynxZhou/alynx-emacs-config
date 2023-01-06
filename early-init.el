@@ -25,8 +25,7 @@
 ;; Initial GUI states, put here to prevent it flash in color or shape.
 
 ;; Set colors before window showing up to avoid white screen flash, those values
-;; match atom-one-dark theme. Should keep updated with theme.
-;; See <https://github.com/jonathanchu/atom-one-dark-theme/blob/master/atom-one-dark-theme.el#L36-L37>.
+;; match One Dark theme. Should keep updated with current theme.
 ;; Should only used if `(display-graphic-p)` is `t`, but I am not sure why it
 ;; does not work with that. Anyway, I don't use Emacs in terminal.
 ;; See <https://github.com/radian-software/radian/blob/develop/emacs/early-init.el#L16-L23>.

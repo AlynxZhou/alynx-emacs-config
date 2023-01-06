@@ -699,8 +699,9 @@ Checkers checked, in order: `flycheck', `flymake'."
   ;; remove color when window is inactive. But if pass `'mode-line-inactive` or
   ;; `t`, you will lose color in active window, because `mode-line` /
   ;; `mode-line-inactive` both have colors and will cover your color. So the
-  ;; solution is set it to `nil` when window is selected, and set it to `t` when
-  ;; window is not selected, `mode-line-window-selected-p` is useful to this.
+  ;; solution is set it to `nil` when window is selected, and set it to
+  ;; `mode-line-inactive` when window is not selected (doc says you can pass `t`
+  ;; but you will get errors), `mode-line-window-selected-p` is useful to this.
   (setq-default mode-line-format
                 '((:eval
                    (alynx-mode-line--align
@@ -709,7 +710,7 @@ Checkers checked, in order: `flycheck', `flymake'."
                      '((:eval (alynx-mode-line--segment-buffer-status))
                        (:eval (alynx-mode-line--segment-buffer-name))
                        (:eval (alynx-mode-line--segment-cursor-position)))
-                     (not (mode-line-window-selected-p)))
+                     (if (mode-line-window-selected-p) nil 'mode-line-inactive))
                     ;; Right.
                     (format-mode-line
                      '((:eval (alynx-mode-line--segment-indentation-style))
@@ -720,7 +721,7 @@ Checkers checked, in order: `flycheck', `flymake'."
                        (:eval (alynx-mode-line--segment-checker))
                        (:eval (alynx-mode-line--segment-process))
                        (:eval (alynx-mode-line--segment-misc-info)))
-                     (not (mode-line-window-selected-p))))))))
+                     (if (mode-line-window-selected-p) nil 'mode-line-inactive)))))))
 
 (defun alynx-mode-line--deactivate ()
   "Deactivate alynx-mode-line."
