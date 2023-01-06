@@ -7,7 +7,7 @@
 ;;
 ;; To remind me what I did:
 ;;   - Removed terminal colors, I use Emacs as a GUI app.
-;;   - Removed helm/ivy colors, I use Vertico now.
+;;   - Removed helm / ivy colors, I use Vertico now.
 ;;   - Removed many packages that I don't use.
 ;;   - Removed prefix of colors, we use them in `let`.
 
@@ -22,6 +22,7 @@
       (bg-1 "#121417")
       (bg-hl "#2C323C")
       (gutter "#4B5363")
+      (guide "#3C4049")
       (insert "#43D08A")
       (change "#E0C285")
       (delete "#E05252")
@@ -60,7 +61,8 @@
      `(link ((t (:foreground ,blue :underline t :weight bold))))
      `(link-visited ((t (:foreground ,blue :underline t :weight normal))))
      `(cursor ((t (:background ,accent))))
-     `(fringe ((t (:background ,bg))))
+     ;; `gutter` is good for it.
+     `(fringe ((t (:foreground ,gutter :background ,bg))))
      `(region ((t (:background ,selection :distant-foreground ,mono-2))))
      `(highlight ((t (:background ,gray :distant-foreground ,mono-2))))
      `(hl-line ((t (:background ,bg-hl :distant-foreground unspecified))))
@@ -104,30 +106,57 @@
      `(custom-state ((t (:foreground ,green))))
 
      ;; Flyspell.
-     `(flyspell-duplicate ((t (:underline (:color ,warning :style wave)))))
-     `(flyspell-incorrect ((t (:underline (:color ,error :style wave)))))
+     `(flyspell-duplicate ((t (:underline (:color ,warning)))))
+     `(flyspell-incorrect ((t (:underline (:color ,error)))))
 
      ;; Flymake.
-     `(flymake-error ((t (:underline (:color ,error :style wave)))))
-     `(flymake-note ((t (:underline (:color ,info :style wave)))))
-     `(flymake-warning ((t (:underline (:color ,warning :style wave)))))
+     `(flymake-error ((t (:underline (:color ,error)))))
+     `(flymake-note ((t (:underline (:color ,info)))))
+     `(flymake-warning ((t (:underline (:color ,warning)))))
 
      ;; Flycheck.
-     `(flycheck-error ((t (:underline (:color ,error :style wave)))))
-     `(flycheck-info ((t (:underline (:color ,info :style wave)))))
-     `(flycheck-warning ((t (:underline (:color ,warning :style wave)))))
+     `(flycheck-error ((t (:underline (:color ,error)))))
+     `(flycheck-info ((t (:underline (:color ,info)))))
+     `(flycheck-warning ((t (:underline (:color ,warning)))))
+
+     ;; Trailing whitespace.
+     ;; This is different from the package called `whitespace`.
+     ;; Setting underline is not OK, it blocks region, don't know why.
+     `(trailing-whitespace ((t (:background ,warning))))
 
      ;; Compilation.
      `(compilation-face ((t (:foreground ,fg))))
      `(compilation-line-number ((t (:foreground ,mono-2))))
      `(compilation-column-number ((t (:foreground ,mono-2))))
-     `(compilation-mode-line-exit ((t (:inherit compilation-info :weight bold))))
-     `(compilation-mode-line-fail ((t (:inherit compilation-error :weight bold))))
+     `(compilation-mode-line-exit ((t (:inherit (compilation-info) :weight bold))))
+     `(compilation-mode-line-fail ((t (:inherit (compilation-error) :weight bold))))
 
      ;; Isearch.
      `(isearch ((t (:foreground ,bg :background ,purple))))
      `(isearch-fail ((t (:foreground ,error :background unspecified))))
      `(lazy-highlight ((t (:foreground ,purple :background ,bg-1 :underline ,purple))))
+
+     ;; `diff-mode`.
+     ;; The default styles are too noisy. Who cares about file / function /
+     ;; index? I only care about lines and never edit patches manually.
+     `(diff-header ((t (:inherit (default)))))
+     `(diff-index ((t (:inherit (diff-header)))))
+     `(diff-function ((t (:inherit (diff-header)))))
+     `(diff-nonexistent ((t (:inherit (diff-header)))))
+     `(diff-file-header ((t (:inherit (diff-header)))))
+     `(diff-hunk-header ((t (:inherit (diff-header)))))
+     `(diff-error ((t (:underline (:color ,error)))))
+     `(diff-removed ((t (:foreground ,delete :background unspecified))))
+     `(diff-added ((t (:foreground ,insert :background unspecified))))
+     `(diff-changed ((t (:foreground ,change :background unspecified))))
+     `(diff-changed-unspecified ((t (:inherit (diff-changed)))))
+     `(diff-indicator-removed ((t (:inherit (diff-removed)))))
+     `(diff-indicator-added ((t (:inherit (diff-added)))))
+     `(diff-indicator-changed ((t (:inherit (diff-changed)))))
+     ;; Using underline to hint char changes is clear.
+     `(diff-refine-removed ((t (:underline t))))
+     `(diff-refine-added ((t (:underline t))))
+     `(diff-refine-changed ((t (:underline t))))
 
      ;; `diff-hl`.
      `(diff-hl-change ((t (:foreground ,change :background unspecified))))
@@ -154,9 +183,9 @@
      `(eshell-prompt ((t (:inherit minibuffer-prompt))))
 
      ;; `js2-mode`.
-     `(js2-error ((t (:underline (:color ,error :style wave)))))
+     `(js2-error ((t (:underline (:color ,error)))))
      `(js2-external-variable ((t (:foreground ,cyan))))
-     `(js2-warning ((t (:underline (:color ,warning :style wave)))))
+     `(js2-warning ((t (:underline (:color ,warning)))))
      `(js2-function-call ((t (:inherit (font-lock-function-name-face)))))
      `(js2-function-param ((t (:foreground ,mono-1))))
      `(js2-jsdoc-tag ((t (:foreground ,purple))))
@@ -218,7 +247,16 @@
      `(line-number-current-line ((t (:foreground ,fg :background ,bg))))
 
      ;; Fill column indicator.
-     `(fill-column-indicator ((t (:inherit (shadow) :weight normal :slant normal :foreground ,gutter))))
+     ;; Inherit shadow, so no background is set, and then use better color, and
+     ;; ignore styles.
+     `(fill-column-indicator ((t (:inherit (shadow) :weight normal :slant normal :foreground ,guide))))
+
+     ;; Highlight indent guides.
+     ;; Similiar to fill column indicator. I don't use responsive guides so
+     ;; those are enough.
+     `(highlight-indent-guides-character-face ((t (:inherit (shadow) :weight normal :slant normal :foreground ,guide))))
+     `(highlight-indent-guides-odd-face ((t (:inherit (shadow) :weight normal :slant normal :foreground ,guide))))
+     `(highlight-indent-guides-even-face ((t (:inherit (shadow) :weight normal :slant normal :foreground ,guide))))
 
      ;; `regexp-builder`.
      `(reb-match-0 ((t (:background ,level-3-color))))
@@ -230,7 +268,7 @@
      `(desktop-entry-deprecated-keyword-face ((t (:inherit (font-lock-warning-face)))))
      `(desktop-entry-group-header-face ((t (:inherit (font-lock-type-face)))))
      `(desktop-entry-locale-face ((t (:inherit (font-lock-string-face)))))
-     `(desktop-entry-unknown-keyword-face ((t (:inherit (font-lock-keyword-face) :underline (:color ,red-1 :style wave)))))
+     `(desktop-entry-unknown-keyword-face ((t (:inherit (font-lock-keyword-face) :underline (:color ,red-1)))))
      `(desktop-entry-value-face ((t (:inherit (default)))))
 
      ;; `latex-mode`.

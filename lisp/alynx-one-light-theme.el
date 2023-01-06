@@ -22,6 +22,7 @@
       (bg-1 "#E5E5E6")
       (bg-hl "#F0F0F1")
       (gutter "#C2C2C3")
+      (guide "#D3D3D5")
       (insert "#2DB448")
       (change "#F2A60D")
       (delete "#FF1414")
@@ -60,7 +61,8 @@
      `(link ((t (:foreground ,blue :underline t :weight bold))))
      `(link-visited ((t (:foreground ,blue :underline t :weight normal))))
      `(cursor ((t (:background ,accent))))
-     `(fringe ((t (:background ,bg))))
+     ;; `gutter` is good for it.
+     `(fringe ((t (:foreground ,gutter :background ,bg))))
      `(region ((t (:background ,selection :distant-foreground ,mono-2))))
      `(highlight ((t (:background ,gray :distant-foreground ,mono-2))))
      `(hl-line ((t (:background ,bg-hl :distant-foreground unspecified))))
@@ -117,17 +119,44 @@
      `(flycheck-info ((t (:underline (:color ,info :style wave)))))
      `(flycheck-warning ((t (:underline (:color ,warning :style wave)))))
 
+     ;; Trailing whitespace.
+     ;; This is different from the package called `whitespace`.
+     ;; Setting underline is not OK, it blocks region, don't know why.
+     `(trailing-whitespace ((t (:background ,warning))))
+
      ;; Compilation.
      `(compilation-face ((t (:foreground ,fg))))
      `(compilation-line-number ((t (:foreground ,mono-2))))
      `(compilation-column-number ((t (:foreground ,mono-2))))
-     `(compilation-mode-line-exit ((t (:inherit compilation-info :weight bold))))
-     `(compilation-mode-line-fail ((t (:inherit compilation-error :weight bold))))
+     `(compilation-mode-line-exit ((t (:inherit (compilation-info) :weight bold))))
+     `(compilation-mode-line-fail ((t (:inherit (compilation-error) :weight bold))))
 
      ;; Isearch.
      `(isearch ((t (:foreground ,bg :background ,purple))))
      `(isearch-fail ((t (:foreground ,error :background unspecified))))
      `(lazy-highlight ((t (:foreground ,purple :background ,bg-1 :underline ,purple))))
+
+     ;; `diff-mode`.
+     ;; The default styles are too noisy. Who cares about file / function /
+     ;; index? I only care about lines and never edit patches manually.
+     `(diff-header ((t (:inherit (default)))))
+     `(diff-index ((t (:inherit (diff-header)))))
+     `(diff-function ((t (:inherit (diff-header)))))
+     `(diff-nonexistent ((t (:inherit (diff-header)))))
+     `(diff-file-header ((t (:inherit (diff-header)))))
+     `(diff-hunk-header ((t (:inherit (diff-header)))))
+     `(diff-error ((t (:underline (:color ,error)))))
+     `(diff-removed ((t (:foreground ,delete :background unspecified))))
+     `(diff-added ((t (:foreground ,insert :background unspecified))))
+     `(diff-changed ((t (:foreground ,change :background unspecified))))
+     `(diff-changed-unspecified ((t (:inherit (diff-changed)))))
+     `(diff-indicator-removed ((t (:inherit (diff-removed)))))
+     `(diff-indicator-added ((t (:inherit (diff-added)))))
+     `(diff-indicator-changed ((t (:inherit (diff-changed)))))
+     ;; Using underline to hint char changes is clear.
+     `(diff-refine-removed ((t (:underline t))))
+     `(diff-refine-added ((t (:underline t))))
+     `(diff-refine-changed ((t (:underline t))))
 
      ;; `diff-hl`.
      `(diff-hl-change ((t (:foreground ,change :background unspecified))))
@@ -220,7 +249,14 @@
      ;; Fill column indicator.
      ;; Inherit shadow, so no background is set, and then use better color, and
      ;; ignore styles.
-     `(fill-column-indicator ((t (:inherit (shadow) :weight normal :slant normal :foreground ,gutter))))
+     `(fill-column-indicator ((t (:inherit (shadow) :weight normal :slant normal :foreground ,guide))))
+
+     ;; Highlight indent guides.
+     ;; Similiar to fill column indicator. I don't use responsive guides so
+     ;; those are enough.
+     `(highlight-indent-guides-character-face ((t (:inherit (shadow) :weight normal :slant normal :foreground ,guide))))
+     `(highlight-indent-guides-odd-face ((t (:inherit (shadow) :weight normal :slant normal :foreground ,guide))))
+     `(highlight-indent-guides-even-face ((t (:inherit (shadow) :weight normal :slant normal :foreground ,guide))))
 
      ;; `regexp-builder`.
      `(reb-match-0 ((t (:background ,level-3-color))))

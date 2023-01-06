@@ -5,8 +5,8 @@
 
 ;;; Code:
 
-;; If a function/variable is not used for direct calling, add a `alynx/` prefix
-;; for it.
+;; If a function / variable is not used for direct calling, add a `alynx/`
+;; prefix for it.
 
 ;; Tweaks.
 
@@ -652,7 +652,9 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Prevent `.#` lock files, so we won't mess up project if crashed.
   (create-lockfiles nil)
   (fill-column 80)
-  (sentence-end-double-space nil))
+  (sentence-end-double-space nil)
+  ;; Don't show default indicators, they are useless and ugly.
+  (fringe-indicator-alist nil))
 
 (use-package windmove
   :demand t
@@ -744,8 +746,9 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (global-display-line-numbers-mode 1)
   :custom
-  ;; Use the max line number width to prevent shaking.
-  (display-line-numbers-width-start t))
+  ;; Calculate max number to prevent shaking.
+  (display-line-numbers-width-start t)
+  (display-line-numbers-grow-only t))
 
 (use-package hl-line
   :config
@@ -953,13 +956,14 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; My favorite themes with my own tweaks.
 ;; Don't defer themes, I need them all time.
+
 (use-package alynx-one-dark-theme
-  :disabled t
   :config
   (load-theme 'alynx-one-dark t))
 
 ;; Or sometimes I want light theme, then move `:disabled` to the dark theme.
 (use-package alynx-one-light-theme
+  :disabled t
   :config
   (load-theme 'alynx-one-light t))
 
@@ -1003,14 +1007,14 @@ point reaches the beginning or end of the buffer, stop there."
                                        ;; (git-gutter-mode 1)
                                        (diff-hl-mode 1))))))
 
-;; Atom-like move regine/current line up and down.
+;; Atom-like move regine / current line up and down.
 (use-package move-text
   :ensure t
   :bind (("M-p" . move-text-up) ("M-n" . move-text-down)))
 
 ;; Atom-like default region.
 ;; If there is no region, behave like current line is current region.
-;; Works on indent/outdent, comment block, cut (kill), copy, paste (yank).
+;; Works on indent / outdent, comment block, cut (kill), copy, paste (yank).
 (use-package whole-line-or-region
   :ensure t
   ;; If you use `:bind`, `use-package` will create lazy loading for package,
@@ -1045,6 +1049,9 @@ point reaches the beginning or end of the buffer, stop there."
          ;; `yaml-mode` should be `prog-mode`, anyway.
          (yaml-mode . highlight-indent-guides-mode))
   :custom
+  ;; Highlight indent guides could generate font faces via background
+  ;; automatically, but it's too dark. I have color in themes so disable it.
+  (highlight-indent-guides-auto-enabled nil)
   ;; Character is faster, but bitmap is modern.
   ;; (highlight-indent-guides-method 'character)
   ;; (highlight-indent-guides-character ?│)
@@ -1178,7 +1185,9 @@ point reaches the beginning or end of the buffer, stop there."
                               "Output\\*$"
                               "\\*Async Shell Command\\*"
                               help-mode
-                              compilation-mode)))
+                              compilation-mode))
+  ;; Don't add extra segment because it does not follow my segments.
+  (popper-mode-line ""))
 
 ;; Not sure why it does not work for me.
 ;; It always set to English even I manually switched to RIME.
