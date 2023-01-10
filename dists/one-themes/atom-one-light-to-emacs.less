@@ -1,0 +1,521 @@
+// # What is this?
+//
+//     A mapping of Atom "One Light" theme colors to Emacs "atom-one-light" theme
+//     colors. Use this file with the LESS compiler to output colors in hex.
+//
+// # How do I use this?
+//
+//     - Copy & Paste this file into the "LESS" column on this page: http://lesscss.org/less-preview/
+//
+//     OR
+//
+//     - Use the LESS compiler locally on your machine, e.g.:
+//
+//         $ node_modules/.bin/lessc atom-one-light-to-emacs.less
+//
+// # Where is the mapping?
+//
+//     Jump to "MAPPING" below to see mapping between Atom's "One Light" theme and
+//     Emacs "atom-one-light" theme
+//
+// # Where is an example of the output?
+//
+//     https://gist.github.com/jhacksworth/e7efbe1a5cfe53abfe7619a3cdbf0f07
+//
+// # What is the other stuff below, after the mapping?
+//
+//     Atom uses several files for defining the theme colors. They are included
+//     here, either in part or whole, so that the mapping can be done easily in one
+//     place.
+//
+// # References?
+//
+//     - Emacs atom-one-light theme:   https://github.com/jonathanchu/atom-one-light-theme
+//     - Atom One Light Syntax theme:  https://github.com/atom/one-light-syntax
+//     - Atom One Light UI theme:      https://github.com/atom/one-light-ui
+//     - LESS online preview:         http://lesscss.org/less-preview/
+//
+// ============================================================================================================
+
+
+/**************************************************************************************************************
+  MAPPING
+
+  - First CSS class name is the name of the Emacs atom-one-light theme color
+    variable
+
+  - Second CSS class name is either:
+    - the name of the Atom One Light source variable OR
+    - a comment about how the value is obtained
+
+  .<emacs>,
+  .<atom>  {
+    color: value
+  }
+**************************************************************************************************************/
+//                        atom variable
+// emacs variable       , or description          color value compiled to hex
+//---------------------   --------------------    ---------------------------
+
+.atom-one-light-accent   , .syntax-accent          { color: @syntax-accent; }
+.atom-one-light-fg       , .syntax-fg              { color: @syntax-fg;     } // same as @mono-1
+.atom-one-light-bg       , .syntax-bg              { color: @syntax-bg;     }
+
+/* Unknown origin */
+.atom-one-light-bg-1     , .unknown                { color: #E5E5E6;        }
+// Possible candidate from atom theme
+// .atom-one-light-bg-1  , .input-background-color { color: @input-background-color;   }
+
+/* @syntax-cursor-line is defined with `fade(@syntax-fg, 5%)`.  */
+/* Which will be blended with the background color. */
+/* We can simulate opacity blending using the `mix` function from Less. */
+.atom-one-light-bg-hl    , .simulate-opacity-blend { color: mix(@syntax-fg, @syntax-bg, 5%); }
+
+/* atom-one-light-gutter takes opacity into account for line-number */
+/* For `.line-number`, @syntax-gutter-text-color will be blended with the background color */
+/* We can simulate opacity blending using the `mix` function from Less. */
+/* `.line-number` is defined with `opacity: 0.6;`. */
+.atom-one-light-gutter   , .simulate-opacity-blend { color: mix(@syntax-gutter-text-color, @syntax-bg, 60%); }
+
+/*  @syntax-guide is defined with `fade(@syntax-fg, 20%)`. */
+/* Which will be blended with the background color. */
+/* We can simulate opacity blending using the `mix` function from Less. */
+.atom-one-light-guide    , .simulate-opacity-blend { color: mix(@syntax-fg, @syntax-bg, 20%); }
+
+// Git colors - For git diff info. i.e. in the gutter
+.atom-one-light-insert   , .syntax-color-added   { color: @syntax-color-added; }
+.atom-one-light-change   , .syntax-color-modified   { color: @syntax-color-modified; }
+.atom-one-light-delete   , .syntax-color-removed   { color: @syntax-color-removed; }
+
+// State colors - info, success, warning, error
+.atom-one-light-info     , .text-color-info        { color: @text-color-info; }
+.atom-one-light-success  , .text-color-success     { color: @text-color-success; }
+.atom-one-light-warning  , .text-color-warning     { color: @text-color-warning; }
+.atom-one-light-error    , .text-color-error       { color: @text-color-error; }
+
+.atom-one-light-mono-1   , .mono-1                 { color: @mono-1;        } // default text
+.atom-one-light-mono-2   , .mono-2                 { color: @mono-2;        }
+.atom-one-light-mono-3   , .mono-3                 { color: @mono-3;        }
+.atom-one-light-cyan     , .hue-1                  { color: @hue-1;         } // cyan
+.atom-one-light-blue     , .hue-2                  { color: @hue-2;         } // blue
+.atom-one-light-purple   , .hue-3                  { color: @hue-3;         } // purple
+.atom-one-light-green    , .hue-4                  { color: @hue-4;         } // green
+.atom-one-light-red-1    , .hue-5                  { color: @hue-5;         } // red 1
+.atom-one-light-red-2    , .hue-5-2                { color: @hue-5-2;       } // red 2
+.atom-one-light-orange-1 , .hue-6                  { color: @hue-6;         } // orange 1
+.atom-one-light-orange-2 , .hue-6-2                { color: @hue-6-2;       } // orange 2
+.atom-one-light-gray     , .syntax-selection-color { color: @syntax-selection-color; }
+
+// Keep compability with some color use.
+// NOTE: Those colors should be reverse for One Dark.
+.atom-one-light-silver   , .level-3-color          { color: @level-3-color; }
+.atom-one-light-black    , .ui-fg                  { color: @ui-fg;         }
+
+// This is the default foreground color of ui elements, and is used in the status-bar text
+.atom-one-light-ui-fg    , .ui-fg                  { color: @ui-fg;         }
+
+// From one-light-ui: .status-bar {background-color: @level-3-color;}
+// Always darker than bg.
+.atom-one-light-level-3-color    , .level-3-color       { color: @level-3-color; }
+
+.atom-one-light-border   , .ui-border              { color: @ui-border;     }
+
+/*
+END OF MAPPING
+**************************************************************************************************************/
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ONE-LIGHT-SYNTAX
+// https://github.com/atom/one-light-syntax
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// atom/one-light-syntax/styles/colors.less
+// ============================================================================================================
+// (Entire file listed)
+
+// Config -----------------------------------
+@syntax-hue:          230;
+@syntax-saturation:    1%;
+@syntax-brightness:   98%;
+
+
+// Monochrome -----------------------------------
+@mono-1: hsl(@syntax-hue, 8%, 24%);
+@mono-2: hsl(@syntax-hue, 6%, 44%);
+@mono-3: hsl(@syntax-hue, 4%, 64%);
+
+// Colors -----------------------------------
+@hue-1:   hsl(198, 99%, 37%); // <-cyan
+@hue-2:   hsl(221, 87%, 60%); // <-blue
+@hue-3:   hsl(301, 63%, 40%); // <-purple
+@hue-4:   hsl(119, 34%, 47%); // <-green
+
+@hue-5:   hsl(  5, 74%, 59%); // <-red 1
+@hue-5-2: hsl(344, 84%, 43%); // <-red 2
+
+@hue-6:   hsl(35, 99%, 36%); // <-orange 1
+@hue-6-2: hsl(35, 99%, 40%); // <-orange 2
+
+
+// Base colors -----------------------------------
+@syntax-fg:     @mono-1;
+@syntax-bg:     hsl(@syntax-hue, @syntax-saturation, @syntax-brightness);
+@syntax-gutter: darken(@syntax-bg, 36%);
+@syntax-guide:  fade(@syntax-fg, 20%);
+@syntax-accent: hsl(@syntax-hue, 100%, 66% );
+//END-OF-FILE==================================================================================================
+
+
+// atom/one-light-syntax/styles/syntax-variables.less
+// ============================================================================================================
+// (Entire file listed)
+// @import "colors.less";
+
+// Official Syntax Variables -----------------------------------
+
+// General colors
+@syntax-text-color:            @syntax-fg;
+@syntax-cursor-color:          @syntax-accent;
+@syntax-selection-color:       darken(@syntax-bg, 8%);
+@syntax-selection-flash-color: @syntax-accent;
+@syntax-background-color:      @syntax-bg;
+
+// Guide colors
+@syntax-wrap-guide-color:          @syntax-guide;
+@syntax-indent-guide-color:        @syntax-guide;
+@syntax-invisible-character-color: @syntax-guide;
+
+// For find and replace markers
+@syntax-result-marker-color:          fade(@syntax-accent, 20%);
+@syntax-result-marker-color-selected: @syntax-accent;
+
+// Gutter colors -----------------------------------
+@syntax-gutter-text-color:                @syntax-gutter;
+@syntax-gutter-text-color-selected:       @syntax-fg;
+@syntax-gutter-background-color:          @syntax-bg; // unused
+@syntax-gutter-background-color-selected: darken(@syntax-bg, 8%);
+
+// Git colors - For git diff info. i.e. in the gutter
+@syntax-color-renamed:  hsl(208, 100%, 66%);
+@syntax-color-added:    hsl(132,  60%, 44%);
+@syntax-color-modified: hsl( 40,  90%, 50%);
+@syntax-color-removed:  hsl(  0, 100%, 54%);
+
+// For language entity colors
+@syntax-color-variable:   @hue-5;
+@syntax-color-constant:   @hue-6;
+@syntax-color-property:   @syntax-fg;
+@syntax-color-value:      @syntax-fg;
+@syntax-color-function:   @hue-2;
+@syntax-color-method:     @hue-2;
+@syntax-color-class:      @hue-6-2;
+@syntax-color-keyword:    @hue-3;
+@syntax-color-tag:        @hue-5;
+@syntax-color-attribute:  @hue-6;
+@syntax-color-import:     @hue-3;
+@syntax-color-snippet:    @hue-4;
+
+
+// Custom Syntax Variables -----------------------------------
+// Don't use in packages
+
+@syntax-cursor-line: fade(@syntax-fg, 5%); // needs to be semi-transparent to show search results
+
+@syntax-deprecated-fg: darken(@syntax-color-modified, 50%);
+@syntax-deprecated-bg: @syntax-color-modified;
+@syntax-illegal-fg:    white;
+@syntax-illegal-bg:    @syntax-color-removed;
+//END-OF-FILE==================================================================================================
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ONE-LIGHT-UI
+// https://github.com/atom/one-light-ui
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// atom/one-light-ui/styles/ui-variables.less
+// ============================================================================================================
+// (Entire file listed)
+
+
+// @import "ui-variables-custom.less"; // import colors and custom variables
+
+// ONE light UI variables
+// ----------------------------------------------
+
+// Official variables
+// These variables must be defined in every theme
+// Source: https://github.com/atom/atom/blob/master/static/variables/ui-variables.less
+// ----------------------------------------------
+
+
+// Text -----------------
+@text-color:            @ui-fg;
+@text-color-subtle:     lighten(@text-color, 30%);
+@text-color-highlight:  darken(@text-color, 12%);
+@text-color-selected:   darken(@text-color-highlight, 12%);
+
+@text-color-info:    hsl(208, 100%, 54%);
+@text-color-success: hsl(132,  60%, 44%);
+@text-color-warning: hsl( 37,  90%, 44%);
+@text-color-error:   hsl(  0,  90%, 56%);
+
+
+// Background -----------------
+@background-color-info:    hsl(208, 100%, 56%);
+@background-color-success: hsl(132,  52%, 48%);
+@background-color-warning: hsl( 40,  60%, 48%);
+@background-color-error:   hsl(  5,  72%, 56%);
+
+@background-color-highlight: darken(@level-3-color, 2%);
+@background-color-selected:  darken(@level-3-color, 6%);
+
+@app-background-color: @level-3-color;
+
+
+// Base -----------------
+@base-background-color: @ui-bg;
+@base-border-color:     @ui-border;
+
+
+// Components -----------------
+@pane-item-background-color:       @base-background-color;
+@pane-item-border-color:           @base-border-color;
+
+@input-background-color:           @level-1-color;
+@input-border-color:               @base-border-color;
+
+@tool-panel-background-color:      @level-3-color;
+@tool-panel-border-color:          @base-border-color;
+
+@inset-panel-background-color:     lighten(@level-2-color, 4%);
+@inset-panel-border-color:         fadeout(@base-border-color, 15%);
+
+@panel-heading-background-color:   @level-2-color;
+@panel-heading-border-color:       @base-border-color;
+
+@overlay-background-color:         mix(@level-2-color, @level-3-color);
+@overlay-border-color:             @base-border-color;
+
+@button-background-color:          @level-1-color;
+@button-background-color-hover:    darken(@button-background-color, 4%);
+@button-background-color-selected: @accent-bg-color;
+@button-border-color:              @base-border-color;
+
+@tab-bar-background-color:         @level-3-color;
+@tab-bar-border-color:             @base-border-color;
+@tab-background-color:             @level-3-color;
+@tab-background-color-active:      @level-2-color;
+@tab-border-color:                 @base-border-color;
+
+@tree-view-background-color:       @level-3-color;
+@tree-view-border-color:           @base-border-color;
+
+@ui-site-color-1: hsl(208, 100%, 56%); // blue
+@ui-site-color-2: hsl(132,  48%, 48%); // green
+@ui-site-color-3: hsl( 40,  60%, 52%); // orange
+@ui-site-color-4: #D831B0;             // pink
+@ui-site-color-5: #EBDD5B;             // yellow
+
+
+// Sizes -----------------
+@font-size:               12px;
+@input-font-size:         14px;
+@disclosure-arrow-size:   12px;
+
+@component-padding:       10px;
+@component-icon-padding:  5px;
+@component-icon-size:     16px; // needs to stay 16px to look sharpest
+@component-line-height:   25px;
+@component-border-radius: 3px;
+
+@tab-height:              30px;
+
+
+// Font -----------------
+@font-family: system-ui;
+//END-OF-FILE==================================================================================================
+
+
+// atom/one-light-ui/styles/ui-variables-custom.less
+// ============================================================================================================
+// (Entire file listed)
+
+// ONE light UI variables
+// ----------------------------------------------
+
+// @import "syntax-variables";
+
+.ui-syntax-color() { @syntax-background-color: hsl(220,1%,98%); } .ui-syntax-color(); // fallback color
+@ui-syntax-color: @syntax-background-color;
+
+// Color guards -----------------
+@ui-s-h: hue(@ui-syntax-color);
+.ui-hue() when (@ui-s-h = 0) { @ui-hue: 220; } // Use blue hue when no saturation
+.ui-hue() when (@ui-s-h > 0) { @ui-hue: @ui-s-h; }
+.ui-hue();
+
+@ui-saturation:   min( saturation(@ui-syntax-color), 24%); // max saturation
+@ui-lightness:    max(  lightness(@ui-syntax-color), 92%); // min lightness
+
+// Main colors -----------------
+@ui-fg:     hsl(@ui-hue, @ui-saturation, @ui-lightness - 72%);
+@ui-bg:     hsl(@ui-hue, @ui-saturation, @ui-lightness); // normalized @syntax-background-color
+@ui-border: darken(@level-3-color, 6%);
+
+
+
+
+// Custom variables
+// These variables are only used in this theme
+// ----------------------------------------------
+
+@ui-theme-name: one-light-ui;
+
+// Text (Custom) -----------------
+@text-color-faded: fade(@text-color, 30%);
+
+@text-color-added:    @text-color-success;  // green
+@text-color-ignored:  @text-color-subtle;   // faded
+@text-color-modified: @text-color-warning;  // orange
+@text-color-removed:  @text-color-error;    // red
+@text-color-renamed:  @text-color-info;     // blue
+
+
+// Background (Custom) -----------------
+@level-1-color: lighten(@base-background-color, 4%);
+@level-2-color: @base-background-color;
+@level-3-color: darken(@base-background-color, 6%);
+
+@level-3-color-hover:  darken(@level-3-color, 6%);
+@level-3-color-active: darken(@level-3-color, 3%);
+
+
+// Accent (Custom) -----------------
+@accent-luma:             luma( hsl(@ui-hue, 50%, 50%) ); // get lightness of current hue
+
+// used for marker, inputs (smaller things)
+@accent-color:            mix( hsv( @ui-hue, 60%, 60%), hsl( @ui-hue, 100%, 68%), @accent-luma * 2 ); // mix hsv + hsl (favor hsl for dark, hsv for light colors)
+@accent-text-color:       contrast(@accent-color, hsl(@ui-hue,100%,16%), #fff, 40% );
+
+// used for button, tooltip (larger things)
+@accent-bg-color:         mix( hsv( @ui-hue, 40%, 72%), hsl( @ui-hue, 100%, 66%), @accent-luma * 2 ); // mix hsv + hsl (favor hsl for dark, hsv for light colors)
+@accent-bg-text-color:    contrast(@accent-bg-color, hsl(@ui-hue,100%,10%), #fff, 40% );
+
+// used for text only
+@accent-only-text-color: mix( hsv( @ui-hue, 70%, 50%), hsl( @ui-hue, 100%, 60%), @accent-luma * 2 ); // mix hsv + hsl (favor hsl for dark, hsv for light colors)
+
+
+// Components (Custom) -----------------
+@badge-background-color:            @background-color-selected;
+
+@button-text-color-selected:        @accent-bg-text-color;
+@button-border-color-selected:      @accent-color;
+
+@checkbox-background-color:         fade(@accent-bg-color, 33%);
+
+@input-background-color-focus:      hsl(@ui-hue, 100%, 96%);
+@input-selection-color:             mix( hsv( @ui-hue, 33%, 95%), hsl( @ui-hue, 100%, 98%), @accent-luma * 2 ); // mix hsv + hsl (favor hsl for dark, hsv for light colors)
+@input-selection-color-focus:       mix( hsv( @ui-hue, 44%, 90%), hsl( @ui-hue, 100%, 94%), @accent-luma * 2 ); // mix hsv + hsl (favor hsl for dark, hsv for light colors)
+
+@overlay-backdrop-color:            hsl(@ui-hue, @ui-saturation*0.4, @ui-lightness*0.8);
+@overlay-backdrop-opacity:          .66;
+
+@progress-background-color:         @accent-color;
+
+@scrollbar-color:                   darken(@level-3-color, 14%);
+@scrollbar-background-color:        @level-3-color; // replaced `transparent` with a solid color to test https://github.com/atom/one-light-ui/issues/4
+@scrollbar-color-editor:            contrast(@ui-syntax-color, darken(@ui-syntax-color, 14%), lighten(@ui-syntax-color, 9%) );
+@scrollbar-background-color-editor: @ui-syntax-color;
+
+@tab-text-color:                    @text-color-subtle;
+@tab-text-color-active:             @text-color-highlight;
+@tab-text-color-editor:             contrast(@ui-syntax-color, lighten(@ui-syntax-color, 70%), @text-color-highlight );
+@tab-background-color-editor:       @ui-syntax-color;
+@tab-inactive-status-added:         fade(@text-color-success, 77%);
+@tab-inactive-status-modified:      fade(@text-color-warning, 77%);
+
+@tooltip-background-color:          @accent-bg-color;
+@tooltip-text-color:                @accent-bg-text-color;
+@tooltip-text-key-color:            @tooltip-background-color;
+@tooltip-background-key-color:      @tooltip-text-color;
+
+
+// Sizes (Custom) -----------------
+
+@ui-size:                 1em;
+@ui-input-size:           @ui-size*1.15;
+@ui-padding:              @ui-size*1.5;
+@ui-padding-pane:         @ui-size*.5;
+@ui-padding-icon:         @ui-padding/3.3;
+@ui-line-height:          @ui-size*2;
+@ui-tab-height:           @ui-size*2.5;
+
+
+
+
+
+// Packages variables
+// These variables are used to override packages
+// ----------------------------------------------
+
+@settings-list-background-color: darken(@level-2-color, 3%);
+@theme-config-box-shadow: inset 0 1px 2px hsla(0, 0%, 0%, .2), 0 1px 0 hsla(0, 0%, 100%, .3);
+@theme-config-box-shadow-selected: inset 0 1px 3px hsla(0, 0%, 0%, .2);
+@theme-config-border-selected: hsla(0, 0%, 0%, .5);
+
+
+// Debug
+// Output variables to the top of the UI
+// -------------------------------------
+
+// html:before {
+//   content: "@{variable}";
+// }
+//END-OF-FILE==================================================================================================
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  Reference for line-number/gutter, cursor line and selection colors
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// https://github.com/atom/atom/blob/ac9cc728450f96096aeeb7d185420a06610b4df2/static/text-editor.less#L54
+// atom/static/text-editor.less
+// ============================================================================================================
+// atom-text-editor {
+//   // ...
+//     .line-number {
+//       // ...
+//       opacity: 0.6;
+//     }
+// }
+//END-OF-FILE==================================================================================================
+
+// https://github.com/atom/one-light-syntax/blob/8c4922f6f964a24ce8f4d352cbac1a9ec3a15f42/styles/editor.less
+// atom/one-light-syntax/styles/editor.less
+// ============================================================================================================
+// atom-text-editor { // L#4
+//   background-color: @syntax-background-color;
+//   color: @syntax-text-color;
+//
+//   .line.cursor-line { // L#8
+//     background-color: @syntax-cursor-line;
+//   }
+//
+//   .selection .region { // L#20
+//     background-color: @syntax-selection-color;
+//   }
+//
+//   .gutter { // L#56
+//
+//     .line-number { // L#58
+//       color: @syntax-gutter-text-color;
+//       // ...
+//       }
+//     }
+//   }
+// }
+//END-OF-FILE==================================================================================================
+

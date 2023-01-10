@@ -1182,6 +1182,8 @@ point reaches the beginning or end of the buffer, stop there."
   (popper-reference-buffers '("\\*Backtrace\\*"
                               "\\*IBuffer\\*"
                               "\\*Warnings\\*"
+                              ;; This will shown when you click TAB on `M-:`.
+                              "\\*Completions\\*"
                               "Output\\*$"
                               "\\*Async Shell Command\\*"
                               help-mode
