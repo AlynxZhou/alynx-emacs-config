@@ -640,6 +640,7 @@ point reaches the beginning or end of the buffer, stop there."
   (auto-window-vscroll nil)
   ;; Decrease scrolling CPU usage.
   (fast-but-imprecise-scrolling t)
+  (redisplay-skip-fontification-on-input t)
   (jit-lock-defer-time 0)
   ;; Resize in pixels, not chars.
   (frame-resize-pixelwise t)
@@ -652,6 +653,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Prevent `.#` lock files, so we won't mess up project if crashed.
   (create-lockfiles nil)
   (fill-column 80)
+  (display-raw-bytes-as-hex t)
   (sentence-end-double-space nil)
   ;; Don't show default indicators, they are useless and ugly.
   (fringe-indicator-alist nil))
@@ -672,6 +674,11 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Silence compiler warnings as they can be pretty disruptive.
   ;; Not sure why this does not work.
   (native-comp-async-report-warnings-errors 'silent))
+
+(use-package mouse
+  :custom
+  ;; Yank to cursor, not where mouse clicked.
+  (mouse-yank-at-point t))
 
 ;; Disable menu bar, tool bar, scroll bar and cursor blink.
 
@@ -706,7 +713,8 @@ point reaches the beginning or end of the buffer, stop there."
   :custom
   ;; By default if you press backspace on indentations, Emacs will turn a tab
   ;; into spaces and delete one space, I think no one likes this.
-  (backward-delete-char-untabify-method nil))
+  (backward-delete-char-untabify-method nil)
+  (kill-do-not-save-duplicates t))
 
 ;; See <https://dougie.io/emacs/indentation/>.
 ;; Auto-indent line when pressing enter.
@@ -1179,6 +1187,8 @@ point reaches the beginning or end of the buffer, stop there."
   (popper-mode 1)
   (popper-echo-mode 1)
   :custom
+  ;; Some popup windows are focused, but others are not, let them all focused,
+  ;; so I could easily close them.
   (popper-reference-buffers '("\\*Backtrace\\*"
                               "\\*IBuffer\\*"
                               "\\*Warnings\\*"
