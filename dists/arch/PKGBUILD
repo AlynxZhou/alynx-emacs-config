@@ -16,7 +16,7 @@
 #   - No PDF or HTML docs, I just read them directly in Emacs.
 
 pkgname=emacs-alynx
-pkgver=30.0.50.162768
+pkgver=30.0.50.164434
 pkgrel=1
 pkgdesc="GNU Emacs. Alynx's build."
 arch=("x86_64")
@@ -32,15 +32,18 @@ conflicts=("emacs")
 # the latest commit and test whether it works fine. I have to sync my tools
 # between different machines and this makes sure that I always get the same
 # working copy.
-_commit="c1a3e8830bb2fa8c3e8056bb42360f3504c434e9"
+_commit="033f2cc6140d03e78403f37689b9f54b64bded01"
 # source=("emacs-git::git+https://git.savannah.gnu.org/git/emacs.git#commit=$_commit")
 # GitHub mirror is easier to access.
-source=("emacs-git::git+https://github.com/emacs-mirror/emacs.git#commit=$_commit")
+source=("emacs-git::git+https://github.com/emacs-mirror/emacs.git#commit=$_commit"
+        "fix-cursor-location.patch")
 options=(!strip)
-sha512sums=("SKIP")
+sha512sums=("SKIP"
+            "SKIP")
 
 pkgver() {
   cd emacs-git
+
   printf "%s.%s" \
     $(grep AC_INIT configure.ac | \
     awk -F',' '{ gsub("[ \\[\\]]","",$2); print $2 }') \
@@ -49,6 +52,8 @@ pkgver() {
 
 prepare() {
   cd emacs-git
+
+  git apply -3 "${srcdir}/fix-cursor-location.patch"
   [[ -x configure ]] || ( ./autogen.sh git && ./autogen.sh autoconf )
   mkdir -p build
 }
