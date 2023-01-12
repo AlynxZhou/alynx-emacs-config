@@ -1419,10 +1419,9 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package yasnippet
   :ensure t
   :hook ((prog-mode . yas-minor-mode))
-  ;; To prevent it create `~/.emacs.d/snippets/`, this is needed before loading.
-  :init
-  (make-directory (locate-user-emacs-file ".local/snippets/") t)
-  (setq yas-snippet-dirs `(,(locate-user-emacs-file ".local/snippets/"))))
+  :config
+  ;; OK, I finally give up, maybe I need to sync snippets so don't exclude them.
+  (make-directory (locate-user-emacs-file "snippets/") t))
 
 ;; Dependency of `lsp-bridge`.
 (use-package yasnippet-snippets

@@ -41,6 +41,15 @@ To flush all installed packages and re-installed them, run the following command
 $ rm -rf ~/.emacs.d/{elpa,eln-cache} && rm ~/.emacs.d/.local/cache/package-quickstart.el*
 ```
 
+# Dir Structure
+
+- `site-lisp`: Third party packages that installed as git submodule instead of from MELPA.
+- `lisp`: Standalone packages that can be used without this project.
+- `snippets`: Code snippets.
+- `.local`: Files that won't sync, like backup and cache files.
+
+If there are more dirs to sync, put them into project root, and if configurations are splitted into different files, just put them into project root (not in `lisp`), too.
+
 # Notice
 
 ## Indentation Handling
