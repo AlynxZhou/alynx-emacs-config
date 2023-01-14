@@ -14,7 +14,8 @@
 ;;; Code:
 
 (deftheme alynx-one-light
-  "Alynx One Light - Alynx's Emacs port of the Atom One Light theme.")
+  "Alynx One Light - Alynx's Emacs port of the Atom One Light theme."
+  :family 'alynx-one)
 
 (let ((accent "#526EFF")
       (fg "#383A42")
@@ -63,9 +64,13 @@
      `(cursor ((t (:background ,accent))))
      ;; `gutter` is good for it.
      `(fringe ((t (:foreground ,gutter :background ,bg))))
-     `(region ((t (:background ,selection :distant-foreground ,mono-2))))
-     `(highlight ((t (:background ,gray :distant-foreground ,mono-2))))
-     `(hl-line ((t (:background ,bg-hl :distant-foreground unspecified))))
+     ;; Don't set `:distant-foreground` for `region`, it adds this to indent
+     ;; guides and fill column indicator, cover this for fill column indicator
+     ;; works, but not for indent guides. It's just hard to know when Emacs
+     ;; decides to use `:distant-foreground`.
+     `(region ((t (:background ,selection))))
+     `(highlight ((t (:background ,gray))))
+     `(hl-line ((t (:background ,bg-hl))))
      ;; For mode line and header line, use UI colors, so they are different from
      ;; editing area.
      `(header-line ((t (:background ,level-3-color))))
