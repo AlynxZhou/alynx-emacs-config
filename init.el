@@ -916,7 +916,6 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package markdown-mode
   :ensure t
-  :commands (markdown-mode gfm-mode)
   ;; Don't cover my `move-text` keybindings! They are more useful.
   :bind (:map gfm-mode-map
               ("M-n" . nil)
@@ -969,11 +968,10 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (load-theme 'alynx-one-dark t))
 
-;; Or sometimes I want light theme, then move `:disabled` to the dark theme.
+;; Or sometimes I want light theme.
 (use-package alynx-one-light-theme
-  :disabled t
-  :config
-  (load-theme 'alynx-one-light t))
+  :demand t
+  :bind (("C-c t t" . toggle-theme)))
 
 ;; Or if you like `nano-theme`.
 ;; (use-package nano-theme
@@ -1060,10 +1058,13 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Highlight indent guides could generate font faces via background
   ;; automatically, but it's too dark. I have color in themes so disable it.
   (highlight-indent-guides-auto-enabled nil)
-  ;; Character is faster, but bitmap is modern.
-  ;; (highlight-indent-guides-method 'character)
+  ;; Bitmap is modern, but has some issues (wrong color after switching theme,
+  ;; wrong size after changing font size), and character is faster. A problem of
+  ;; character is that it shows in default face in candidates of `consult-line`,
+  ;; I have some hacks for it in `consult`.
+  (highlight-indent-guides-method 'character)
   ;; (highlight-indent-guides-character ?│)
-  (highlight-indent-guides-method 'bitmap)
+  ;; (highlight-indent-guides-method 'bitmap)
   (highlight-indent-guides-bitmap-function
    'highlight-indent-guides--bitmap-line))
 
@@ -1333,7 +1334,10 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Optionally configure the narrowing key.
   ;; Both `<` and `C-+` work reasonably well.
   (consult-narrow-key "<")
-)
+  ;; HACK: `consult-line` cannot handle font face of `highlight-indent-guides`
+  ;; properly, and I don't really need syntax highlight in search candidates,
+  ;; this just ignores all text properties, so it also hides indent guides.
+  (consult-fontify-preserve nil))
 
 (use-package treemacs
   :ensure t
