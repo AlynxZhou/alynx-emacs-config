@@ -268,6 +268,11 @@ order provided)."
   :group 'alynx-mode-line
   :type '(alist :key-type symbol :value-type sexp))
 
+(defface alynx-mode-line-face-window-selected
+  `((t (:inherit (cursor))))
+  "Face used to hint selected window."
+  :group 'alynx-mode-line-faces)
+
 (defface alynx-mode-line-face-buffer-name
   '((t (:inherit (mode-line-buffer-id))))
   "Face used for displaying the value of `buffer-name'."
@@ -318,10 +323,8 @@ order provided)."
 
 If a character could not be found for the requested glyph, a fallback will be
 returned from `alynx-mode-line-glyphs-ascii'."
-  (char-to-string (or (alist-get glyph
-                                 alynx-mode-line-glyph-alist)
-                      (alist-get glyph
-                                 alynx-mode-line-glyphs-ascii))))
+  (char-to-string (or (alist-get glyph alynx-mode-line-glyph-alist)
+                      (alist-get glyph alynx-mode-line-glyphs-ascii))))
 
 (defmacro alynx-mode-line--concat-with-sperator (&rest sequences)
   "Concatenate speartor, SEQUENCES and sperator and make the result a string."
@@ -333,50 +336,53 @@ returned from `alynx-mode-line-glyphs-ascii'."
 (defun alynx-mode-line--align (left right)
   "Align a mode line with a LEFT and RIGHT justified list of elements.
 
-The mode line should fit the `window-width' with space between the lists."
-  (let ((reserve (length right)))
-    (concat " "
+The mode line should fit the `window-width' with space between."
+  (let ((right-length (length right)))
+    (concat (if (mode-line-window-selected-p)
+                (propertize " " 'face 'alynx-mode-line-face-window-selected)
+              " ")
             left
+            ;; Don't forget to subtract 1 more, because we have a right space!
             (propertize " "
-                        'display `((space :align-to (- (+ right right-margin)
-                                                       ,reserve))))
+                        'display `((space :align-to (- (+ right right-fringe
+                                                          right-margin
+                                                          scroll-bar)
+                                                       ,right-length 1))))
             right
-            " ")))
-
-(defun alynx-mode-line--segment-buffer-status ()
-  "Return an indicator representing the status of the current buffer."
-  (alynx-mode-line--concat-with-sperator
-          (if (buffer-file-name (buffer-base-buffer))
-              (cond
-               ((buffer-narrowed-p)
-                (propertize (alynx-mode-line--get-glyph :buffer-narrowed)
-                            'face 'alynx-mode-line-face-buffer-status-narrowed))
-               ((buffer-modified-p)
-                (propertize (alynx-mode-line--get-glyph :buffer-modified)
-                            'face 'alynx-mode-line-face-buffer-status-modified))
-               (buffer-read-only
-                (propertize (alynx-mode-line--get-glyph :buffer-read-only)
-                            'face 'alynx-mode-line-face-buffer-status-read-only))
-               (t " "))
-            (if (buffer-narrowed-p)
-                (propertize (alynx-mode-line--get-glyph :buffer-narrowed)
-                            'face 'alynx-mode-line-face-buffer-status-narrowed)
+            (if (mode-line-window-selected-p)
+                (propertize " " 'face 'alynx-mode-line-face-window-selected)
               " "))))
 
 (defun alynx-mode-line--segment-buffer-name ()
   "Display the name of the current buffer."
   (alynx-mode-line--concat-with-sperator
-          (propertize "%b" 'face 'alynx-mode-line-face-buffer-name)))
+   (propertize "%b" 'face 'alynx-mode-line-face-buffer-name)))
+
+(defun alynx-mode-line--segment-buffer-status ()
+  "Return an indicator representing the status of the current buffer."
+  (alynx-mode-line--concat-with-sperator
+   (if (buffer-file-name (buffer-base-buffer))
+       (cond
+        ((buffer-narrowed-p)
+         (propertize (alynx-mode-line--get-glyph :buffer-narrowed)
+                     'face 'alynx-mode-line-face-buffer-status-narrowed))
+        ((buffer-modified-p)
+         (propertize (alynx-mode-line--get-glyph :buffer-modified)
+                     'face 'alynx-mode-line-face-buffer-status-modified))
+        (buffer-read-only
+         (propertize (alynx-mode-line--get-glyph :buffer-read-only)
+                     'face 'alynx-mode-line-face-buffer-status-read-only))
+        (t " "))
+     (if (buffer-narrowed-p)
+         (propertize (alynx-mode-line--get-glyph :buffer-narrowed)
+                     'face 'alynx-mode-line-face-buffer-status-narrowed)
+       " "))))
 
 (defun alynx-mode-line--segment-cursor-position ()
   "Display the position of the cursor in the current buffer."
   (when alynx-mode-line-show-cursor-position
     (alynx-mode-line--concat-with-sperator
-            "%l:%c"
-            " "
-            (number-to-string (point))
-            " "
-            "%p%%")))
+     "%l:%c" " " (number-to-string (point)) " " "%p%%")))
 
 (defun alynx-mode-line--segment-indentation-style ()
   "Display the indentation style of the current buffer."
@@ -386,43 +392,43 @@ The mode line should fit the `window-width' with space between the lists."
                                    (cdr (assoc major-mode
                                                alynx-mode-line-mode-indent-offset-alist))))))
       (alynx-mode-line--concat-with-sperator
-              (if indent-tabs-mode "TAB" "SPC")
-              (alynx-mode-line--get-glyph :count-separator)
-              (if (null mode-offset) "?" (number-to-string mode-offset))
-              ":"
-              (number-to-string tab-width)))))
+       (if indent-tabs-mode "TAB" "SPC")
+       (alynx-mode-line--get-glyph :count-separator)
+       (if (null mode-offset) "?" (number-to-string mode-offset))
+       ":"
+       (number-to-string tab-width)))))
 
 (defun alynx-mode-line--segment-eol-style ()
   "Display the EOL type for the coding system of the current buffer."
   (when (and alynx-mode-line-show-eol-style buffer-file-coding-system)
     (alynx-mode-line--concat-with-sperator
-            (pcase (coding-system-eol-type buffer-file-coding-system)
-              (0 "LF")
-              (1 "CRLF")
-              (2 "CR")))))
+     (pcase (coding-system-eol-type buffer-file-coding-system)
+       (0 "LF")
+       (1 "CRLF")
+       (2 "CR")))))
 
 (defun alynx-mode-line--segment-encoding ()
   "Display the name of the coding system of the current buffer."
   (when (and alynx-mode-line-show-encoding
              buffer-file-coding-system)
     (alynx-mode-line--concat-with-sperator
-            (let ((coding-system
-                   (coding-system-plist buffer-file-coding-system)))
-              (cond
-               ((memq (plist-get coding-system :category)
-                      '(coding-category-undecided coding-category-utf-8))
-                "UTF-8")
-               (t
-                (upcase (symbol-name (plist-get coding-system :name)))))))))
+     (let ((coding-system
+            (coding-system-plist buffer-file-coding-system)))
+       (cond
+        ((memq (plist-get coding-system :category)
+               '(coding-category-undecided coding-category-utf-8))
+         "UTF-8")
+        (t
+         (upcase (symbol-name (plist-get coding-system :name)))))))))
 
 (defun alynx-mode-line--segment-major-mode ()
   "Display the name of the major mode of the current buffer."
   (when alynx-mode-line-show-major-mode
     (alynx-mode-line--concat-with-sperator
-            ;; Call `format-mode-line` here because we want to process the
-            ;; string by ourselves.
-            (propertize (substring-no-properties (format-mode-line mode-name))
-                        'face 'alynx-mode-line-face-major-mode))))
+     ;; Call `format-mode-line` here because we want to process the
+     ;; string by ourselves.
+     (propertize (substring-no-properties (format-mode-line mode-name))
+                 'face 'alynx-mode-line-face-major-mode))))
 
 (defvar-local alynx-mode-line--vc-text nil)
 
@@ -456,10 +462,8 @@ The mode line should fit the `window-width' with space between the lists."
               (setq face 'alynx-mode-line-face-status-success
                     glyph :vc-good)))
             (alynx-mode-line--concat-with-sperator
-                    (propertize (concat (alynx-mode-line--get-glyph glyph)
-                                        " "
-                                        branch)
-                                'face face))))))
+             (propertize (concat (alynx-mode-line--get-glyph glyph) " " branch)
+                         'face face))))))
 
 (defun alynx-mode-line--segment-vc ()
   "Display color-coded version control information."
@@ -499,47 +503,43 @@ Counts will be returned in an alist as the `cdr' of the following keys:
         (pcase status
           ('finished
            (alynx-mode-line--concat-with-sperator
-                   (let-alist (alynx-mode-line--checker-flycheck-count)
-                     (cond
-                      ((> .error-count 0)
-                       (propertize (concat (alynx-mode-line--get-glyph :checker-issues)
-                                           " "
-                                           "Error: "
-                                           (number-to-string .all-count))
-                                   'face 'alynx-mode-line-face-status-error))
-                      ((> .warning-count 0)
-                       (propertize (concat (alynx-mode-line--get-glyph :checker-issues)
-                                           " "
-                                           "Issue: "
-                                           (number-to-string .all-count))
-                                   'face 'alynx-mode-line-face-status-warning))
-                      ((> .info-count 0)
-                       (propertize (concat (alynx-mode-line--get-glyph :checker-info)
-                                           " "
-                                           "Info: "
-                                           (number-to-string .all-count))
-                                   'face 'alynx-mode-line-face-status-info))
-                      ((zerop .all-count)
-                       (propertize (concat (alynx-mode-line--get-glyph :checker-good)
-                                           " "
-                                           "Good")
-                                   'face 'alynx-mode-line-face-status-success))))))
+            (let-alist (alynx-mode-line--checker-flycheck-count)
+              (cond
+               ((> .error-count 0)
+                (propertize (concat (alynx-mode-line--get-glyph :checker-issues)
+                                    " "
+                                    "Error: "
+                                    (number-to-string .all-count))
+                            'face 'alynx-mode-line-face-status-error))
+               ((> .warning-count 0)
+                (propertize (concat (alynx-mode-line--get-glyph :checker-issues)
+                                    " "
+                                    "Issue: "
+                                    (number-to-string .all-count))
+                            'face 'alynx-mode-line-face-status-warning))
+               ((> .info-count 0)
+                (propertize (concat (alynx-mode-line--get-glyph :checker-info)
+                                    " "
+                                    "Info: "
+                                    (number-to-string .all-count))
+                            'face 'alynx-mode-line-face-status-info))
+               ((zerop .all-count)
+                (propertize (concat (alynx-mode-line--get-glyph :checker-good)
+                                    " "
+                                    "Good")
+                            'face 'alynx-mode-line-face-status-success))))))
           ('running
            (alynx-mode-line--concat-with-sperator
-            (alynx-mode-line--get-glyph :checker-checking)
-            " "
-            "Checking"))
+            (alynx-mode-line--get-glyph :checker-checking) " " "Checking"))
           ('errored
            (alynx-mode-line--concat-with-sperator
-                   (propertize (concat (alynx-mode-line--get-glyph :checker-errored)
-                                       " "
-                                       "Error")
-                               'face 'alynx-mode-line-face-status-error)))
+            (propertize (concat (alynx-mode-line--get-glyph :checker-errored)
+                                " "
+                                "Error")
+                        'face 'alynx-mode-line-face-status-error)))
           ('interrupted
            (alynx-mode-line--concat-with-sperator
-            (alynx-mode-line--get-glyph :checker-interrupted)
-            " "
-            "Paused"))
+            (alynx-mode-line--get-glyph :checker-interrupted) " " "Paused"))
           ;; Hide this and its sperators if not running.
           ('no-checker ""))))
 
@@ -585,42 +585,40 @@ Counts will be returned in an alist as the cdr of the following keys:
   "Update `alynx-mode-line--checker-flymake-text' against the state of flymake."
   (setq alynx-mode-line--checker-flymake-text
         (if (and (fboundp 'flymake-is-running)
-                   (flymake-is-running))
-          (let-alist (alynx-mode-line--checker-flymake-count)
-            (cond
-             ((seq-difference (flymake-running-backends)
-                              (flymake-reporting-backends))
-              (alynx-mode-line--concat-with-sperator
-               (alynx-mode-line--get-glyph :checker-checking)
-               " "
-               "Checking"))
-             ((> .error-count 0)
-              (alynx-mode-line--concat-with-sperator
-                      (propertize (concat (alynx-mode-line--get-glyph :checker-issues)
-                                          " "
-                                          "Errors: "
-                                          (number-to-string .all-count))
-                                  'face 'alynx-mode-line-face-status-error)))
-             ((> .warning-count 0)
-              (alynx-mode-line--concat-with-sperator
-                      (propertize (concat (alynx-mode-line--get-glyph :checker-issues)
-                                          " "
-                                          "Issues: "
-                                          (number-to-string .all-count))
-                          	  'face 'alynx-mode-line-face-status-warning)))
-             ((> .info-count 0)
-              (alynx-mode-line--concat-with-sperator
-                      (propertize (concat (alynx-mode-line--get-glyph :checker-info)
-                                          " "
-                                          "Info: "
-                                          (number-to-string .all-count))
-                                  'face 'alynx-mode-line-face-status-info)))
-             (t
-              (alynx-mode-line--concat-with-sperator
-                      (propertize (concat (alynx-mode-line--get-glyph :checker-good)
-                                          " "
-                                          "Good")
-                                  'face 'alynx-mode-line-face-status-success))))))))
+                 (flymake-is-running))
+            (let-alist (alynx-mode-line--checker-flymake-count)
+              (cond
+               ((seq-difference (flymake-running-backends)
+                                (flymake-reporting-backends))
+                (alynx-mode-line--concat-with-sperator
+                 (alynx-mode-line--get-glyph :checker-checking) " " "Checking"))
+               ((> .error-count 0)
+                (alynx-mode-line--concat-with-sperator
+                 (propertize (concat (alynx-mode-line--get-glyph :checker-issues)
+                                     " "
+                                     "Errors: "
+                                     (number-to-string .all-count))
+                             'face 'alynx-mode-line-face-status-error)))
+               ((> .warning-count 0)
+                (alynx-mode-line--concat-with-sperator
+                 (propertize (concat (alynx-mode-line--get-glyph :checker-issues)
+                                     " "
+                                     "Issues: "
+                                     (number-to-string .all-count))
+                             'face 'alynx-mode-line-face-status-warning)))
+               ((> .info-count 0)
+                (alynx-mode-line--concat-with-sperator
+                 (propertize (concat (alynx-mode-line--get-glyph :checker-info)
+                                     " "
+                                     "Info: "
+                                     (number-to-string .all-count))
+                             'face 'alynx-mode-line-face-status-info)))
+               (t
+                (alynx-mode-line--concat-with-sperator
+                 (propertize (concat (alynx-mode-line--get-glyph :checker-good)
+                                     " "
+                                     "Good")
+                             'face 'alynx-mode-line-face-status-success))))))))
 
 (defun alynx-mode-line--segment-checker-flymake ()
   "Display the current status of flymake."
@@ -641,16 +639,14 @@ Checkers checked, in order: `flycheck', `flymake'."
   ;; Call `format-mode-line` here because we want to process the string.
   (let ((process-info (format-mode-line mode-line-process)))
     (unless (string-blank-p process-info)
-      (alynx-mode-line--concat-with-sperator
-              (string-trim process-info)))))
+      (alynx-mode-line--concat-with-sperator (string-trim process-info)))))
 
 (defun alynx-mode-line--segment-misc-info ()
   "Display the current value of `mode-line-misc-info'."
   ;; Call `format-mode-line` here because we want to process the string.
   (let ((misc-info (format-mode-line mode-line-misc-info)))
     (unless (string-blank-p misc-info)
-      (alynx-mode-line--concat-with-sperator
-              (string-trim misc-info)))))
+      (alynx-mode-line--concat-with-sperator (string-trim misc-info)))))
 
 (defvar-local alynx-mode-line--original-mode-line mode-line-format)
 
@@ -670,12 +666,9 @@ Checkers checked, in order: `flycheck', `flymake'."
               #'alynx-mode-line--checker-flymake-update-segment)
 
   ;; Add VC hooks.
-  (add-hook 'find-file-hook
-            #'alynx-mode-line--vc-update-segment)
-  (add-hook 'after-save-hook
-            #'alynx-mode-line--vc-update-segment)
-  (advice-add 'vc-refresh-state :after
-              #'alynx-mode-line--vc-update-segment)
+  (add-hook 'find-file-hook #'alynx-mode-line--vc-update-segment)
+  (add-hook 'after-save-hook #'alynx-mode-line--vc-update-segment)
+  (advice-add 'vc-refresh-state :after #'alynx-mode-line--vc-update-segment)
 
   ;; Save previous value of `mode-line-format`, it's a buffer-local variable and
   ;; we only save global value here.
@@ -743,12 +736,9 @@ Checkers checked, in order: `flycheck', `flymake'."
                  #'alynx-mode-line--checker-flymake-update-segment)
 
   ;; Remove VC hooks.
-  (remove-hook 'file-find-hook
-               #'alynx-mode-line--vc-update-segment)
-  (remove-hook 'after-save-hook
-               #'alynx-mode-line--vc-update-segment)
-  (advice-remove 'vc-refresh-state
-                 #'alynx-mode-line--vc-update-segment)
+  (remove-hook 'file-find-hook #'alynx-mode-line--vc-update-segment)
+  (remove-hook 'after-save-hook #'alynx-mode-line--vc-update-segment)
+  (advice-remove 'vc-refresh-state #'alynx-mode-line--vc-update-segment)
 
   ;; Restore the original value of `mode-line-format`, we still only handle
   ;; global value.
