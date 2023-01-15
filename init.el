@@ -1348,19 +1348,21 @@ point reaches the beginning or end of the buffer, stop there."
   ;; this just ignores all text properties, so it also hides indent guides.
   (consult-fontify-preserve nil))
 
-(use-package treemacs
-  :ensure t
-  :defer 1
-  ;; I never use internal input method so bind this to `treemacs`.
-  :bind (("C-\\" . treemacs))
-  ;; Disable line number for `treemacs` window.
-  :hook ((treemacs-mode . (lambda () (display-line-numbers-mode -1))))
-  :custom
-  ;; Default `treemacs` window is too wide.
-  (treemacs-width 20)
-  (treemacs-persist-file (locate-user-emacs-file ".local/treemacs-persist"))
-  (treemacs-last-error-persist-file
-   (locate-user-emacs-file ".local/treemacs-persist-at-last-error")))
+;; This depends on `ace-window` and `hydra`, and I hardly use it.
+;; (use-package treemacs
+;;   :ensure t
+;;   :disabled t
+;;   :defer 1
+;;   ;; I never use internal input method so bind this to `treemacs`.
+;;   :bind (("C-\\" . treemacs))
+;;   ;; Disable line number for `treemacs` window.
+;;   :hook ((treemacs-mode . (lambda () (display-line-numbers-mode -1))))
+;;   :custom
+;;   ;; Default `treemacs` window is too wide.
+;;   (treemacs-width 20)
+;;   (treemacs-persist-file (locate-user-emacs-file ".local/treemacs-persist"))
+;;   (treemacs-last-error-persist-file
+;;    (locate-user-emacs-file ".local/treemacs-persist-at-last-error")))
 
 ;; Dependency of `flycheck-posframe` and `lsp-bridge`.
 (use-package posframe
