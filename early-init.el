@@ -36,6 +36,9 @@
 ;; Hide default mode line until custom mode line is loaded, because the default
 ;; style is ugly and it's useless during startup.
 (setq-default mode-line-format nil)
+;; Change titlebar label.
+;; I hardly see titlebar, `system-name` is really useless.
+(setq-default frame-title-format "%b - GNU Emacs")
 ;; Start every frame maximized.
 ;; See <https://emacsredux.com/blog/2020/12/04/maximize-the-emacs-frame-on-startup/>.
 ;; Well, `maximized` should be the correct value, but at least it does not work

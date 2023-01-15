@@ -621,8 +621,9 @@ point reaches the beginning or end of the buffer, stop there."
   ;;         (cdr args)))
   ;; (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
   :custom
-  ;; Disable startup buffer.
+  ;; Disable startup buffer. It's OK but it's not beautiful and not helpful.
   (inhibit-startup-screen t)
+  (initial-scratch-message ";; Happy hacking here!\n\n")
   ;; Disable annoying bell.
   (ring-bell-function 'ignore)
   ;; (visible-bell nil)
