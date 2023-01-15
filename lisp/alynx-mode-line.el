@@ -551,13 +551,14 @@ Counts will be returned in an alist as the `cdr' of the following keys:
 
 (declare-function flymake-running-backends "flymake" ())
 (declare-function flymake-reporting-backends "flymake" ())
+(declare-function flymake-diagnostic-type "flymake" (diag))
 
 (defun alynx-mode-line--checker-flymake-count-report-type (type)
   "Return count of current flymake reports of TYPE."
   (let ((count 0))
     (dolist (d (flymake-diagnostics))
-      (when (eq (cl-struct-slot-value 'flymake--diag 'type d) type)
-        (cl-incf count)))
+      (when (eq (flymake-diagnostic-type d) type)
+        (setq count (+ count 1))))
     count))
 
 (defun alynx-mode-line--checker-flymake-count ()
