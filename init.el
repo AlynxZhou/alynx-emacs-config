@@ -101,8 +101,10 @@
   '((apache-mode apache-indent-level)
     (awk-mode c-basic-offset)
     (bpftrace-mode c-basic-offset)
-    (c++-mode c-basic-offset)
     (c-mode c-basic-offset)
+    (c-ts-mode c-basic-offset)
+    (c++-mode c-basic-offset)
+    (c++-ts-mode c-basic-offset)
     (cmake-mode cmake-tab-width)
     (coffee-mode coffee-tab-width)
     (cperl-mode cperl-indent-level)
@@ -140,6 +142,7 @@
     (jade-mode jade-tab-width)
     (java-mode c-basic-offset)
     (js-mode js-indent-level)
+    (js-ts-mode js-indent-level)
     (js-jsx-mode js-indent-level sgml-basic-offset)
     (js2-mode js2-basic-offset)
     (js2-jsx-mode js2-basic-offset sgml-basic-offset)
@@ -150,6 +153,7 @@
     (kotlin-mode kotlin-tab-width)
     (latex-mode tex-indent-basic)
     (lisp-mode lisp-indent-offset)
+    (lisp-interaction-mode lisp-indent-offset)
     (livescript-mode livescript-tab-width)
     (lua-mode lua-indent-level)
     (matlab-mode matlab-indent-level)
@@ -494,7 +498,7 @@ point reaches the beginning or end of the buffer, stop there."
   (end-of-line)
   (newline-and-indent))
 (global-set-key (kbd "C-o") 'open-next-line)
-(global-set-key (kbd "C-O") 'open-previous-line)
+(global-set-key (kbd "C-S-o") 'open-previous-line)
 
 (defun show-file-path ()
   "Show the full file path of current buffer in the minibuffer."
@@ -1231,10 +1235,14 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Orderless always returns too many unrelated results, especially for auto
   ;; completing, so only use it in minibuffer.
   ;; See <https://emacs-china.org/t/orderless-completion/20455/3>.
-  :hook ((minibuffer-setup . (lambda ()
-                               (setq-local completion-styles '(orderless basic)
-                                           completion-category-overrides '((file . ((styles . (partial-completion)))))))))
+  ;; Well, that's not a problem after using `lsp-bridge`. `lsp-bridge` has its
+  ;; own completion style so it won't be affected by orderless.
+  ;; :hook ((minibuffer-setup . (lambda ()
+  ;;                              (setq-local completion-styles '(orderless basic)
+  ;;                                          completion-category-overrides '((file . ((styles . (partial-completion)))))))))
   :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file . ((styles . (partial-completion))))))
   ;; Allow escape space with backslash.
   (orderless-component-separator 'orderless-escapable-split-on-space))
 
@@ -1407,7 +1415,7 @@ point reaches the beginning or end of the buffer, stop there."
   :custom
   ;; Currently `flycheck` is unable to run local `standardx` with `npx`.
   ;; See <https://github.com/flycheck/flycheck/issues/1428>.
-  ;; (flycheck-javascript-standard-executable "/usr/bin/standardx")
+  (flycheck-javascript-standard-executable "/usr/bin/standardx")
   ;; Leave left fringe to VCS states.
   (flycheck-indication-mode 'right-fringe))
 

@@ -115,14 +115,20 @@
      `(flyspell-incorrect ((t (:underline (:color ,error :style wave)))))
 
      ;; Flymake.
-     `(flymake-error ((t (:underline (:color ,error :style wave)))))
-     `(flymake-note ((t (:underline (:color ,info :style wave)))))
-     `(flymake-warning ((t (:underline (:color ,warning :style wave)))))
+     `(flymake-error ((t (:underline (:color ,error)))))
+     `(flymake-warning ((t (:underline (:color ,warning)))))
+     `(flymake-note ((t (:underline (:color ,info)))))
 
      ;; Flycheck.
-     `(flycheck-error ((t (:underline (:color ,error :style wave)))))
-     `(flycheck-info ((t (:underline (:color ,info :style wave)))))
-     `(flycheck-warning ((t (:underline (:color ,warning :style wave)))))
+     `(flycheck-error ((t (:underline (:color ,error)))))
+     `(flycheck-warning ((t (:underline (:color ,warning)))))
+     `(flycheck-info ((t (:underline (:color ,info)))))
+
+     ;; `lsp-bridge`.
+     `(lsp-bridge-diagnostics-error-face ((t (:underline (:color ,error)))))
+     `(lsp-bridge-diagnostics-warning-face ((t (:underline (:color ,warning)))))
+     `(lsp-bridge-diagnostics-info-face ((t (:underline (:color ,info)))))
+     `(lsp-bridge-diagnostics-hint-face ((t (:underline (:color ,fg)))))
 
      ;; Trailing whitespace.
      ;; This is different from the package called `whitespace`.
@@ -244,12 +250,12 @@
      `(rpm-spec-section-face ((t (:foreground ,orange-2))))
 
      ;; `linum`.
-     `(linum ((t (:foreground ,gutter :background ,bg))))
+     `(linum ((t (:foreground ,gutter :background ,bg :weight normal :slant normal))))
      ;; `hlinum`.
-     `(linum-highlight-face ((t (:foreground ,fg :background ,bg))))
+     `(linum-highlight-face ((t (:foreground ,fg :background ,bg :weight normal :slant normal))))
      ;; Native line numbers (version >=26).
-     `(line-number ((t (:foreground ,gutter :background ,bg))))
-     `(line-number-current-line ((t (:foreground ,fg :background ,bg))))
+     `(line-number ((t (:foreground ,gutter :background ,bg :weight normal :slant normal))))
+     `(line-number-current-line ((t (:foreground ,fg :background ,bg :weight normal :slant normal))))
 
      ;; Fill column indicator.
      ;; Inherit shadow, so no background is set, and then use better color, and

@@ -31,6 +31,12 @@ Install dependencies and language servers for `lsp-bridge` (`clangd` is included
 $ paru -S python-epc python-sexpdata
 ```
 
+Because [`flycheck` currently cannot run locally installed `standardx`](https://github.com/flycheck/flycheck/issues/1428), you may need to install it globally:
+
+```shell
+$ npm install --global standardx
+```
+
 And run Emacs.
 
 I am using Emacs master branch with pgtk and native-comp, if you are not using the latest version, it may not work. You may read my [PKGBUILD](./dists/arch/PKGBUILD) for my Emacs building options, but it may be not OK for you.
