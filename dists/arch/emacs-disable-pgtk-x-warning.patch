@@ -1,0 +1,29 @@
+From bcc420ec070c9b0f3dea98b9ef2c35cef31b159d Mon Sep 17 00:00:00 2001
+From: Alynx Zhou <alynx.zhou@gmail.com>
+Date: Mon, 16 Jan 2023 13:49:23 +0800
+Subject: [PATCH] Disabled PGTK X warning.
+
+I know what I am doing.
+---
+ src/pgtkterm.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/pgtkterm.c b/src/pgtkterm.c
+index 5158492ca0..dbd8b93a2d 100644
+--- a/src/pgtkterm.c
++++ b/src/pgtkterm.c
+@@ -6789,9 +6789,10 @@ pgtk_term_init (Lisp_Object display_name, char *resource_name)
+       return 0;
+     }
+ 
++  /* AZ: This is too annoying, I know what I am doing and won't cry to devs. */
+   /* If the PGTK port is being used under X, complain very loudly, as
+      that isn't supported.  */
+-  pgtk_display_x_warning (dpy);
++  /* pgtk_display_x_warning (dpy); */
+ 
+   dpyinfo = xzalloc (sizeof *dpyinfo);
+   pgtk_initialize_display_info (dpyinfo);
+-- 
+2.39.0
+

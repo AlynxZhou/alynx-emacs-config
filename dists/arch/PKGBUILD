@@ -1,7 +1,8 @@
 # Maintainer: Alynx Zhou <alynx.zhou@gmail.com>
 
 # This is just used to record my building options, it may be not OK for you. I
-# even do not upload it to AUR.
+# even do not upload it to AUR. If you try my package and crash, don't cry to
+# me or upstream devs.
 
 # Based on <https://aur.archlinux.org/packages/emacs-pgtk-native-comp-git>.
 
@@ -14,6 +15,7 @@
 #   - No CLI or NOX build, I'm a desktop engineer and always have GUI.
 #   - I don't use xwidgets, but may be useful in future.
 #   - No PDF or HTML docs, I just read them directly in Emacs.
+#   - Disable PGTK X warning, I hack GTK and I know what I am doing.
 
 pkgname=emacs-alynx
 pkgver=30.0.50.164434
@@ -36,10 +38,12 @@ _commit="033f2cc6140d03e78403f37689b9f54b64bded01"
 # source=("emacs-git::git+https://git.savannah.gnu.org/git/emacs.git#commit=$_commit")
 # GitHub mirror is easier to access.
 source=("emacs-git::git+https://github.com/emacs-mirror/emacs.git#commit=$_commit"
-        "fix-cursor-location.patch")
+        "emacs-fix-pgtk-cursor-location.patch"
+        "emacs-disable-pgtk-x-warning.patch")
 options=(!strip)
 sha512sums=("SKIP"
-            "SKIP")
+            "53c887c5bbf84c64fab5949f8b9ddd25a5b069510cf72f2dff7b3debbd8ad98543dafdeddf96e371b85808aba8bc618e9a8ffdf53d79ddd63bc073a4dae2d807"
+            "9c74ff3cc7648b1f90d6d9705b3c3bf28eb724a5cb633edf362d10dfdb8db3917812e09fe474d26afae9aa6805fb872dfa12a24d740a0b22453c43507b4f984c")
 
 pkgver() {
   cd emacs-git
@@ -53,7 +57,9 @@ pkgver() {
 prepare() {
   cd emacs-git
 
-  git apply -3 "${srcdir}/fix-cursor-location.patch"
+  git apply -3 "${srcdir}/emacs-fix-pgtk-cursor-location.patch"
+  git apply -3 "${srcdir}/emacs-disable-pgtk-x-warning.patch"
+
   [[ -x configure ]] || ( ./autogen.sh git && ./autogen.sh autoconf )
   mkdir -p build
 }
