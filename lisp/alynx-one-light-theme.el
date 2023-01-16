@@ -148,14 +148,19 @@
    `(lazy-highlight ((t (:foreground ,purple :background ,bg-1 :underline ,purple))))
 
    ;; `diff-mode`.
-   ;; The default styles are too noisy. Who cares about file / function /
-   ;; index? I only care about lines and never edit patches manually.
-   `(diff-header ((t (:inherit (default)))))
+   ;; The default styles are too noisy.
+   ;; Unchanged text and e-mail content of `git format-patch`.
+   `(diff-context ((t (:inherit (default)))))
+   ;; Easier to see different files.
+   `(diff-header ((t (:inherit (font-lock-preprocessor-face)))))
+   ;; Not sure what `diff-index` is.
    `(diff-index ((t (:inherit (diff-header)))))
-   `(diff-function ((t (:inherit (diff-header)))))
-   `(diff-nonexistent ((t (:inherit (diff-header)))))
-   `(diff-file-header ((t (:inherit (diff-header)))))
-   `(diff-hunk-header ((t (:inherit (diff-header)))))
+   ;; File names are important.
+   `(diff-file-header ((t (:inherit (font-lock-type-face) :weight bold))))
+   `(diff-nonexistent ((t (:inherit (diff-file-header)))))
+   ;; Easier to see different hunks, they are less important.
+   `(diff-hunk-header ((t (:inherit (font-lock-keyword-face)))))
+   `(diff-function ((t (:inherit (font-lock-function-name-face)))))
    `(diff-error ((t (:underline (:color ,error)))))
    `(diff-removed ((t (:foreground ,delete :background unspecified))))
    `(diff-added ((t (:foreground ,insert :background unspecified))))
