@@ -393,9 +393,9 @@ The mode line should fit the `window-width' with space between."
                                                alynx-mode-line-mode-indent-offset-alist))))))
       (alynx-mode-line--concat-with-sperator
        (if indent-tabs-mode "TAB" "SPC")
-       (alynx-mode-line--get-glyph :count-separator)
+       " "
        (if (null mode-offset) "?" (number-to-string mode-offset))
-       ":"
+       " "
        (number-to-string tab-width)))))
 
 (defun alynx-mode-line--segment-eol-style ()
