@@ -813,7 +813,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Don't set `:ensure t` for built-in packages, it will mess things up when
   ;; using `package-activate-all` instead of `package-initialize`.
   ;; This is not needed in startup so we defer it for 1 second.
-  ;; Only `ivy-use-virtual-buffers` need it.
+  ;; `ivy-use-virtual-buffers` and `consult-buffer` need it.
   :defer 1
   :config
   (recentf-mode 1)
