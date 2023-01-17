@@ -803,7 +803,10 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Better keybindings for replace, because `isearch-backward` is hardly used.
 (use-package replace
   :bind (("C-r" . query-replace)
-         ("C-M-r" . query-replace-regexp)))
+         ("C-M-r" . query-replace-regexp))
+  :custom
+  ;; No, don't do case insensitive replace.
+  (case-fold-search nil))
 
 ;; Built-in minor mode to save recent files.
 (use-package recentf
