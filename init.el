@@ -1151,6 +1151,11 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (which-key-mode 1))
 
+(use-package rainbow-mode
+  :ensure t
+  :hook ((prog-mode . rainbow-mode)
+         (yaml-mode . rainbow-mode)))
+
 ;; High CPU usage on scrolling.
 ;; (use-package rainbow-delimiters
 ;;   :ensure t
