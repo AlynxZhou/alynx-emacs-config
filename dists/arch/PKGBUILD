@@ -18,7 +18,7 @@
 #   - Disable PGTK X warning, I hack GTK and I know what I am doing.
 
 pkgname=emacs-alynx
-pkgver=30.0.50.164434
+pkgver=30.0.50.164556
 pkgrel=1
 pkgdesc="GNU Emacs. Alynx's build."
 arch=("x86_64")
@@ -34,15 +34,13 @@ conflicts=("emacs")
 # the latest commit and test whether it works fine. I have to sync my tools
 # between different machines and this makes sure that I always get the same
 # working copy.
-_commit="033f2cc6140d03e78403f37689b9f54b64bded01"
+_commit="281f48f19ecad706a639d57cb937afb0b97eded7"
 # source=("emacs-git::git+https://git.savannah.gnu.org/git/emacs.git#commit=$_commit")
 # GitHub mirror is easier to access.
 source=("emacs-git::git+https://github.com/emacs-mirror/emacs.git#commit=$_commit"
-        "emacs-fix-pgtk-cursor-location.patch"
         "emacs-disable-pgtk-x-warning.patch")
 options=(!strip)
 sha512sums=("SKIP"
-            "53c887c5bbf84c64fab5949f8b9ddd25a5b069510cf72f2dff7b3debbd8ad98543dafdeddf96e371b85808aba8bc618e9a8ffdf53d79ddd63bc073a4dae2d807"
             "9c74ff3cc7648b1f90d6d9705b3c3bf28eb724a5cb633edf362d10dfdb8db3917812e09fe474d26afae9aa6805fb872dfa12a24d740a0b22453c43507b4f984c")
 
 pkgver() {
@@ -57,7 +55,6 @@ pkgver() {
 prepare() {
   cd emacs-git
 
-  git apply -3 "${srcdir}/emacs-fix-pgtk-cursor-location.patch"
   git apply -3 "${srcdir}/emacs-disable-pgtk-x-warning.patch"
 
   [[ -x configure ]] || ( ./autogen.sh git && ./autogen.sh autoconf )
