@@ -367,11 +367,17 @@ If NUM is negative, indent offset will be nil."
                                        (lisp-interaction-mode space -1)
                                        (js-mode space 2)
                                        (js2-mode space 2)
+                                       (json-ts-mode space 2)
                                        (css-mode space 2)
                                        (html-mode space 2)
                                        (nxml-mode space 2)
                                        (web-mode space 2)
                                        (yaml-mode space 2)
+                                       ;; `yaml-ts-mode` is a `text-mode`, it
+                                       ;; has no indent offset variable and tab
+                                       ;; is used to align, so this just let it
+                                       ;; use spaces.
+                                       (yaml-ts-mode space -1)
                                        (meson-mode space 2)
                                        (lua-mode space 3)
                                        (python-mode space 4))
@@ -775,7 +781,7 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package whitespace
   ;; Highlight trailing whitespace in `prog-mode` only.
   :hook ((prog-mode . (lambda () (setq show-trailing-whitespace t)))
-         (yaml-mode . (lambda () (setq show-trailing-whitespace t)))))
+         (yaml-ts-mode . (lambda () (setq show-trailing-whitespace t)))))
 
 ;; Built-in minor mode to display column ruler.
 (use-package display-fill-column-indicator
@@ -848,6 +854,9 @@ point reaches the beginning or end of the buffer, stop there."
 ;; See <https://git.savannah.gnu.org/cgit/emacs.git/tree/admin/notes/tree-sitter/starter-guide?h=feature/tree-sitter>.
 ;; Building <https://github.com/casouri/tree-sitter-module/> is needed, because
 ;; the release is not up to date sometimes.
+;; Articles from the feature author are also helpful.
+;; See <https://archive.casouri.cc/note/2023/tree-sitter-in-emacs-29/>.
+;; See <https://archive.casouri.cc/note/2023/tree-sitter-starter-guide/>.
 (use-package treesit
   :custom
   (treesit-extra-load-path `(,(locate-user-emacs-file ".local/treesit"))))
@@ -891,6 +900,15 @@ point reaches the beginning or end of the buffer, stop there."
   :hook (c-mode . (lambda () (setq comment-start "//"
                                    comment-end   ""))))
 
+(use-package json-ts-mode
+  :mode (("\\.bowerrc\\'" . json-ts-mode)
+         ("\\.jshintrc\\'" . json-ts-mode)
+         ("\\.json_schema\\'" . json-ts-mode)
+         ("\\.json\\'" . json-ts-mode)))
+
+(use-package yaml-ts-mode
+  :mode (("\\.yml\\'" . yaml-ts-mode) ("\\.yaml\\'" . yaml-ts-mode)))
+
 ;; External modes and tools for different languages.
 
 (use-package js2-mode
@@ -913,13 +931,15 @@ point reaches the beginning or end of the buffer, stop there."
   :bind (:map js-mode-map ("M-." . nil))
   :custom (xref-js2-search-program 'rg))
 
-(use-package json-mode
-  :ensure t
-  :bind (:map json-mode-map ("C-c <tab>" . json-mode-beautify))
-  :mode (("\\.bowerrc\\'" . json-mode)
-         ("\\.jshintrc\\'" . json-mode)
-         ("\\.json_schema\\'" . json-mode)
-         ("\\.json\\'" . json-mode)))
+;; Emacs now has internal `json-ts-mode`, should be enough for me.
+;; (use-package json-mode
+;;   :ensure t
+;;   :disabled t
+;;   :bind (:map json-mode-map ("C-c <tab>" . json-mode-beautify))
+;;   :mode (("\\.bowerrc\\'" . json-mode)
+;;          ("\\.jshintrc\\'" . json-mode)
+;;          ("\\.json_schema\\'" . json-mode)
+;;          ("\\.json\\'" . json-mode)))
 
 (use-package lua-mode
   :ensure t
@@ -953,9 +973,11 @@ point reaches the beginning or end of the buffer, stop there."
   ;; I prefer not to indent control blocks of templating.
   (web-mode-enable-control-block-indentation nil))
 
-(use-package yaml-mode
-  :ensure t
-  :mode (("\\.yml\\'" . yaml-mode) ("\\.yaml\\'" . yaml-mode)))
+;; Emacs now has internal `yaml-ts-mode`, should be enough for me.
+;; (use-package yaml-mode
+;;   :ensure t
+;;   :disabled t
+;;   :mode (("\\.yml\\'" . yaml-mode) ("\\.yaml\\'" . yaml-mode)))
 
 (use-package meson-mode
   :ensure t
@@ -1066,7 +1088,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; I only use this in `prog-mode`.
   :hook ((prog-mode . highlight-indent-guides-mode)
          ;; `yaml-mode` should be `prog-mode`, anyway.
-         (yaml-mode . highlight-indent-guides-mode))
+         (yaml-ts-mode . highlight-indent-guides-mode))
   :custom
   ;; Highlight indent guides could generate font faces via background
   ;; automatically, but it's too dark. I have color in themes so disable it.
@@ -1086,7 +1108,7 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer t
   :hook ((prog-mode . hl-todo-mode)
-         (yaml-mode . hl-todo-mode)))
+         (yaml-ts-mode . hl-todo-mode)))
 
 ;; `diff-hl` supports more VCS than `git-gutter` and `git-gutter-fringe`.
 (use-package diff-hl
@@ -1159,7 +1181,7 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package rainbow-mode
   :ensure t
   :hook ((prog-mode . rainbow-mode)
-         (yaml-mode . rainbow-mode)))
+         (yaml-ts-mode . rainbow-mode)))
 
 ;; High CPU usage on scrolling.
 ;; (use-package rainbow-delimiters
@@ -1385,7 +1407,7 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer t
   :hook ((prog-mode . flycheck-mode)
-         (yaml-mode . flycheck-mode)
+         (yaml-ts-mode . flycheck-mode)
          (markdown-mode . flycheck-mode)
          (org-mode . flycheck-mode))
   :config
@@ -1464,7 +1486,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; This is not in MELPA and installed as submodules.
   :load-path "site-lisp/lsp-bridge/"
   :hook ((prog-mode . lsp-bridge-mode)
-         (yaml-mode . lsp-bridge-mode))
+         (yaml-ts-mode . lsp-bridge-mode))
   :custom
   (lsp-bridge-enable-hover-diagnostic t)
   (lsp-bridge-signature-show-function 'lsp-bridge-signature-posframe))
