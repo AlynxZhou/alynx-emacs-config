@@ -603,7 +603,12 @@ point reaches the beginning or end of the buffer, stop there."
          ("\\.changes\\'" . (lambda ()
                               (display-fill-column-indicator-mode 1)
                               (setq display-fill-column-indicator-column 67)
-                              (setq show-trailing-whitespace t))))
+                              (setq show-trailing-whitespace t)))
+         ;; `osc` generate temp files for `vc`.
+         ("\\.changes\\.vctmp\\." . (lambda ()
+                                      (display-fill-column-indicator-mode 1)
+                                      (setq display-fill-column-indicator-column 67)
+                                      (setq show-trailing-whitespace t))))
   ;; Vertico requires those.
   :config
   ;; Contrary to what many Emacs users have in their configs, you only need this
