@@ -52,7 +52,7 @@
 ;; it has padding before and after it. To fix this I used my patched Monaco
 ;; which merges Menlo's characters into it.
 (set-face-attribute 'default nil
-                    :family "Monaco"
+                    :family "monospace"
                     ;; :slant 'normal
                     :width 'normal
                     :weight 'normal
@@ -61,11 +61,11 @@
 
 ;; Set CJK font. 中文
 ;; Don't set size here, otherwise when scaling Chinese won't scale.
-(dolist (charset '(kana han symbol cjk-misc bopomofo))
-  (set-fontset-font t charset (font-spec :family "Noto Sans Mono CJK SC"
-                                         ;; :slant 'normal
-                                         :width 'normal
-                                         :weight 'normal)))
+;; (dolist (charset '(kana han symbol cjk-misc bopomofo))
+;;   (set-fontset-font t charset (font-spec :family "Noto Sans Mono CJK SC"
+;;                                          ;; :slant 'normal
+;;                                          :width 'normal
+;;                                          :weight 'normal)))
 
 ;; Make Monaco and Noto Sans CJK SC the same line height.
 ;; This is not perfect, since font size is always integer, same line height
@@ -73,7 +73,7 @@
 ;; Better way is to custom Monaco's ascent and descent in its OS/2 table to make
 ;; it have the same ratio as Noto Sans Mono CJK SC.
 ;; However it will break box-drawing characters, which needs to be stretched.
-;; If Emacs allows user to set a custom min line height, this will be solved.
+;; If Emacs allows user to set a custom min line height, this might be solved.
 (setq face-font-rescale-alist '(("Noto Sans Mono CJK SC" . 0.85)))
 
 ;; Don't clean font-caches during GC.
