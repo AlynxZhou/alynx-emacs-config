@@ -106,6 +106,7 @@
     (c++-mode c-basic-offset)
     (c++-ts-mode c-basic-offset)
     (cmake-mode cmake-tab-width)
+    (cmake-ts-mode cmake-ts-mode-indent-offset)
     (coffee-mode coffee-tab-width)
     (cperl-mode cperl-indent-level)
     (crystal-mode crystal-indent-level)
@@ -676,14 +677,14 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package windmove
   :demand t
-  :config
-  ;; `S-<arrow>` to move between windows (`S` means Shift).
-  (windmove-default-keybindings)
   :bind
   (("C-c n" . windmove-down)
    ("C-c p" . windmove-up)
    ("C-c f" . windmove-right)
-   ("C-c b" . windmove-left)))
+   ("C-c b" . windmove-left))
+  :config
+  ;; `S-<arrow>` to move between windows (`S` means Shift).
+  (windmove-default-keybindings))
 
 (use-package comp
   :custom
@@ -1017,8 +1018,17 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Finally I decide to write my own mode line so I can modify it easily.
 (use-package alynx-mode-line
-  ;; Well, Emacs does not generate autoloads for local library, to make flycheck
-  ;; happy, let `use-package` declare it.
+  ;; Well, Emacs does not generate and call autoloads for local library, and
+  ;; `flycheck` will be unhappy because the function is not declared. We could
+  ;; use `:commands` to let `use-package` generate and call autoloads here, but
+  ;; it will also defer the package and `:demand t` is needed then. Actually I
+  ;; don't really need autoloads for this, I just need to declare it, this could
+  ;; be done via `:functions`.
+  ;; Interestingly, it's a chicken & egg problem. I need autoloads to lazy load
+  ;; packages when calling functions, but functions in `:config` are called
+  ;; after package loaded, so use `:demand t` to break it.
+  ;; :demand t
+  ;; :commands (alynx-mode-line-mode)
   :functions (alynx-mode-line-mode)
   :config
   (alynx-mode-line-mode 1)
@@ -1060,15 +1070,15 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   ;; If you use `:bind`, `use-package` will create lazy loading for package,
   ;; however I don't want to lazy load this, I just want to add some
-  ;; keybindings. In this case, use `:demand`.
+  ;; keybindings. In this case, use `:demand t`.
   ;; See <https://github.com/jwiegley/use-package#notes-about-lazy-loading>.
   :demand t
-  :config
-  (whole-line-or-region-global-mode 1)
   ;; See <https://github.com/purcell/whole-line-or-region/commit/ba193b2034388bbc384cb04093150fca56f7e262>.
   :bind (:map whole-line-or-region-local-mode-map
               ([remap indent-rigidly-left-to-tab-stop] . whole-line-or-region-indent-rigidly-left-to-tab-stop)
-              ([remap indent-rigidly-right-to-tab-stop] . whole-line-or-region-indent-rigidly-right-to-tab-stop)))
+              ([remap indent-rigidly-right-to-tab-stop] . whole-line-or-region-indent-rigidly-right-to-tab-stop))
+  :config
+  (whole-line-or-region-global-mode 1))
 
 ;; Redo like most editors.
 (use-package undo-tree
@@ -1180,8 +1190,30 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package rainbow-mode
   :ensure t
+  ;; Defining our functions that calls package functions in `:preface` is a
+  ;; solution to make byte-compiler happy, but we still needs `:functions` to
+  ;; work when we call functions from packages in `:config` directly.
+  ;; See <https://github.com/jwiegley/use-package/issues/1032#issuecomment-1397951772>
+  ;; :functions (rainbow-x-color-luminance)
   :hook ((prog-mode . rainbow-mode)
-         (yaml-ts-mode . rainbow-mode)))
+         (yaml-ts-mode . rainbow-mode))
+  :config
+  ;; FIXME: To make `flycheck` happy, before we fix `:functions`.
+  (declare-function rainbow-x-color-luminance "rainbow-mode" (color))
+  ;; Using overlay so it has higher priority than `hl-line`.
+  ;; After Emacs 29 we have fantastic optimizations about overlay so it won't be
+  ;; a problem.
+  (defun alynx/rainbow-colorize-with-overlay (color &optional match)
+    (let* ((match (or match 0))
+           (ov (make-overlay (match-beginning match) (match-end match))))
+      (overlay-put ov 'ov-rainbow t)
+      (overlay-put ov 'face
+                   `((:foreground ,(if (> 0.5 (rainbow-x-color-luminance color))
+                                       "white"
+                                     "black"))
+                     (:background ,color)))))
+  (advice-add 'rainbow-colorize-match :override
+              'alynx/rainbow-colorize-with-overlay))
 
 ;; High CPU usage on scrolling.
 ;; (use-package rainbow-delimiters

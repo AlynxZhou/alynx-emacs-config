@@ -163,6 +163,7 @@ may be found to be missing in `alynx-mode-line-glyph-alist'."
     (c++-mode c-basic-offset)
     (c++-ts-mode c-basic-offset)
     (cmake-mode cmake-tab-width)
+    (cmake-ts-mode cmake-ts-mode-indent-offset)
     (coffee-mode coffee-tab-width)
     (cperl-mode cperl-indent-level)
     (crystal-mode crystal-indent-level)
