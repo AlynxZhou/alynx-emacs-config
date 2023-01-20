@@ -5,11 +5,11 @@
 
 ;;; Code:
 
-;; If a function / variable is not used for direct calling, add a `alynx/`
+;; NOTE: If a function / variable is not used for direct calling, add a `alynx/`
 ;; prefix for it.
 
 ;; Tweaks.
-
+;;
 ;; Those belong to no package and should be done during initialization.
 
 ;; Show loading details after startup.
@@ -31,11 +31,13 @@
 (add-to-list 'load-path (locate-user-emacs-file "lisp/"))
 
 ;; Create local dir to redirect package-generated files.
+;;
 ;; It's better not to move `eln-cache` and `elpa` into local dir, `eln-cache` is
 ;; defined in `native-comp-eln-load-path`, which is a list contains user one and
 ;; system one, I am even not sure whether this is used to save compiled cache,
 ;; maybe it's only used to load. `elpa` is defined in `package-user-dir`, I
 ;; don't want to modify it, either.
+;;
 ;; The last non-nil argument makes `make-directory` silience if dir exists.
 (make-directory (locate-user-emacs-file ".local/") t)
 ;; Cache dir which contains package caches that you can safely remove it.
@@ -46,33 +48,64 @@
 ;; Fonts.
 
 ;; (setq font-use-system-font t)
+
 ;; Set default font.
+;;
 ;; `fill-column-indicator` and `highlight-indent-guide` uses box-drawing
 ;; characters to draw bars, but the default characters in Monaco is not so good,
 ;; it has padding before and after it. To fix this I used my patched Monaco
-;; which merges Menlo's characters into it.
+;; which merges Menlo's box-drawing characters into it.
 (set-face-attribute 'default nil
-                    :family "monospace"
+                    :family "Monaco"
                     ;; :slant 'normal
-                    :width 'normal
-                    :weight 'normal
+                    ;; :width 'normal
+                    ;; :weight 'normal
                     ;; 1 height is 1/10 pt.
                     :height 140)
 
-;; Set CJK font. 中文
+;; Set fallback fonts, like 中文 or 😸.
+;;
+;; Emacs does not handle fonts fallback with FontConfig directly, instead it has
+;; something called `fontset`. While there are more then one `fontset`s, we only
+;; need to handle `fontset-default` mostly.
+;;
+;; You can modify `fontset` by `set-fontset-font`, but it's not a simple list of
+;; fonts, it contains different lists for different charsets. If you don't give
+;; a charset, you are changing the default charset, however, it's not for every
+;; chars, but only for chars that cannot be found in other charsets. So at least
+;; we have to modify all charsets we need.
+;;
+;; See <https://archive.casouri.cc/note/2019/emacs-%E5%AD%97%E4%BD%93%E4%B8%8E%E5%AD%97%E4%BD%93%E9%9B%86/>.
+;;
 ;; Don't set size here, otherwise when scaling Chinese won't scale.
-;; (dolist (charset '(kana han symbol cjk-misc bopomofo))
-;;   (set-fontset-font t charset (font-spec :family "Noto Sans Mono CJK SC"
-;;                                          ;; :slant 'normal
-;;                                          :width 'normal
-;;                                          :weight 'normal)))
+;;
+;; NOTE: Noto Sans CJK has no italic version, so if you cannot see CJK in
+;; italic, it's not a bug. Maybe Sarasa Fixed has a generated italic version.
+;;
+;; See <https://github.com/notofonts/noto-fonts/issues/1466#issuecomment-469384694>.
+(dolist (charset '(han kana hangul symbol cjk-misc bopomofo))
+  ;; FIXME: Not sure why Emacs prefers Sarasa Fixed, even I add Noto Sans Mono
+  ;; CJK SC before it, I have to clear the list before adding fonts.
+  (set-fontset-font t charset nil)
+  ;; Prepend to the beginning of charset font lists.
+  (set-fontset-font t charset
+                    (font-spec :family "Noto Color Emoji") nil 'prepend)
+  (set-fontset-font t charset
+                    (font-spec :family "Noto Sans Mono CJK SC") nil 'prepend)
+  (set-fontset-font t charset
+                    (font-spec :family "Monaco") nil 'prepend))
 
-;; Make Monaco and Noto Sans CJK SC the same line height.
-;; This is not perfect, since font size is always integer, same line height
-;; makes Chinese too small.
+;; Noto Sans CJK fonts has larger ascent and descent, which make lines with CJK
+;; chars higher than others. So make Monaco and Noto Sans Mono CJK SC the same
+;; line height.
+;;
+;; This is not perfect, since font size is always integer, after rounding it
+;; makes Noto Sans Mono CJK SC a little bit small.
+;;
 ;; Better way is to custom Monaco's ascent and descent in its OS/2 table to make
-;; it have the same ratio as Noto Sans Mono CJK SC.
-;; However it will break box-drawing characters, which needs to be stretched.
+;; it have the same ratio as Noto Sans Mono CJK SC. But it will break
+;; box-drawing characters, which needs to be stretched.
+;;
 ;; If Emacs allows user to set a custom min line height, this might be solved.
 (setq face-font-rescale-alist '(("Noto Sans Mono CJK SC" . 0.85)))
 
@@ -90,12 +123,15 @@
 
 ;; This is the default value, which means if major mode does not set those
 ;; value, I'll use tabs and it's length should be 8 chars.
+;;
 ;; `indent-tabs-mode` does not mean use tabs only, it means if the indent level
 ;; can be divided by `tab-width`, use tabs, and use spaces for the remaining.
 (setq-default indent-tabs-mode t)
 
 ;; Based on `editorconfig-indentation-alist` and `doom-modeline-indent-alist`.
+;;
 ;; See <https://github.com/editorconfig/editorconfig-emacs/blob/master/editorconfig.el#L175>.
+;;
 ;; See <https://github.com/seagle0128/doom-modeline/blob/master/doom-modeline-core.el#L282>.
 (defconst alynx/mode-indent-offsets
   '((apache-mode apache-indent-level)
@@ -212,15 +248,12 @@ in order.")
   "Get indent offset variables of current major mode."
   (cdr (assoc major-mode alynx/mode-indent-offsets)))
 
-;; If you quote a list, not only itself, but it's elements will not be eval.
-;; Using `list` will eval elements and return a list.
-;; `interactive` wants a list of integers to fill arguments, so we cannot quote
-;; here, because we need to evaluate `read-number`, and quote will prevent list
-;; and it's elements to be evaluated.
-;; Using `\`` with `,` can also evaluate selected elements.
-;; Don't use `setq-default`, because every time we start a new major mode we set
-;; those values, and if we open two files with different modes, the latter one
-;; will cover the former one's value with `setq-default`.
+;; If you quote a list, not only itself, but it's elements won't be evaluated,
+;; either, `interactive` wants a list of integers to fill arguments, so we
+;; can't quote here, because we need to evaluate `read-number`.
+;;
+;; Using `list` will evaluate elements and return a list, using `\`` with `,`
+;; can quote but evaluate selected elements.
 (defun set-indent-offset (num)
   "Set indent offset to NUM chars.
 If NUM is negative, indent offset will be nil."
@@ -264,6 +297,11 @@ If NUM is negative, indent offset will be nil."
   (when (/= tab-width num)
     (setq tab-width num)))
 
+(defconst alynx/skip-guess-indent-modes '(lisp-mode
+                                          emacs-lisp-mode
+                                          lisp-interaction-mode)
+  "Don't guess indent for those major modes.")
+
 ;; This function is not perfect, it is based on that "if the file is indented
 ;; with spaces, lines are never started with tabs, and the shortest space prefix
 ;; length except 0 or 1 is the indent offset".
@@ -291,13 +329,9 @@ If NUM is negative, indent offset will be nil."
 ;; per indent level. A proper but impossible solution is ignore function header,
 ;; but obviously editors cannot understand every languages. Maybe we can also
 ;; record space or tab lines and do some comparation, but that's not exact.
-;; Anyway, this function is just guessing indentation, not alignment, so user
-;; should correct it manually.
-(defconst alynx/skip-guess-indent-modes '(lisp-mode
-                                          emacs-lisp-mode
-                                          lisp-interaction-mode)
-  "Don't guess indent for those major modes.")
-
+;;
+;; Anyway, this function is just guessing indentation, so user should correct it
+;; manually if it returns wrong value.
 (defun guess-indent ()
   "Guess and set indent-offset and tab/space for current buffer."
   (interactive)
@@ -390,9 +424,11 @@ If NUM is negative, indent offset will be nil."
 ;; we may guess indent from the buffer, and then project's `.editorconfig` is
 ;; loaded, and then our custom `.dir-local.el` is loaded, then
 ;; `after-change-major-mode-hook` is called.
+;;
 ;; See <https://github.com/editorconfig/editorconfig-emacs/issues/141>.
+;;
 ;; `add-hook` by default adds function to the beginning of hook, so add
-;; `guess-indent` first.
+;; `guess-indent` first and it will run last.
 (add-hook 'change-major-mode-after-body-hook 'guess-indent)
 
 (add-hook 'change-major-mode-after-body-hook
@@ -414,8 +450,10 @@ If NUM is negative, indent offset will be nil."
 (global-set-key (kbd "C-c i w") 'set-tab-width)
 (global-set-key (kbd "C-c i g") 'guess-indent)
 ;; Atom style indent left or right.
+;;
 ;; TODO: Currently they will indent by a `tab-width`, I want to modify them to
 ;; use `indent-offset`.
+;;
 ;; See <https://dougie.io/emacs/indent-selection/>.
 (global-set-key (kbd "M-[") 'indent-rigidly-left-to-tab-stop)
 (global-set-key (kbd "M-]") 'indent-rigidly-right-to-tab-stop)
@@ -425,45 +463,59 @@ If NUM is negative, indent offset will be nil."
 (global-set-key (kbd "C-;") 'comment-dwim)
 
 ;; See <https://www.gnu.org/software/emacs/manual/html_node/efaq/Backspace-invokes-help.html>.
-;; A long story: old terminals make Backspace generate the same code as `C-h`,
-;; and make Delete generate `DEL` code.
-;; Emacs binds backward delete to `DEL` code and help prefix to `C-h` (Maybe
-;; that's why by default HHKB has a Delete key in Backspace's place).
+;;
+;; A long story: Old terminals make Backspace generate the same code as `C-h`,
+;; and make Delete generate `DEL` code. Emacs binds backward delete to `DEL`
+;; code and help prefix to `C-h` (Maybe that's why by default HHKB has a Delete
+;; key in Backspace's place).
+;;
 ;; But in GUI, Emacs makes Backspace generate `DEL` code, and make Delete
-;; generate another code which is bound to forward delete.
-;; Also GNOME Terminal makes Backspace generate `DEL` code by default, too.
+;; generate another code which is bound to forward delete. Also GNOME Terminal
+;; makes Backspace generate `DEL` code by default, too.
+;;
 ;; Another problem is that GNOME Terminal makes Delete generate escape sequence
 ;; by default, Emacs cannot handle it. But there are also conflict with other
 ;; keybindings, so I just suggest not to use Emacs in terminal.
-;; It's not good to translate Delete to `DEL` code and bind Backspace to
-;; functions like `backward-delete-char`, since many backward delete related
+;;
+;; It's not good enough to translate Delete to `DEL` code and bind Backspace to
+;; functions like `backward-delete-char`, because many backward delete related
 ;; functions are actually bound to `DEL` code.
-;; So what should do is to make `C-h` generate `DEL` code to make it the same
-;; behavior as Backspace like `C-i` for `TAB`.
+;;
+;; So what should do is to make `C-h` generate `DEL` code so it has the same
+;; behavior as Backspace (like `C-i` for `TAB`), and don't forget to make `M-h`
+;; the same as `M-DEL`.
+;;
 ;; See <https://www.emacswiki.org/emacs/BackspaceKey>.
-;; And don't forget to make `M-h` the same as `M-DEL`.
+;;
 ;; I am not using `keyboard-translate` here, since it only accept 1 char (or a
 ;; key code), `M-DEL` does not generate a single key code, but a sequence.
+;;
 ;; I use `kbd` because it's easy to read, char constant or vector is also OK.
+;;
 ;; See <https://ftp.gnu.org/old-gnu/Manuals/emacs-20.7/html_node/emacs_451.html>.
-;; Since we make `C-h` generate `DEL`, it should not be the default help prefix,
-;; unset it so `<f1>` will be used as default help prefix.
+;;
+;; Since we make `C-h` generate `DEL`, it should not be the default help prefix
+;; now, by default we have another help perfix key `<f1>`, just unset it so
+;; `<f1>` will be used as default help prefix.
 (global-unset-key (kbd "C-h"))
 (define-key key-translation-map (kbd "C-h") (kbd "DEL"))
 (define-key key-translation-map (kbd "M-h") (kbd "M-DEL"))
 
-;; By default, `join-line` will join current line into previous line.
-;; In Atom, I typically join next line into current line.
+;; By default, `join-line` will join current line into previous line. But in
+;; Atom, I typically join next line into current line.
+;;
 ;; See <https://emacsredux.com/blog/2013/05/30/joining-lines/>.
 (defun join-next-line ()
   "Join the current line with the next line."
   (interactive)
   (join-line 1))
+
 ;; `C-j` is used to insert evaluated value in `lisp-interaction-mode`, maybe I
 ;; should find another keybinding for this.
 (global-set-key (kbd "C-j") 'join-next-line)
 
 ;; See <https://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/>.
+;;
 ;; Maybe `mwim` package is better? But do I really to move between code and
 ;; trailing comment?
 (defun smarter-move-beginning-of-line (arg)
@@ -488,6 +540,7 @@ point reaches the beginning or end of the buffer, stop there."
     (back-to-indentation)
     (when (= orig-point (point))
       (move-beginning-of-line 1))))
+
 ;; Remap `C-a`, `Home` to `smarter-move-beginning-of-line`.
 (global-set-key [remap move-beginning-of-line]
                 'smarter-move-beginning-of-line)
@@ -498,12 +551,14 @@ point reaches the beginning or end of the buffer, stop there."
   (interactive)
   (end-of-line)
   (newline-and-indent))
+
 (defun open-previous-line ()
   "Insert an empty line above the current line."
   (interactive)
   (forward-line -1)
   (end-of-line)
   (newline-and-indent))
+
 (global-set-key (kbd "C-o") 'open-next-line)
 (global-set-key (kbd "C-S-o") 'open-previous-line)
 
@@ -511,12 +566,14 @@ point reaches the beginning or end of the buffer, stop there."
   "Show the full file path of current buffer in the minibuffer."
   (interactive)
   (message "%s" buffer-file-name))
+
 (global-set-key (kbd "C-c s") 'show-file-path)
 
 (defun edit-config ()
   "Open init.el to edit."
   (interactive)
   (find-file (locate-user-emacs-file "init.el")))
+
 (global-set-key (kbd "C-,") 'edit-config)
 
 ;; I maybe use this as some custom keybindings' prefix, but currently I prefer
@@ -539,19 +596,25 @@ point reaches the beginning or end of the buffer, stop there."
         ("melpa" . 100)))
 
 ;; About `package-initialize`, `package-activate-all` and `package-quickstart`:
+;;
 ;; If I am not wrong, you should never call `package-initialize`, because since
 ;; Emacs 27.1, the old `package-initialize` is splitted into two parts:
+;;
 ;;   - `package-initialize`: load all lisp files of all packages (expensive) and
 ;;     call `package-activate-all`.
 ;;   - `package-activate-all`: load autoloads for all packages (cheap).
+;;
 ;; And what about `package-quickstart`? It just writes all autoloads in a single
 ;; file when you call `package-quickstart-refresh`, and if you have such a file,
 ;; `package-activate-all` will load it instead of many files. This reduces only
 ;; 0.1s for me, but maybe very helpful for HDD users.
+;;
 ;; See <https://git.savannah.gnu.org/cgit/emacs.git/commit/?id=6dfdf0c9e8e4aca77b148db8d009c862389c64d3>.
+;;
 ;; So basically you only need `package-activate-all`, and autoloads will load
 ;; the actual packages when you call them. Any articles telling you write
 ;; `package-initialize` before Emacs 27.1 is wrong now.
+;;
 ;; Also, Emacs now call `package-activate-all` between `early-init.el` and
 ;; `init.el`, so if you want to control package loading in `init.el` like me,
 ;; you need to set `package-enable-at-startup` to `nil` in `early-init.el`.
@@ -576,15 +639,19 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Setting `use-package-always-ensure` to `t` will also set `:ensure t` for
 ;; built-in packages.
-;; However, never set `:ensure t` for built-in packages, it will mess things up
-;; when using `package-activate-all` instead of `package-initialize`.
+;;
+;; However, you should never set `:ensure t` for built-in packages, it will mess
+;; things up when using `package-activate-all` instead of `package-initialize`.
+;;
 ;; See <https://github.com/jwiegley/use-package/issues/977>.
-;; Let `use-package` always install packages.
+;;
+;; Let `use-package` always ensure packages so we don't need add `:ensure t`
+;; manually.
 ;; (setq use-package-always-ensure t)
 
-;; Install packages.
+;; Install and configure packages.
 
-;; If a package is not needed since startup and has no bind or mode or hook
+;; NOTE: If a package is not needed since startup and has no bind or mode or hook
 ;; to make `use-package` auto load it, add `:defer 1` to load it after 1 second.
 ;; Difference between `:defer t` and `:defer 1`: `:defer 1` will load package
 ;; after 1 second, but `:defer t` does not load package, expects other options
@@ -600,7 +667,8 @@ point reaches the beginning or end of the buffer, stop there."
   ((minibuffer-setup . cursor-intangible-mode))
   ;; Some files does not have a major mode, and I don't want to define a major
   ;; mode for it, so just use some `lambda` for them.
-  ;; Note that `auto-mode-alist` can only run a function for each regex, so just
+  ;;
+  ;; NOTE: `auto-mode-alist` can only run a function for each regex, so just
   ;; add all needed settings here.
   :mode (("COMMIT_EDITMSG\\'" . (lambda ()
                                   (display-fill-column-indicator-mode 1)
@@ -623,6 +691,7 @@ point reaches the beginning or end of the buffer, stop there."
   (set-language-environment "UTF-8")
   (put 'narrow-to-region 'disabled nil)
   ;; Add prompt indicator to `completing-read-multiple`.
+  ;;
   ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
   ;; (defun crm-indicator (args)
   ;;   (cons (format "[CRM%s] %s"
@@ -645,10 +714,10 @@ point reaches the beginning or end of the buffer, stop there."
   (use-short-answers t)
   ;; Set cursor to underline.
   (cursor-type 'hbar)
-  ;; Disable line spacing.
-  ;; Line space makes `highlight-indent-guides` wired.
+  ;; Disable line spacing, it makes `highlight-indent-guides` wired.
   ;; (line-spacing nil)
-  ;; High CPU usage on scrolling.
+  ;; FIXME: High CPU usage on scrolling.
+  ;;
   ;; By default Emacs will jump a half screen if your cursor is out of screen,
   ;; this makes it behave like other editors, but sometimes it still jumps.
   (scroll-margin 3)
@@ -689,7 +758,8 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package comp
   :custom
   ;; Silence compiler warnings as they can be pretty disruptive.
-  ;; Not sure why this does not work.
+  ;;
+  ;; FIXME: Not sure why this does not work.
   (native-comp-async-report-warnings-errors 'silent))
 
 (use-package mouse
@@ -734,6 +804,7 @@ point reaches the beginning or end of the buffer, stop there."
   (kill-do-not-save-duplicates t))
 
 ;; See <https://dougie.io/emacs/indentation/>.
+;;
 ;; Auto-indent line when pressing enter.
 (use-package electric
   :custom
@@ -746,7 +817,9 @@ point reaches the beginning or end of the buffer, stop there."
   (find-file-suppress-same-file-warnings nil)
   ;; Backup file is generated when you save file. Autosave file is generated
   ;; every few seconds or every few characters.
+  ;;
   ;; See <https://emacsredux.com/blog/2013/05/09/keep-backup-and-auto-save-files-out-of-the-way/>.
+  ;;
   ;; Disable backup files.
   (make-backup-files nil)
   ;; Move backup files into backup dir.
@@ -786,8 +859,6 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Built-in minor mode to display column ruler.
 (use-package display-fill-column-indicator
-  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
-  ;; using `package-activate-all` instead of `package-initialize`.
   :defer t
   ;; I only use this in `prog-mode`.
   :hook ((prog-mode . display-fill-column-indicator-mode)
@@ -822,11 +893,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Built-in minor mode to save recent files.
 (use-package recentf
-  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
-  ;; using `package-activate-all` instead of `package-initialize`.
-  ;; This is not needed in startup so we defer it for 1 second.
   ;; `ivy-use-virtual-buffers` and `consult-buffer` need it.
-  :defer 1
   :config
   (recentf-mode 1)
   :custom
@@ -834,8 +901,6 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Built-in minor mode to open files at last-edited position.
 (use-package saveplace
-  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
-  ;; using `package-activate-all` instead of `package-initialize`.
   ;; Don't defer this if you want it to work on the first file you opened.
   :config
   (save-place-mode 1)
@@ -853,29 +918,30 @@ point reaches the beginning or end of the buffer, stop there."
   (global-auto-revert-mode 1))
 
 ;; See <https://git.savannah.gnu.org/cgit/emacs.git/tree/admin/notes/tree-sitter/starter-guide?h=feature/tree-sitter>.
+;;
 ;; Building <https://github.com/casouri/tree-sitter-module/> is needed, because
 ;; the release is not up to date sometimes.
+;;
 ;; Articles from the feature author are also helpful.
+;;
 ;; See <https://archive.casouri.cc/note/2023/tree-sitter-in-emacs-29/>.
+;;
 ;; See <https://archive.casouri.cc/note/2023/tree-sitter-starter-guide/>.
 (use-package treesit
   :custom
   (treesit-extra-load-path `(,(locate-user-emacs-file ".local/treesit"))))
 
-;; Set customization data in a specific file, without littering my init files.
+;; Save customization data in a specific file, without littering my init files.
 (use-package cus-edit
   :config
   (unless (file-exists-p custom-file)
-  (make-empty-file custom-file))
+    (make-empty-file custom-file))
   (load-file custom-file)
   :custom
   (custom-file (locate-user-emacs-file "custom-file.el")))
 
-;; Built-in shell written in Emacs Lisp.
-;; I hardly use this, but it has a data dir.
+;; Built-in shell written in Emacs Lisp. I hardly use this, but it has a dir.
 (use-package eshell
-  ;; Don't set `:ensure t` for built-in packages, it will mess things up when
-  ;; using `package-activate-all` instead of `package-initialize`.
   ;; This is not needed in startup so we defer it for 1 second.
   :defer 1
   :custom
@@ -884,13 +950,12 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package ibuffer
   ;; The default Buffer List is ugly, it is said no one uses it except RMS, so
-  ;; replace it with IBuffer.
-  ;; However I don't use them either.
+  ;; replace it with IBuffer. However I don't use them either.
   :bind (("C-x C-b" . ibuffer))
   :custom
   (ibuffer-use-other-window t))
 
-;; I prefer linux coding style for C, not gnu.
+;; I prefer Linux coding style for C, not GNU.
 (use-package cc-vars
   :custom
   (c-default-style '((java-mode . "java")
@@ -898,6 +963,7 @@ point reaches the beginning or end of the buffer, stop there."
                      (other . "linux"))))
 
 (use-package cc-mode
+  ;; I am a modern guy.
   :hook (c-mode . (lambda () (setq comment-start "//"
                                    comment-end   ""))))
 
@@ -985,6 +1051,7 @@ point reaches the beginning or end of the buffer, stop there."
   :mode (("meson\\.build\\'" . meson-mode)))
 
 ;; See <https://github.com/stigbjorlykke/rpm-spec-mode/issues/16>.
+;;
 ;; Currently this package does not work with Emacs after 28.1.
 ;; (use-package rpm-spec-mode
 ;;   :ensure t
@@ -998,6 +1065,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   :defer 1)
 
 ;; My favorite themes with my own tweaks.
+;;
 ;; Don't defer themes, I need them all time.
 
 (use-package alynx-one-dark-theme
@@ -1024,6 +1092,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; it will also defer the package and `:demand t` is needed then. Actually I
   ;; don't really need autoloads for this, I just need to declare it, this could
   ;; be done via `:functions`.
+  ;;
   ;; Interestingly, it's a chicken & egg problem. I need autoloads to lazy load
   ;; packages when calling functions, but functions in `:config` are called
   ;; after package loaded, so use `:demand t` to break it.
@@ -1063,14 +1132,15 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :bind (("M-p" . move-text-up) ("M-n" . move-text-down)))
 
-;; Atom-like default region.
-;; If there is no region, behave like current line is current region.
+;; If there is no region, behave like current line is current region like Atom.
+;;
 ;; Works on indent / outdent, comment block, cut (kill), copy, paste (yank).
 (use-package whole-line-or-region
   :ensure t
   ;; If you use `:bind`, `use-package` will create lazy loading for package,
   ;; however I don't want to lazy load this, I just want to add some
   ;; keybindings. In this case, use `:demand t`.
+  ;;
   ;; See <https://github.com/jwiegley/use-package#notes-about-lazy-loading>.
   :demand t
   ;; See <https://github.com/purcell/whole-line-or-region/commit/ba193b2034388bbc384cb04093150fca56f7e262>.
@@ -1086,12 +1156,11 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (global-undo-tree-mode 1)
   :custom
-  ;; Why you guys always generate garbage in project dir by default? It is
-  ;; crazy!
+  ;; Why you guys always generate garbage in project dir by default?
   (undo-tree-history-directory-alist
         `(("." . ,(locate-user-emacs-file ".local/undo-tree/")))))
 
-;; High CPU usage on scrolling.
+;; FIXME: High CPU usage on scrolling.
 (use-package highlight-indent-guides
   :ensure t
   :defer t
@@ -1113,7 +1182,7 @@ point reaches the beginning or end of the buffer, stop there."
   (highlight-indent-guides-bitmap-function
    'highlight-indent-guides--bitmap-line))
 
-;; Highlight FIXME or TODO.
+;; Highlight FIXME, TODO, NOTE or HACK.
 (use-package hl-todo
   :ensure t
   :defer t
@@ -1153,6 +1222,8 @@ point reaches the beginning or end of the buffer, stop there."
      #b1000000000000000]
     nil nil 'top)
   ;; Don't use `diff-hl`'s background, it's ugly.
+  ;;
+  ;; I altered those faces in my themes instead of here.
   ;; (set-face-background 'diff-hl-insert nil)
   ;; (set-face-background 'diff-hl-delete nil)
   ;; (set-face-background 'diff-hl-change nil)
@@ -1193,6 +1264,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Defining our functions that calls package functions in `:preface` is a
   ;; solution to make byte-compiler happy, but we still needs `:functions` to
   ;; work when we call functions from packages in `:config` directly.
+  ;;
   ;; See <https://github.com/jwiegley/use-package/issues/1032#issuecomment-1397951772>
   ;; :functions (rainbow-x-color-luminance)
   :hook ((prog-mode . rainbow-mode)
@@ -1200,9 +1272,8 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   ;; FIXME: To make `flycheck` happy, before we fix `:functions`.
   (declare-function rainbow-x-color-luminance "rainbow-mode" (color))
-  ;; Using overlay so it has higher priority than `hl-line`.
-  ;; After Emacs 29 we have fantastic optimizations about overlay so it won't be
-  ;; a problem.
+  ;; Using overlay so it has higher priority than `hl-line`. After Emacs 29 we
+  ;; have fantastic optimizations about overlay so it won't be a problem.
   (defun alynx/rainbow-colorize-with-overlay (color &optional match)
     (let* ((match (or match 0))
            (ov (make-overlay (match-beginning match) (match-end match))))
@@ -1215,7 +1286,7 @@ point reaches the beginning or end of the buffer, stop there."
   (advice-add 'rainbow-colorize-match :override
               'alynx/rainbow-colorize-with-overlay))
 
-;; High CPU usage on scrolling.
+;; FIXME: High CPU usage on scrolling.
 ;; (use-package rainbow-delimiters
 ;;   :ensure t
 ;;   :disabled t
@@ -1223,7 +1294,9 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   :hook ((prog-mode . rainbow-delimiters-mode)))
 
 ;; Not good, I only use minimap as scroll bar, but it cannot do this well.
+;;
 ;; If use this don't forget to install block font.
+;;
 ;; See <https://github.com/jandamm/doom-emacs-minimap/blob/master/blockfont.ttf>.
 ;; (use-package minimap
 ;;   :ensure t
@@ -1274,9 +1347,9 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Don't add extra segment because it does not follow my segments.
   (popper-mode-line ""))
 
-;; Not sure why it does not work for me.
-;; It always set to English even I manually switched to RIME.
-;; I also want to use Chinese for `find-file` or `swiper`.
+;; Not sure why it does not work for me. It always set to English even I
+;; manually switched to RIME. I also want to use Chinese for `find-file` or
+;; `consult-line`.
 ;; (use-package sis
 ;;   :ensure t
 ;;   :init
@@ -1286,15 +1359,18 @@ point reaches the beginning or end of the buffer, stop there."
 ;;   (sis-global-respect-mode t))
 
 ;; Complex packages that have dependencies.
+;;
 ;; Don't change the sequence, because the latter needs to obey the former's
 ;; `:custom`, for example `projectile` and `counsel-projectile`. If a package
 ;; depends on other package, it should be placed after all of its dependencies.
+;;
 ;; I don't use `:after` here, because we may have keybindings for dependencies,
 ;; which leads into an autoload, and if you have 2 dependencies in `:after`,
-;; you need to first press both keybindings of those 2 dependencies, then the
-;; package will be loaded, it won't be loaded before those keybindings. I don't
-;; want this, I just want to run dependencies' `:custom` first, so keep the
-;; sequence is the easiest.
+;; you need to first press both keybindings of those 2 dependencies, then
+;; configurations of the 2 packages will be run, it won't work before those
+;; keybindings. I don't want this, I just want to run `:custom` of dependencies
+;; first, so keep the sequence is the easiest.
+;;
 ;; See <https://github.com/jwiegley/use-package/issues/976#issuecomment-1056017784>.
 
 ;; Vertico and Consult need this to behave like `ivy--regex-plus`.
@@ -1302,7 +1378,9 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   ;; Orderless always returns too many unrelated results, especially for auto
   ;; completing, so only use it in minibuffer.
+  ;;
   ;; See <https://emacs-china.org/t/orderless-completion/20455/3>.
+  ;;
   ;; Well, that's not a problem after using `lsp-bridge`. `lsp-bridge` has its
   ;; own completion style so it won't be affected by orderless.
   ;; :hook ((minibuffer-setup . (lambda ()
@@ -1385,7 +1463,7 @@ point reaches the beginning or end of the buffer, stop there."
          ;; ("M-'" . consult-register-store)
          ;; ("C-M-#" . consult-register)
          )
-  ;; Enable automatic preview at point in the *Completions* buffer. This is
+  ;; Enable automatic preview at point in the `*Completions*` buffer. This is
   ;; relevant when you use the default completion UI.
   :hook ((completion-list-mode . consult-preview-at-point-mode))
   :config
@@ -1484,12 +1562,13 @@ point reaches the beginning or end of the buffer, stop there."
   ;;   nil nil 'center)
   :custom
   ;; Currently `flycheck` is unable to run local `standardx` with `npx`.
+  ;;
   ;; See <https://github.com/flycheck/flycheck/issues/1428>.
   (flycheck-javascript-standard-executable "/usr/bin/standardx")
   ;; Leave left fringe to VCS states.
   (flycheck-indication-mode 'right-fringe))
 
-;; `lsp-bridge` also has error popup and looks better than it.
+;; `lsp-bridge` also has error popups and looks better than it.
 ;; (use-package flycheck-posframe
 ;;   :ensure t
 ;;   :disabled t
@@ -1512,8 +1591,6 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Looks like that I need to alter JSON files under `langserver` to add
 ;; parameters to `clangd`, but I can also modify `~/.config/clangd/config.yaml`
 ;; to let it find `compile_commands.json` under `build/`.
-;; Or maybe a little bit hack is needed.
-;; See <https://github.com/manateelazycat/lsp-bridge/wiki/Python-virtualenv>.
 (use-package lsp-bridge
   ;; This is not in MELPA and installed as submodules.
   :load-path "site-lisp/lsp-bridge/"
