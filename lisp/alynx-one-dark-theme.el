@@ -68,9 +68,9 @@
    ;; guides and fill column indicator, cover this for fill column indicator
    ;; works, but not for indent guides. It's just hard to know when Emacs
    ;; decides to use `:distant-foreground`.
-   `(region ((t (:background ,selection))))
+   `(region ((t (:background ,selection :extend t))))
    `(highlight ((t (:background ,gray))))
-   `(hl-line ((t (:background ,bg-hl))))
+   `(hl-line ((t (:background ,bg-hl :extend t))))
    ;; For mode line and header line, use UI colors, so they are different from
    ;; editing area.
    `(header-line ((t (:background ,level-3-color))))
@@ -143,9 +143,22 @@
    `(compilation-mode-line-fail ((t (:inherit (compilation-error) :weight bold))))
 
    ;; Isearch.
-   `(isearch ((t (:foreground ,bg :background ,purple))))
+   `(isearch ((t (:foreground ,bg :background ,cyan))))
    `(isearch-fail ((t (:foreground ,error :background unspecified))))
-   `(lazy-highlight ((t (:foreground ,purple :background ,bg-1 :underline ,purple))))
+   `(lazy-highlight ((t (:foreground ,cyan :background ,bg-1 :underline ,cyan))))
+
+   ;; Replace.
+   `(match ((t (:foreground ,bg :background ,blue))))
+
+   ;; Consult.
+   `(consult-line-number-prefix ((t (:inherit (line-number)))))
+   `(consult-line-number-wrapped ((t (:inherit (line-number) :weight bold))))
+   `(consult-preview-match ((t (:inherit (isearch)))))
+   `(consult-highlight-match ((t (:inherit (match)))))
+   ;; Don't inherit default, because it changes background.
+   `(consult-buffer ((t (:foreground ,fg))))
+   ;; Like `diff-mode`.
+   `(consult-file ((t (:inherit (font-lock-type-face) :weight bold))))
 
    ;; `diff-mode`.
    ;; The default styles are too noisy.
