@@ -657,6 +657,15 @@ point reaches the beginning or end of the buffer, stop there."
 ;; after 1 second, but `:defer t` does not load package, expects other options
 ;; load it.
 
+;; NOTE: If you have both `:bind` / `:hook` / `:mode` / `:interpreter` /
+;; `:commands` and enabling global mode in `:config`, add `:demand t` to break
+;; lazy loading.
+;;
+;; See <https://sh.alynx.one/posts/Emacs-Lazy-Loading-use-package/>.
+;;
+;; See <https://github.com/jwiegley/use-package#notes-about-lazy-loading>.
+
+
 ;; Built-in packages.
 
 ;; There is actually no `emacs` package, but it is useful if you have some
@@ -1092,10 +1101,6 @@ point reaches the beginning or end of the buffer, stop there."
   ;; it will also defer the package and `:demand t` is needed then. Actually I
   ;; don't really need autoloads for this, I just need to declare it, this could
   ;; be done via `:functions`.
-  ;;
-  ;; Interestingly, it's a chicken & egg problem. I need autoloads to lazy load
-  ;; packages when calling functions, but functions in `:config` are called
-  ;; after package loaded, so use `:demand t` to break it.
   ;; :demand t
   ;; :commands (alynx-mode-line-mode)
   :functions (alynx-mode-line-mode)
@@ -1137,11 +1142,6 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Works on indent / outdent, comment block, cut (kill), copy, paste (yank).
 (use-package whole-line-or-region
   :ensure t
-  ;; If you use `:bind`, `use-package` will create lazy loading for package,
-  ;; however I don't want to lazy load this, I just want to add some
-  ;; keybindings. In this case, use `:demand t`.
-  ;;
-  ;; See <https://github.com/jwiegley/use-package#notes-about-lazy-loading>.
   :demand t
   ;; See <https://github.com/purcell/whole-line-or-region/commit/ba193b2034388bbc384cb04093150fca56f7e262>.
   :bind (:map whole-line-or-region-local-mode-map
@@ -1324,7 +1324,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; I use this to control popup window position and behavior.
 (use-package popper
   :ensure t
-  ;; Prevent lazy loading so it can manage popup earlier.
+  ;; Prevent lazy loading so it can manage popup since Emacs starts.
   :demand t
   :bind (("C-'" . popper-toggle-latest)
          ("M-'" . popper-cycle)
@@ -1395,7 +1395,7 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package marginalia
   :ensure t
   ;; Always load it instead of wait for first time keybinding pressed.
-  :demand t
+  ;; :demand t
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle))
   :config
