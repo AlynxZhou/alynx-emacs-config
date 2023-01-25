@@ -354,11 +354,6 @@ The mode line should fit the `window-width' with space between."
                 (propertize " " 'face 'alynx-mode-line-face-window-selected)
               " "))))
 
-(defun alynx-mode-line--segment-buffer-name ()
-  "Display the name of the current buffer."
-  (alynx-mode-line--concat-with-sperator
-   (propertize "%b" 'face 'alynx-mode-line-face-buffer-name)))
-
 (defun alynx-mode-line--segment-buffer-status ()
   "Return an indicator representing the status of the current buffer."
   (alynx-mode-line--concat-with-sperator
@@ -378,6 +373,14 @@ The mode line should fit the `window-width' with space between."
          (propertize (alynx-mode-line--get-glyph :buffer-narrowed)
                      'face 'alynx-mode-line-face-buffer-status-narrowed)
        " "))))
+
+(defun alynx-mode-line--segment-buffer-name ()
+  "Display the name of the current buffer."
+  (alynx-mode-line--concat-with-sperator
+   ;; `format-mode-line` will attach face to `%b` even I forced
+   ;; `mode-line-inactive`, so just resolve it earlier.
+   (propertize (substring-no-properties (format-mode-line "%b"))
+               'face 'alynx-mode-line-face-buffer-name)))
 
 (defun alynx-mode-line--segment-cursor-position ()
   "Display the position of the cursor in the current buffer."
@@ -426,8 +429,8 @@ The mode line should fit the `window-width' with space between."
   "Display the name of the major mode of the current buffer."
   (when alynx-mode-line-show-major-mode
     (alynx-mode-line--concat-with-sperator
-     ;; Call `format-mode-line` here because we want to process the
-     ;; string by ourselves.
+     ;; Call `format-mode-line` here because we want to process the string by
+     ;; ourselves.
      (propertize (substring-no-properties (format-mode-line mode-name))
                  'face 'alynx-mode-line-face-major-mode))))
 
@@ -652,6 +655,18 @@ Checkers checked, in order: `flycheck', `flymake'."
 
 (defvar-local alynx-mode-line--original-mode-line mode-line-format)
 
+;; `eval-expression` uses `eldoc-minibuffer-message` to display function headers
+;; on mode line (because minibuffer is used to input), but the function has
+;; problems, it addes a segment to selected buffer or lowest buffer, but cannot
+;; remove the segment, so if you have many buffers previously added the segment
+;; by it, they will both show it. So just don't show it on mode line, and if you
+;; really wants function header tips, you could first use `*scratch*` buffer and
+;; then copy and paste it to `eval-expression`.
+(defun alynx-mode-line--eldoc-minibuffer-message (format-string &rest args)
+  "Display message specified by FORMAT-STRING and ARGS if not in minibuffer."
+  (unless (minibufferp)
+    (apply #'message format-string args)))
+
 (defun alynx-mode-line--activate ()
   "Activate alynx-mode-line."
 
@@ -672,11 +687,15 @@ Checkers checked, in order: `flycheck', `flymake'."
   (add-hook 'after-save-hook #'alynx-mode-line--vc-update-segment)
   (advice-add 'vc-refresh-state :after #'alynx-mode-line--vc-update-segment)
 
+  (advice-add 'eldoc-minibuffer-message :override
+              #'alynx-mode-line--eldoc-minibuffer-message)
+
   ;; Save previous value of `mode-line-format`, it's a buffer-local variable and
   ;; we only save global value here.
   (setq alynx-mode-line--original-mode-line (default-value 'mode-line-format))
 
   ;; `format-mode-line` processes mode line interestingly:
+  ;;
   ;;   1. String will inhert `mode-line` / `mode-line-inactive` face initially.
   ;;   2. Then I call `propertize` to attace faces to some string, properties
   ;;      added via those faces have higher priority.
@@ -685,22 +704,32 @@ Checkers checked, in order: `flycheck', `flymake'."
   ;;     2. You can pass a face here to cover properties, which means properties
   ;;        of this face have higher priority then I added via `propertize`.
   ;;     3. `nil` means don't cover properties here.
+  ;;
   ;; The doc says `format-mode-line` only attach face to characters has no face.
-  ;; I guess it only means `(:propertize ELT PROPS...)` and treats string
-  ;; returned by `propertize` as no face.
+  ;; I guess it only means `(:propertize ELT PROPS...)` or `%-constructor`s and
+  ;; treats string returned by `propertize` as no face.
+  ;;
   ;; What I want is:
+  ;;
   ;;   1. Inherit `mode-line` / `mode-line-inactive` from theme.
   ;;   2. Add different colors to segments.
   ;;   3. If window is not selected, all color should covered by
   ;;     `mode-line-inactive`, so I can easily see which window is selected.
+  ;;
   ;; (Well, my theme only has color for `mode-line` / `mode-line-inactive`.)
-  ;; 1 and 2 are easy, for 3, if you pass `nil` to `format-mode-line`, it won't
-  ;; remove color when window is inactive. But if pass `'mode-line-inactive` or
-  ;; `t`, you will lose color in active window, because `mode-line` /
-  ;; `mode-line-inactive` both have colors and will cover your color. So the
-  ;; solution is set it to `nil` when window is selected, and set it to
-  ;; `mode-line-inactive` when window is not selected (doc says you can pass `t`
-  ;; but you will get errors), `mode-line-window-selected-p` is useful to this.
+  ;;
+  ;; 1 and 2 are easy, for 3, first must make sure all characters are no face to
+  ;; `format-mode-line`, this can be done by call `format-mode-line` and
+  ;; `substring-no-properties` earlier for `(:propertize ELT PROPS...)` or
+  ;; `%-constructor`s and then call `propertize` to the result.
+  ;;
+  ;; Then if you pass `nil` to `format-mode-line`, it won't remove color when
+  ;; window is inactive. But if you pass `'mode-line-inactive` or `t`, you will
+  ;; lose color in active window, because `mode-line` / `mode-line-inactive`
+  ;; both have colors and will cover your color. So the solution is set it to
+  ;; `nil` when window is selected, and set it to `mode-line-inactive` when
+  ;; window is not selected (doc says you can pass `t` but you will get errors),
+  ;; `mode-line-window-selected-p` is useful to this.
   (setq-default mode-line-format
                 '((:eval
                    (alynx-mode-line--align
@@ -741,6 +770,9 @@ Checkers checked, in order: `flycheck', `flymake'."
   (remove-hook 'file-find-hook #'alynx-mode-line--vc-update-segment)
   (remove-hook 'after-save-hook #'alynx-mode-line--vc-update-segment)
   (advice-remove 'vc-refresh-state #'alynx-mode-line--vc-update-segment)
+
+  (advice-remove 'eldoc-minibuffer-message
+                 #'alynx-mode-line--eldoc-minibuffer-message)
 
   ;; Restore the original value of `mode-line-format`, we still only handle
   ;; global value.
