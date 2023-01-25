@@ -83,17 +83,31 @@
 ;; italic, it's not a bug. Maybe Sarasa Fixed has a generated italic version.
 ;;
 ;; See <https://github.com/notofonts/noto-fonts/issues/1466#issuecomment-469384694>.
-(dolist (charset '(han kana hangul symbol cjk-misc bopomofo))
-  ;; FIXME: Not sure why Emacs prefers Sarasa Fixed, even I add Noto Sans Mono
-  ;; CJK SC before it, I have to clear the list before adding fonts.
-  (set-fontset-font t charset nil)
-  ;; Prepend to the beginning of charset font lists.
-  (set-fontset-font t charset
-                    (font-spec :family "Noto Color Emoji") nil 'prepend)
-  (set-fontset-font t charset
-                    (font-spec :family "Noto Sans Mono CJK SC") nil 'prepend)
-  (set-fontset-font t charset
-                    (font-spec :family "Monaco") nil 'prepend))
+(defun alynx/clear-and-set-fallback-fonts ()
+  "Clear fontset and set fallback fonts."
+  (dolist (charset '(han kana hangul symbol cjk-misc bopomofo))
+    ;; FIXME: Not sure why Emacs prefers Sarasa Fixed, even I add Noto Sans Mono
+    ;; CJK SC before it, I have to clear the list before adding fonts.
+    (set-fontset-font t charset nil)
+    ;; Prepend to the beginning of charset font lists.
+    (set-fontset-font t charset
+                      (font-spec :family "Noto Color Emoji") nil 'prepend)
+    (set-fontset-font t charset
+                      (font-spec :family "Noto Sans Mono CJK SC") nil 'prepend)
+    (set-fontset-font t charset
+                      (font-spec :family "Monaco") nil 'prepend)))
+
+;; HACK: Set fallback fonts directly does not work for `emacsclient`. When
+;; client starts a daemon, it firstly does not have GUI and those font related
+;; setups are ignored. So we need to call this after frame created.
+;;
+;; See <https://www.reddit.com/r/emacs/comments/3a5kim/comment/cs9i9qd/?utm_source=share&utm_medium=web2x&context=3>.
+(if (daemonp)
+    (add-hook 'after-make-frame-functions
+              (lambda (frame)
+                (select-frame frame)
+                (alynx/clear-and-set-fallback-fonts)))
+  (alynx/clear-and-set-fallback-fonts))
 
 ;; Noto Sans CJK fonts has larger ascent and descent, which make lines with CJK
 ;; chars higher than others. So make Monaco and Noto Sans Mono CJK SC the same
@@ -756,10 +770,10 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package windmove
   :demand t
   :bind
-  (("C-c n" . windmove-down)
-   ("C-c p" . windmove-up)
-   ("C-c f" . windmove-right)
-   ("C-c b" . windmove-left))
+  (("C-c C-n" . windmove-down)
+   ("C-c C-p" . windmove-up)
+   ("C-c C-f" . windmove-right)
+   ("C-c C-b" . windmove-left))
   :config
   ;; `S-<arrow>` to move between windows (`S` means Shift).
   (windmove-default-keybindings))
@@ -864,6 +878,7 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package whitespace
   ;; Highlight trailing whitespace in `prog-mode` only.
   :hook ((prog-mode . (lambda () (setq show-trailing-whitespace t)))
+         (nxml-mode . (lambda () (setq show-trailing-whitespace t)))
          (yaml-ts-mode . (lambda () (setq show-trailing-whitespace t)))))
 
 ;; Built-in minor mode to display column ruler.
@@ -871,7 +886,8 @@ point reaches the beginning or end of the buffer, stop there."
   :defer t
   ;; I only use this in `prog-mode`.
   :hook ((prog-mode . display-fill-column-indicator-mode)
-         (yaml-mode . display-fill-column-indicator-mode))
+         (nxml-mode . display-fill-column-indicator-mode)
+         (yaml-ts-mode . display-fill-column-indicator-mode))
   :custom
   ;; Set column ruler at 80 columns.
   (display-fill-column-indicator-column 80))
@@ -925,6 +941,11 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package autorevert
   :config
   (global-auto-revert-mode 1))
+
+(use-package profiler
+  :bind (("C-c p b" . profiler-start)
+         ("C-c p e" . profiler-stop)
+         ("C-c p r" . profiler-report)))
 
 ;; See <https://git.savannah.gnu.org/cgit/emacs.git/tree/admin/notes/tree-sitter/starter-guide?h=feature/tree-sitter>.
 ;;
@@ -1166,6 +1187,7 @@ point reaches the beginning or end of the buffer, stop there."
   :defer t
   ;; I only use this in `prog-mode`.
   :hook ((prog-mode . highlight-indent-guides-mode)
+         (nxml-mode . highlight-indent-guides-mode)
          ;; `yaml-mode` should be `prog-mode`, anyway.
          (yaml-ts-mode . highlight-indent-guides-mode))
   :custom
@@ -1187,6 +1209,7 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer t
   :hook ((prog-mode . hl-todo-mode)
+         (nxml-mode . hl-todo-mode)
          (yaml-ts-mode . hl-todo-mode)))
 
 ;; `diff-hl` supports more VCS than `git-gutter` and `git-gutter-fringe`.
@@ -1268,6 +1291,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; See <https://github.com/jwiegley/use-package/issues/1032#issuecomment-1397951772>
   ;; :functions (rainbow-x-color-luminance)
   :hook ((prog-mode . rainbow-mode)
+         (nxml-mode . rainbow-mode)
          (yaml-ts-mode . rainbow-mode))
   :config
   ;; FIXME: To make `flycheck` happy, before we fix `:functions`.
@@ -1517,6 +1541,7 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   :defer t
   :hook ((prog-mode . flycheck-mode)
+         (nxml-mode . flycheck-mode)
          (yaml-ts-mode . flycheck-mode)
          (markdown-mode . flycheck-mode)
          (org-mode . flycheck-mode))
@@ -1595,6 +1620,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; This is not in MELPA and installed as submodules.
   :load-path "site-lisp/lsp-bridge/"
   :hook ((prog-mode . lsp-bridge-mode)
+         (nxml-mode . lsp-bridge-mode)
          (yaml-ts-mode . lsp-bridge-mode))
   :custom
   (lsp-bridge-enable-hover-diagnostic t)
