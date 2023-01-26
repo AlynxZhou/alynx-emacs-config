@@ -332,6 +332,17 @@ returned from `alynx-mode-line-glyphs-ascii'."
   `(concat alynx-mode-line-segment-sperator
            ,@sequences
            alynx-mode-line-segment-sperator))
+;; Instead of the complex 3th argument of `format-mode-line`, this is a simple
+;; way to make mode line of unselected window inactive.
+;;
+;; If you are really interested in how `format-mode-line` handles faces, see
+;; <../unused.el#L143-L178>.
+(defun alynx-mode-line--propertize (mode-line)
+  "Propertize MODE-LINE with inactive face if not selected."
+  (if (mode-line-window-selected-p)
+      (format-mode-line mode-line)
+    (propertize (substring-no-properties (format-mode-line mode-line))
+                'face 'mode-line-inactive)))
 
 ;; See <https://www.gnu.org/software/emacs/manual/html_node/elisp/Pixel-Specification.html>.
 (defun alynx-mode-line--align (left right)
@@ -339,9 +350,8 @@ returned from `alynx-mode-line-glyphs-ascii'."
 
 The mode line should fit the `window-width' with space between."
   (let ((right-length (length right)))
-    (concat (if (mode-line-window-selected-p)
-                (propertize " " 'face 'alynx-mode-line-face-window-selected)
-              " ")
+    ;; We don't need to check selected here, we do it later for the whole line.
+    (concat (propertize " " 'face 'alynx-mode-line-face-window-selected)
             left
             ;; Don't forget to subtract 1 more, because we have a right space!
             (propertize " "
@@ -350,9 +360,7 @@ The mode line should fit the `window-width' with space between."
                                                           scroll-bar)
                                                        ,right-length 1))))
             right
-            (if (mode-line-window-selected-p)
-                (propertize " " 'face 'alynx-mode-line-face-window-selected)
-              " "))))
+            (propertize " " 'face 'alynx-mode-line-face-window-selected))))
 
 (defun alynx-mode-line--segment-buffer-status ()
   "Return an indicator representing the status of the current buffer."
@@ -662,6 +670,9 @@ Checkers checked, in order: `flycheck', `flymake'."
 ;; by it, they will both show it. So just don't show it on mode line, and if you
 ;; really wants function header tips, you could first use `*scratch*` buffer and
 ;; then copy and paste it to `eval-expression`.
+;;
+;; TODO: Maybe a better solution is save previous mode line and restore it, I am
+;; not sure about how to do it properly.
 (defun alynx-mode-line--eldoc-minibuffer-message (format-string &rest args)
   "Display message specified by FORMAT-STRING and ARGS if not in minibuffer."
   (unless (minibufferp)
@@ -694,62 +705,27 @@ Checkers checked, in order: `flycheck', `flymake'."
   ;; we only save global value here.
   (setq alynx-mode-line--original-mode-line (default-value 'mode-line-format))
 
-  ;; `format-mode-line` processes mode line interestingly:
-  ;;
-  ;;   1. String will inhert `mode-line` / `mode-line-inactive` face initially.
-  ;;   2. Then I call `propertize` to attace faces to some string, properties
-  ;;      added via those faces have higher priority.
-  ;;   3. You can use the third `face` argument to attach faces at last:
-  ;;     1. Integer value clears all properties.
-  ;;     2. You can pass a face here to cover properties, which means properties
-  ;;        of this face have higher priority then I added via `propertize`.
-  ;;     3. `nil` means don't cover properties here.
-  ;;
-  ;; The doc says `format-mode-line` only attach face to characters has no face.
-  ;; I guess it only means `(:propertize ELT PROPS...)` or `%-constructor`s and
-  ;; treats string returned by `propertize` as no face.
-  ;;
-  ;; What I want is:
-  ;;
-  ;;   1. Inherit `mode-line` / `mode-line-inactive` from theme.
-  ;;   2. Add different colors to segments.
-  ;;   3. If window is not selected, all color should covered by
-  ;;     `mode-line-inactive`, so I can easily see which window is selected.
-  ;;
-  ;; (Well, my theme only has color for `mode-line` / `mode-line-inactive`.)
-  ;;
-  ;; 1 and 2 are easy, for 3, first must make sure all characters are no face to
-  ;; `format-mode-line`, this can be done by call `format-mode-line` and
-  ;; `substring-no-properties` earlier for `(:propertize ELT PROPS...)` or
-  ;; `%-constructor`s and then call `propertize` to the result.
-  ;;
-  ;; Then if you pass `nil` to `format-mode-line`, it won't remove color when
-  ;; window is inactive. But if you pass `'mode-line-inactive` or `t`, you will
-  ;; lose color in active window, because `mode-line` / `mode-line-inactive`
-  ;; both have colors and will cover your color. So the solution is set it to
-  ;; `nil` when window is selected, and set it to `mode-line-inactive` when
-  ;; window is not selected (doc says you can pass `t` but you will get errors),
-  ;; `mode-line-window-selected-p` is useful to this.
   (setq-default mode-line-format
                 '((:eval
-                   (alynx-mode-line--align
-                    ;; Left.
-                    (format-mode-line
-                     '((:eval (alynx-mode-line--segment-buffer-status))
-                       (:eval (alynx-mode-line--segment-buffer-name))
-                       (:eval (alynx-mode-line--segment-cursor-position)))
-                     (if (mode-line-window-selected-p) nil 'mode-line-inactive))
-                    ;; Right.
-                    (format-mode-line
-                     '((:eval (alynx-mode-line--segment-indentation-style))
-                       (:eval (alynx-mode-line--segment-eol-style))
-                       (:eval (alynx-mode-line--segment-encoding))
-                       (:eval (alynx-mode-line--segment-major-mode))
-                       (:eval (alynx-mode-line--segment-vc))
-                       (:eval (alynx-mode-line--segment-checker))
-                       (:eval (alynx-mode-line--segment-process))
-                       (:eval (alynx-mode-line--segment-misc-info)))
-                     (if (mode-line-window-selected-p) nil 'mode-line-inactive)))))))
+                   (alynx-mode-line--propertize
+                    ;; Calling `format-mode-line` here is needed because we can
+                    ;; only align after knowing the final string length.
+                    (alynx-mode-line--align
+                     ;; Left.
+                     (format-mode-line
+                      '((:eval (alynx-mode-line--segment-buffer-status))
+                        (:eval (alynx-mode-line--segment-buffer-name))
+                        (:eval (alynx-mode-line--segment-cursor-position))))
+                     ;; Right.
+                     (format-mode-line
+                      '((:eval (alynx-mode-line--segment-indentation-style))
+                        (:eval (alynx-mode-line--segment-eol-style))
+                        (:eval (alynx-mode-line--segment-encoding))
+                        (:eval (alynx-mode-line--segment-major-mode))
+                        (:eval (alynx-mode-line--segment-vc))
+                        (:eval (alynx-mode-line--segment-checker))
+                        (:eval (alynx-mode-line--segment-process))
+                        (:eval (alynx-mode-line--segment-misc-info))))))))))
 
 (defun alynx-mode-line--deactivate ()
   "Deactivate alynx-mode-line."

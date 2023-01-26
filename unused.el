@@ -140,6 +140,43 @@
   :defer 1
   :commands lsp-treemacs-errors-list)
 
+;; `format-mode-line` processes mode line interestingly:
+;;
+;;   1. String will inhert `mode-line` / `mode-line-inactive` face initially.
+;;   2. Then I call `propertize` to attace faces to some string, properties
+;;      added via those faces have higher priority.
+;;   3. You can use the third `face` argument to attach faces at last:
+;;     1. Integer value clears all properties.
+;;     2. You can pass a face here to cover properties, which means properties
+;;        of this face have higher priority then I added via `propertize`.
+;;     3. `nil` means don't cover properties here.
+;;
+;; The doc says `format-mode-line` only attach face to characters has no face.
+;; I guess it only means `(:propertize ELT PROPS...)` or `%-constructor`s and
+;; treats string returned by `propertize` as no face.
+;;
+;; What I want is:
+;;
+;;   1. Inherit `mode-line` / `mode-line-inactive` from theme.
+;;   2. Add different colors to segments.
+;;   3. If window is not selected, all color should covered by
+;;     `mode-line-inactive`, so I can easily see which window is selected.
+;;
+;; (Well, my theme only has color for `mode-line` / `mode-line-inactive`.)
+;;
+;; 1 and 2 are easy, for 3, first must make sure all characters are no face to
+;; `format-mode-line`, this can be done by call `format-mode-line` and
+;; `substring-no-properties` earlier for `(:propertize ELT PROPS...)` or
+;; `%-constructor`s and then call `propertize` to the result.
+;;
+;; Then if you pass `nil` to `format-mode-line`, it won't remove color when
+;; window is inactive. But if you pass `'mode-line-inactive` or `t`, you will
+;; lose color in active window, because `mode-line` / `mode-line-inactive`
+;; both have colors and will cover your color. So the solution is set it to
+;; `nil` when window is selected, and set it to `mode-line-inactive` when
+;; window is not selected (doc says you can pass `t` but you will get errors),
+;; `mode-line-window-selected-p` is useful to this.
+
 (provide 'unused)
 
-;;; unused,el ends here.
+;;; unused.el ends here.
