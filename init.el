@@ -1591,7 +1591,9 @@ point reaches the beginning or end of the buffer, stop there."
   ;; See <https://github.com/flycheck/flycheck/issues/1428>.
   (flycheck-javascript-standard-executable "/usr/bin/standardx")
   ;; Leave left fringe to VCS states.
-  (flycheck-indication-mode 'right-fringe))
+  (flycheck-indication-mode 'right-fringe)
+  ;; Prevent check on modifications, it makes Emacs laggy.
+  (flycheck-check-syntax-automatically '(save mode-enabled)))
 
 ;; `lsp-bridge` also has error popups and looks better than it.
 ;; (use-package flycheck-posframe
