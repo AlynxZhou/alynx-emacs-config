@@ -958,6 +958,15 @@ point reaches the beginning or end of the buffer, stop there."
 ;;
 ;; See <https://archive.casouri.cc/note/2023/tree-sitter-starter-guide/>.
 (use-package treesit
+  :config
+  (add-to-list 'major-mode-remap-alist
+               '(c-mode . c-ts-mode))
+  (add-to-list 'major-mode-remap-alist
+               '(c++-mode . c++-ts-mode))
+  (add-to-list 'major-mode-remap-alist
+               '(python-mode . python-ts-mode))
+  (add-to-list 'major-mode-remap-alist
+               '(css-mode . css-ts-mode))
   :custom
   (treesit-extra-load-path `(,(locate-user-emacs-file ".local/treesit"))))
 
@@ -1626,6 +1635,7 @@ point reaches the beginning or end of the buffer, stop there."
          (yaml-ts-mode . lsp-bridge-mode))
   :custom
   (lsp-bridge-enable-hover-diagnostic t)
-  (lsp-bridge-signature-show-function 'lsp-bridge-signature-posframe))
+  (lsp-bridge-signature-show-function 'lsp-bridge-signature-posframe)
+  (acm-enable-tabnine nil))
 
 ;;; init.el ends here.
