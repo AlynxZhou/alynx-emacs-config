@@ -332,6 +332,7 @@ returned from `alynx-mode-line-glyphs-ascii'."
   `(concat alynx-mode-line-segment-sperator
            ,@sequences
            alynx-mode-line-segment-sperator))
+
 ;; Instead of the complex 3th argument of `format-mode-line`, this is a simple
 ;; way to make mode line of unselected window inactive.
 ;;
@@ -341,8 +342,9 @@ returned from `alynx-mode-line-glyphs-ascii'."
   "Propertize MODE-LINE with inactive face if not selected."
   (if (mode-line-window-selected-p)
       (format-mode-line mode-line)
-    (propertize (substring-no-properties (format-mode-line mode-line))
-                'face 'mode-line-inactive)))
+    ;; NOTE: Don't call `substring-no-properties` here, we need to keep
+    ;; `display` property for align.
+    (propertize (format-mode-line mode-line) 'face 'mode-line-inactive)))
 
 ;; See <https://www.gnu.org/software/emacs/manual/html_node/elisp/Pixel-Specification.html>.
 (defun alynx-mode-line--align (left right)
