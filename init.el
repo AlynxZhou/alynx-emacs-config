@@ -934,6 +934,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package savehist
   :config
+  (add-to-list 'savehist-additional-variables 'kill-ring)
   (savehist-mode 1)
   :custom
   (savehist-file (locate-user-emacs-file ".local/history")))
