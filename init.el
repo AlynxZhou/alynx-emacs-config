@@ -152,9 +152,9 @@
     (awk-mode c-basic-offset)
     (bpftrace-mode c-basic-offset)
     (c-mode c-basic-offset)
-    (c-ts-mode c-basic-offset)
+    (c-ts-mode c-ts-mode-indent-offset)
     (c++-mode c-basic-offset)
-    (c++-ts-mode c-basic-offset)
+    (c++-ts-mode c-ts-mode-indent-offset)
     (cmake-mode cmake-tab-width)
     (cmake-ts-mode cmake-ts-mode-indent-offset)
     (coffee-mode coffee-tab-width)
@@ -1006,6 +1006,10 @@ point reaches the beginning or end of the buffer, stop there."
   ;; I am a modern guy.
   :hook (c-mode . (lambda () (setq comment-start "//"
                                    comment-end   ""))))
+
+(use-package c-ts-mode
+  :custom
+  (c-ts-mode-indent-style 'linux))
 
 (use-package json-ts-mode
   :mode (("\\.bowerrc\\'" . json-ts-mode)
