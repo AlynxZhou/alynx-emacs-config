@@ -25,7 +25,10 @@ arch=("x86_64")
 url="http://www.gnu.org/software/emacs/"
 license=("GPL3")
 # `gmp` is mouse support in Linux console.
-depends=("gnutls" "libxml2" "jansson" "harfbuzz" "libgccjit" "libxi" "gtk3" "libsm" "xcb-util" "libxcb" "libjpeg-turbo" "libpng" "giflib" "libwebp" "libtiff" "libxpm" "alsa-lib" "cairo" "webkit2gtk" "tree-sitter" "sqlite3" "gpm")
+depends=("gnutls" "libxml2" "jansson" "harfbuzz" "libgccjit" "libxi" "gtk3"
+         "libsm" "xcb-util" "libxcb" "libjpeg-turbo" "libpng" "giflib" "libwebp"
+         "libtiff" "libxpm" "alsa-lib" "cairo" "webkit2gtk" "tree-sitter"
+         "sqlite3" "gpm")
 makedepends=("git" "xorgproto")
 provides=("emacs")
 replaces=("emacs")
@@ -35,9 +38,9 @@ conflicts=("emacs")
 # between different machines and this makes sure that I always get the same
 # working copy.
 _commit="281f48f19ecad706a639d57cb937afb0b97eded7"
-# source=("emacs-git::git+https://git.savannah.gnu.org/git/emacs.git#commit=$_commit")
+# source=("emacs-git::git+https://git.savannah.gnu.org/git/emacs.git#commit=${_commit}")
 # GitHub mirror is easier to access.
-source=("emacs-git::git+https://github.com/emacs-mirror/emacs.git#commit=$_commit"
+source=("emacs-git::git+https://github.com/emacs-mirror/emacs.git#commit=${_commit}"
         "emacs-disable-pgtk-x-warning.patch")
 options=(!strip)
 sha512sums=("SKIP"
