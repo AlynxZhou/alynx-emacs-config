@@ -1641,6 +1641,8 @@ point reaches the beginning or end of the buffer, stop there."
   :custom
   (lsp-bridge-enable-hover-diagnostic t)
   (lsp-bridge-signature-show-function 'lsp-bridge-signature-posframe)
+  ;; It is fancy, but noisy.
+  (acm-enable-doc nil)
   (acm-enable-tabnine nil))
 
 ;;; init.el ends here.
