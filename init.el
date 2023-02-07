@@ -407,6 +407,9 @@ If NUM is negative, indent offset will be nil."
 ;; If installed more modes, add them here as
 ;; `(mode-name tab/space indent-offset)`.
 (defconst alynx/modes-default-indent '((prog-mode tab 8)
+                                       (c-mode tab 8)
+                                       (c-ts-mode tab 8)
+                                       (java-mode tab 8)
                                        (markdown-mode tab 8)
                                        (gfm-mode tab 8)
                                        ;; By default `lisp-indent-offset` is
@@ -1004,10 +1007,13 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package cc-mode
   ;; I am a modern guy.
-  :hook (c-mode . (lambda () (setq comment-start "//"
-                                   comment-end   ""))))
+  :hook ((c-mode . (lambda () (setq comment-start "//"
+                                    comment-end   "")))))
 
 (use-package c-ts-mode
+  ;; I am a modern guy.
+  :hook ((c-ts-mode . (lambda () (setq comment-start "//"
+                                    comment-end   ""))))
   :custom
   (c-ts-mode-indent-style 'linux))
 
