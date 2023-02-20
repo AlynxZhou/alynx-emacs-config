@@ -273,6 +273,9 @@ in order.")
 If NUM is negative, indent offset will be nil."
   (interactive `(,(read-number "Indent offset (chars): ")))
   (dolist (mode-indent-offset (alynx/get-mode-indent-offsets))
+    ;; `setq` sets buffer-local value automatically, but we need to do this
+    ;; manually for `set`.
+    (make-local-variable mode-indent-offset)
     (if (< num 0)
         (set mode-indent-offset nil)
       (set mode-indent-offset num))))

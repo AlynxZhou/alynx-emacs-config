@@ -35,7 +35,7 @@ $ mkdir ~/.emacs.d/.local/treesit/ && cp dists/* $_
 Install dependencies and language servers for `lsp-bridge` (`clangd` is included by `clang` package):
 
 ```shell
-# pacman -S python-orjson python-six clang typescript-language-server bash-language-server yaml-language-server pyright
+# pacman -S python-orjson python-six clang typescript-language-server bash-language-server yaml-language-server pyright vscode-html-languageserver
 $ paru -S python-epc python-sexpdata
 ```
 
