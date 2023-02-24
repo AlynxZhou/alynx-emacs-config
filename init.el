@@ -757,8 +757,6 @@ point reaches the beginning or end of the buffer, stop there."
   (fast-but-imprecise-scrolling t)
   (redisplay-skip-fontification-on-input t)
   (jit-lock-defer-time 0)
-  ;; Resize in pixels, not chars.
-  (frame-resize-pixelwise t)
   (minibuffer-prompt-properties
         '(read-only t cursor-intangible t face minibuffer-prompt))
   ;; Enable recursive minibuffers.
@@ -772,6 +770,13 @@ point reaches the beginning or end of the buffer, stop there."
   (sentence-end-double-space nil)
   ;; Don't show default indicators, they are useless and ugly.
   (fringe-indicator-alist nil))
+
+(use-package server
+  :custom
+  ;; HACK: Don't know why, but if this is `t`, new frame cannot be maximized
+  ;; properly with PGTK.
+  (server-raise-frame nil)
+  (server-log nil))
 
 (use-package windmove
   :demand t
@@ -966,10 +971,11 @@ point reaches the beginning or end of the buffer, stop there."
 ;; See <https://archive.casouri.cc/note/2023/tree-sitter-starter-guide/>.
 (use-package treesit
   :config
-  (add-to-list 'major-mode-remap-alist
-               '(c-mode . c-ts-mode))
-  (add-to-list 'major-mode-remap-alist
-               '(c++-mode . c++-ts-mode))
+  ;; Well, `c-ts-mode` not works well sometimes.
+  ;; (add-to-list 'major-mode-remap-alist
+  ;;              '(c-mode . c-ts-mode))
+  ;; (add-to-list 'major-mode-remap-alist
+  ;;              '(c++-mode . c++-ts-mode))
   (add-to-list 'major-mode-remap-alist
                '(python-mode . python-ts-mode))
   (add-to-list 'major-mode-remap-alist

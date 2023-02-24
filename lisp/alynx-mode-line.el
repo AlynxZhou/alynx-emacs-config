@@ -682,7 +682,7 @@ Checkers checked, in order: `flycheck', `flymake'."
 (defun alynx-mode-line--eldoc-minibuffer-message (format-string &rest args)
   "Display message specified by FORMAT-STRING and ARGS if not in minibuffer."
   (unless (minibufferp)
-    (apply #'messageS format-string args)))
+    (apply #'message format-string args)))
 
 (defun alynx-mode-line--activate ()
   "Activate alynx-mode-line."

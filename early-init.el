@@ -49,16 +49,20 @@
 (setq-default mode-line-format nil)
 ;; Change titlebar label.
 ;;
-;; I hardly see titlebar, `system-name` is really useless.
+;; I mostly run Emacs GUI locally, `system-name` is really useless.
 (setq-default frame-title-format "%b - GNU Emacs")
 ;; Start every frame maximized.
 ;;
 ;; See <https://emacsredux.com/blog/2020/12/04/maximize-the-emacs-frame-on-startup/>.
 ;;
-;; Well, `maximized` should be the correct value, but at least it does not work
-;; with `emacsclient`. (It's in maximized mode, but size is incorrect.)
-(modify-all-frames-parameters '((fullscreen . fullboth)
-                                ;; Alpha background does not work will
+;; Well, `maximized` does not work well with `emacsclient` under PGTK. (It's in
+;; maximized mode, but size is incorrect.) There should be something wrong on
+;; handling `(select-frame-set-input-focus (window-frame))`, a workaround is set
+;; `server-raise-frame` to `nil` to prevent this function call.
+;;
+;; See <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=61710>.
+(modify-all-frames-parameters '((fullscreen . maximized)
+                                ;; Alpha background does not work with
                                 ;; fullscreen.
                                 ;; (alpha-background . 85)
                                 (menu-bar-lines . 0)
@@ -69,6 +73,9 @@
                                 (horizontal-scroll-bars . nil)))
 ;; Do not resize the frame at this early stage.
 (setq frame-inhibit-implied-resize t)
+;; Resize frame in pixels, not chars (which is not supported in Wayland). Put
+;; it here to make sure the initial maximized frame will fill the screen.
+(setq frame-resize-pixelwise t)
 
 ;; Initial package settings, put here because package manager are called before
 ;; `init.el`.
