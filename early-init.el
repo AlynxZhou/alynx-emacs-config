@@ -62,9 +62,13 @@
 ;;
 ;; See <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=61710>.
 (modify-all-frames-parameters '((fullscreen . maximized)
-                                ;; Alpha background does not work with
+                                ;; NOTE: Alpha background does not work with
                                 ;; fullscreen.
-                                ;; (alpha-background . 85)
+                                ;;
+                                ;; It looks good if there is nothing between
+                                ;; Emacs and wallpaper, however I typically have
+                                ;; a fullscreen terminal and it looks terrible.
+                                ;; (alpha-background . 90)
                                 (menu-bar-lines . 0)
                                 (tool-bar-lines . 0)
                                 (internal-border-width . 0)
