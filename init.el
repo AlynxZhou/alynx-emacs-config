@@ -733,6 +733,7 @@ point reaches the beginning or end of the buffer, stop there."
   :custom
   ;; Disable startup buffer. It's OK but it's not beautiful and not helpful.
   (inhibit-startup-screen t)
+  ;; (fancy-splash-image (locate-user-emacs-file "emacs-e.svg"))
   (initial-scratch-message ";; Happy hacking here!\n\n")
   ;; Disable annoying bell.
   (ring-bell-function 'ignore)
@@ -765,6 +766,8 @@ point reaches the beginning or end of the buffer, stop there."
   (auto-save-list-file-prefix (locate-user-emacs-file ".local/backup/.saves-"))
   ;; Prevent `.#` lock files, so we won't mess up project if crashed.
   (create-lockfiles nil)
+  ;; Emacs GC is not so good now, let's see how many times we trigger it.
+  (garbage-collection-messages (format "A garbage collection has been triggered, currently threshold is %s MB." gc-cons-threshold))
   (fill-column 80)
   (display-raw-bytes-as-hex t)
   (sentence-end-double-space nil)
@@ -773,8 +776,11 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package server
   :custom
-  ;; HACK: Don't know why, but if this is `t`, new frame cannot be maximized
-  ;; properly with PGTK.
+  ;; HACK: If this is `t`, server will try to raise new frames via calling
+  ;; `gtk_window_present_with_time()`, which has some bugs like unsetting
+  ;; maximized frames and still show window decorations in maximized state, just
+  ;; disable it as a workaround. (Emacs itself never raises its frame, only
+  ;; Emacs server does this, so I don't think it's necessary.)
   (server-raise-frame nil)
   (server-log nil))
 
@@ -1019,12 +1025,14 @@ point reaches the beginning or end of the buffer, stop there."
   :hook ((c-mode . (lambda () (setq comment-start "//"
                                     comment-end   "")))))
 
-(use-package c-ts-mode
-  ;; I am a modern guy.
-  :hook ((c-ts-mode . (lambda () (setq comment-start "//"
-                                    comment-end   ""))))
-  :custom
-  (c-ts-mode-indent-style 'linux))
+;; It turns out that if I enable `c-ts-mode` here it will automatically remap
+;; all C files to itself, I don't want this.
+;; (use-package c-ts-mode
+;;   ;; I am a modern guy.
+;;   :hook ((c-ts-mode . (lambda () (setq comment-start "//"
+;;                                        comment-end   ""))))
+;;   :custom
+;;   (c-ts-mode-indent-style 'linux))
 
 (use-package json-ts-mode
   :mode (("\\.bowerrc\\'" . json-ts-mode)
