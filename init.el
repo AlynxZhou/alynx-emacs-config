@@ -767,7 +767,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Prevent `.#` lock files, so we won't mess up project if crashed.
   (create-lockfiles nil)
   ;; Emacs GC is not so good now, let's see how many times we trigger it.
-  (garbage-collection-messages (format "A garbage collection has been triggered, currently threshold is %s MB." gc-cons-threshold))
+  (garbage-collection-messages t)
   (fill-column 80)
   (display-raw-bytes-as-hex t)
   (sentence-end-double-space nil)
