@@ -768,6 +768,8 @@ point reaches the beginning or end of the buffer, stop there."
   (create-lockfiles nil)
   ;; Emacs GC is not so good now, let's see how many times we trigger it.
   (garbage-collection-messages t)
+  ;; See <https://emacs-china.org/t/emacs/21053/14>.
+  (process-adaptive-read-buffering nil)
   (fill-column 80)
   (display-raw-bytes-as-hex t)
   (sentence-end-double-space nil)
@@ -783,6 +785,16 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Emacs server does this, so I don't think it's necessary.)
   (server-raise-frame nil)
   (server-log nil))
+
+;; List dirs first in dired.
+(use-package ls-lisp
+  :custom
+  (ls-lisp-dirs-first t))
+
+(use-package dired
+  :custom
+  (dired-dwim-target t)
+  (dired-listing-switches "-alh"))
 
 (use-package windmove
   :demand t
