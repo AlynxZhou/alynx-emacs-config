@@ -1131,10 +1131,14 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; See <https://github.com/stigbjorlykke/rpm-spec-mode/issues/16>.
 ;;
-;; Currently this package does not work with Emacs after 28.1.
-;; (use-package rpm-spec-mode
-;;   :ensure t
-;;   :mode (("\\.spec\\'" . rpm-spec-mode)))
+;; Currently this package does not work with Emacs after 28.1, and the repo
+;; seems not actively maintained, so I manually bundle it, and apply the patch
+;; from Fedora.
+;;
+;; See <https://src.fedoraproject.org/rpms/emacs-rpm-spec-mode/blob/rawhide/f/fix-define-obsolete-variable-alias.patch>.
+(use-package rpm-spec-mode
+  ;; Don't ensure it, the MELPA one is old.
+  :mode (("\\.spec\\'" . rpm-spec-mode)))
 
 ;; Simple packages that have no dependencies.
 
@@ -1237,6 +1241,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; I only use this in `prog-mode`.
   :hook ((prog-mode . highlight-indent-guides-mode)
          (nxml-mode . highlight-indent-guides-mode)
+         (rpm-spec-mode . highlight-indent-guides-mode)
          ;; `yaml-mode` should be `prog-mode`, anyway.
          (yaml-ts-mode . highlight-indent-guides-mode))
   :custom
@@ -1259,6 +1264,7 @@ point reaches the beginning or end of the buffer, stop there."
   :defer t
   :hook ((prog-mode . hl-todo-mode)
          (nxml-mode . hl-todo-mode)
+         (rpm-spec-mode . hl-todo-mode)
          (yaml-ts-mode . hl-todo-mode)))
 
 ;; `diff-hl` supports more VCS than `git-gutter` and `git-gutter-fringe`.
@@ -1341,6 +1347,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; :functions (rainbow-x-color-luminance)
   :hook ((prog-mode . rainbow-mode)
          (nxml-mode . rainbow-mode)
+         (rpm-spec-mode . rainbow-mode)
          (yaml-ts-mode . rainbow-mode))
   :config
   ;; FIXME: To make `flycheck` happy, before we fix `:functions`.
