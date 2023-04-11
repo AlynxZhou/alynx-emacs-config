@@ -154,7 +154,7 @@
    `(consult-line-number-prefix ((t (:inherit (line-number)))))
    `(consult-line-number-wrapped ((t (:inherit (line-number) :weight bold))))
    `(consult-preview-match ((t (:inherit (isearch)))))
-   `(consult-highlight-match ((t (:inherit (match)))))
+   `(consult-highlight-match ((t (:inherit (isearch)))))
    ;; Don't inherit default, because it changes background.
    `(consult-buffer ((t (:foreground ,fg))))
    ;; Like `diff-mode`.

@@ -657,6 +657,10 @@ point reaches the beginning or end of the buffer, stop there."
   (package-refresh-contents)
   (package-install 'use-package))
 
+;; Not all variables supports `custom-theme-set-variables`, so just let
+;; `use-package` use `custom-set-variables`. I really don't use custom file.
+(setq use-package-use-theme nil)
+
 ;; Setting `use-package-always-ensure` to `t` will also set `:ensure t` for
 ;; built-in packages.
 ;;
@@ -867,6 +871,9 @@ point reaches the beginning or end of the buffer, stop there."
   :custom
   (find-file-visit-truename t)
   (find-file-suppress-same-file-warnings nil)
+  (find-sibling-rules '(("\\([^/]+\\)\\.c\\'" "\\1.h")
+                        ("\\([^/]+\\)\\.h\\'" "\\1.c")
+                        ("\\([^/]+\\)\\.rej\\'" "\\1")))
   ;; Backup file is generated when you save file. Autosave file is generated
   ;; every few seconds or every few characters.
   ;;
@@ -879,6 +886,11 @@ point reaches the beginning or end of the buffer, stop there."
    `(("." . ,(locate-user-emacs-file ".local/backup/"))))
   (auto-save-file-name-transforms
    `((".*" ,(locate-user-emacs-file ".local/backup/") t))))
+
+(use-package tramp-cache
+  :custom
+  ;; Move tramp cache into cache dir.
+  (tramp-persistency-file-name (locate-user-emacs-file ".local/cache/tramp")))
 
 (use-package uniquify
   :custom
@@ -1181,7 +1193,7 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (alynx-mode-line-mode 1)
   :custom
-  (alynx-mode-line-glyph-alist alynx-mode-line-glyphs-fira-code))
+  (alynx-mode-line-glyph-type 'fira-code))
 
 ;; (use-package nano-modeline
 ;;   :ensure t

@@ -6,6 +6,28 @@
 
 ;;; Code:
 
+;; Keys are names for different mode line glyphs, values are characters for that
+;; glyph.  Glyphs used by alynx-mode-line include:
+;;
+;; `:checker-info`        | Syntax checker reports notes.
+;; `:checker-issues`      | Syntax checker reports issues.
+;; `:checker-good`        | Syntax checker reports no issues.
+;; `:checker-checking`    | Syntax checker is running.
+;; `:checker-errored`     | Syntax checker is stopped due to an error.
+;; `:checker-interrupted` | Syntax checker is paused.
+;;
+;; `:vc-added`            | VC backend reports additions/changes.
+;; `:vc-needs-merge`      | VC backend reports required merge.
+;; `:vc-needs-update`     | VC backend reports upstream is ahead of local.
+;; `:vc-conflict`         | VC backend reports conflict.
+;; `:vc-good`             | VC backend has nothing to report.
+;;
+;; `:buffer-narrowed`     | File-backed buffer is narrowed.
+;; `:buffer-modified`     | File-backed buffer is modified.
+;; `:buffer-read-only`    | File-backed buffer is read-only.
+;;
+;; `:count-separator`     | Separates indicator names from numerical counts.
+
 (defconst alynx-mode-line-glyphs-ascii
   '((:checker-info . ?i)
     (:checker-issues . ?!)
@@ -108,48 +130,19 @@
   :group 'alynx-mode-line
   :type 'string)
 
-(defcustom alynx-mode-line-glyph-alist alynx-mode-line-glyphs-ascii
-  "Alist mapping glyph names to characters used to draw some mode line segments.
+(defcustom alynx-mode-line-glyph-type 'ascii
+  "Type of glyph used to draw some mode line segments.
 
 alynx-mode-line includes several sets of glyphs by default:
 
-`alynx-mode-line-glyphs-ascii'     | Basic ASCII character glyphs.
-`alynx-mode-line-glyphs-fira-code' | Fira Code-compatible glyphs.
-`alynx-mode-line-glyphs-unicode'   | Fancy unicode glyphs.
+`ascii'     | Basic ASCII character glyphs.
+`unicode'   | Fancy unicode glyphs.
+`fira-code' | Fira Code-compatible glyphs.
 
-Note that if a character provided by a glyph set is not included in your default
-font, the editor will render it with a fallback font.  If your fallback font is
-not the same height as your default font, the mode line may unexpectedly grow
-or shrink.
-
-Keys are names for different mode line glyphs, values are characters for that
-glyph.  Glyphs used by alynx-mode-line include:
-
-`:checker-info'        | Syntax checker reports notes.
-`:checker-issues'      | Syntax checker reports issues.
-`:checker-good'        | Syntax checker reports no issues.
-`:checker-checking'    | Syntax checker is running.
-`:checker-errored'     | Syntax checker is stopped due to an error.
-`:checker-interrupted' | Syntax checker is paused.
-
-`:vc-added'            | VC backend reports additions/changes.
-`:vc-needs-merge'      | VC backend reports required merge.
-`:vc-needs-update'     | VC backend reports upstream is ahead of local.
-`:vc-conflict'         | VC backend reports conflict.
-`:vc-good'             | VC backend has nothing to report.
-
-`:buffer-narrowed'     | File-backed buffer is narrowed.
-`:buffer-modified'     | File-backed buffer is modified.
-`:buffer-read-only'    | File-backed buffer is read-only.
-
-`:count-separator'     | Separates some indicator names from numerical counts.
-
-`alynx-mode-line-glyphs-ascii' will be used as a fallback wherever the a glyph
-may be found to be missing in `alynx-mode-line-glyph-alist'."
+`ascii' will be used as a fallback wherever the a glyph
+may be found to be missing in selected type."
   :group 'alynx-mode-line
-  :type `(alist :tag "Character map alist"
-                :key-type (symbol :tag "Glyph name")
-                :value-type (character :tag "Character to use")))
+  :type '(choice (const ascii) (const unicode) (const fira-code)))
 
 ;; Based on `editorconfig-indentation-alist` and `doom-modeline-indent-alist`.
 ;; See <https://github.com/editorconfig/editorconfig-emacs/blob/b8043702f3d977db0e030c6c64ee4a810cad5f45/editorconfig.el#L175>.
@@ -320,11 +313,14 @@ order provided)."
   :group 'alynx-mode-line-faces)
 
 (defun alynx-mode-line--get-glyph (glyph)
-  "Return character from `alynx-mode-line-glyph-alist' for GLYPH.
+  "Return character from selected glyph list for GLYPH.
 
 If a character could not be found for the requested glyph, a fallback will be
 returned from `alynx-mode-line-glyphs-ascii'."
-  (char-to-string (or (alist-get glyph alynx-mode-line-glyph-alist)
+  (char-to-string (or (alist-get glyph (pcase alynx-mode-line-glyph-type
+                                         ('ascii alynx-mode-line-glyphs-ascii)
+                                         ('unicode alynx-mode-line-glyphs-unicode)
+                                         ('fira-code alynx-mode-line-glyphs-fira-code)))
                       (alist-get glyph alynx-mode-line-glyphs-ascii))))
 
 (defmacro alynx-mode-line--concat-with-sperator (&rest sequences)
