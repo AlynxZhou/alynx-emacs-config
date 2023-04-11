@@ -1047,8 +1047,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Built-in shell written in Emacs Lisp. I hardly use this, but it has a dir.
 (use-package eshell
-  ;; This is not needed in startup so we defer it for 1 second.
-  :defer 1
+  :defer t
   :custom
   ;; Redirect its data dir.
   (eshell-directory-name (locate-user-emacs-file ".local/eshell/")))
@@ -1194,6 +1193,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Or sometimes I want light theme.
 (use-package alynx-one-light-theme
+  ;; What we bind here is not from our theme, so the theme is loaded manually.
   :demand t
   :bind (("C-c t t" . toggle-theme)))
 
@@ -1511,7 +1511,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package marginalia
   :ensure t
-  ;; Always load it instead of wait for first time keybinding pressed.
+  ;; Vertico will load it so we don't load it manually.
   ;; :demand t
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle))
