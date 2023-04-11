@@ -657,6 +657,8 @@ point reaches the beginning or end of the buffer, stop there."
   (package-refresh-contents)
   (package-install 'use-package))
 
+(require 'use-package)
+
 ;; Not all variables supports `custom-theme-set-variables`, so just let
 ;; `use-package` use `custom-set-variables`. I really don't use custom file.
 (setq use-package-use-theme nil)
@@ -675,20 +677,28 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Install and configure packages.
 
-;; NOTE: If a package is not needed since startup and has no bind or mode or hook
-;; to make `use-package` auto load it, add `:defer 1` to load it after 1 second.
-;; Difference between `:defer t` and `:defer 1`: `:defer 1` will load package
-;; after 1 second, but `:defer t` does not load package, expects other options
-;; load it.
-
-;; NOTE: If you have both `:bind` / `:hook` / `:mode` / `:interpreter` /
-;; `:commands` and enabling global mode in `:config`, add `:demand t` to break
-;; lazy loading.
+;; NOTE: If you have both `:bind` / `:mode` / `:interpreter` / `:commands` and
+;; enabling global mode in `:config`, it will never work, because `use-package`
+;; will lazy load packages with those keywords. Add `:demand t` to break lazy
+;; loading for this.
 ;;
 ;; See <https://sh.alynx.one/posts/Emacs-Lazy-Loading-use-package/>.
 ;;
 ;; See <https://github.com/jwiegley/use-package#notes-about-lazy-loading>.
-
+;;
+;; `(use-package PACKAGE)` block by default loads a package at startup if no
+;; lazy loading generated, but sometimes I only want to set some custom
+;; variables for a package, but don't load it (for example, move tramp's cache
+;; file, but don't load tramp at startup), just use `:defer t` to prevent
+;; loading them, `:custom` will still work.
+;;
+;; If a package is not needed since startup and has no keyword to make
+;; `use-package` auto load it, but is needed later, add `:defer 1` to load it
+;; after 1 second.
+;;
+;; Difference between `:defer t` and `:defer 1`: `:defer 1` will load package
+;; after 1 second, but `:defer t` does not load package, expects other code
+;; triggers it.
 
 ;; Built-in packages.
 
@@ -781,6 +791,7 @@ point reaches the beginning or end of the buffer, stop there."
   (fringe-indicator-alist nil))
 
 (use-package server
+  :defer t
   :custom
   ;; HACK: If this is `t`, server will try to raise new frames via calling
   ;; `gtk_window_present_with_time()`, which has some bugs like unsetting
@@ -792,13 +803,15 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; List dirs first in dired.
 (use-package ls-lisp
+  :defer t
   :custom
   (ls-lisp-dirs-first t))
 
 (use-package dired
+  :defer t
   :custom
   (dired-dwim-target t)
-  (dired-listing-switches "-alh"))
+  (dired-listing-switches "-alh --group-directories-first"))
 
 (use-package windmove
   :demand t
@@ -812,13 +825,13 @@ point reaches the beginning or end of the buffer, stop there."
   (windmove-default-keybindings))
 
 (use-package comp
+  :defer t
   :custom
   ;; Silence compiler warnings as they can be pretty disruptive.
-  ;;
-  ;; FIXME: Not sure why this does not work.
   (native-comp-async-report-warnings-errors 'silent))
 
 (use-package mouse
+  :defer t
   :custom
   ;; Yank to cursor, not where mouse clicked.
   (mouse-yank-at-point t))
@@ -826,29 +839,33 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Disable menu bar, tool bar, scroll bar and cursor blink.
 
 (use-package menu-bar
+  :defer t
   :config
   (menu-bar-mode -1))
 
 (use-package tool-bar
+  :defer t
   :config
   (tool-bar-mode -1))
 
 ;; Scroll bar is too narrow to click, better to disable it.
 (use-package scroll-bar
+  :defer t
   :config
   (scroll-bar-mode -1))
 
 (use-package frame
+  :defer t
   :config
   (blink-cursor-mode -1))
 
 (use-package window
-  :demand t
   :bind (("C-c C-v" . scroll-other-window)
          ("C-c M-v" . scroll-other-window-down)))
 
 ;; Display line number and column number of cursor in mode line.
 (use-package simple
+  :defer t
   :config
   ;; This only affects the built-in mode line.
   ;; (line-number-mode 1)
@@ -863,11 +880,13 @@ point reaches the beginning or end of the buffer, stop there."
 ;;
 ;; Auto-indent line when pressing enter.
 (use-package electric
+  :defer t
   :custom
   ;; Looks like `:custom` can handle `setq-default` correctly.
   (electric-indent-inhibit nil))
 
 (use-package files
+  :defer t
   :custom
   (find-file-visit-truename t)
   (find-file-suppress-same-file-warnings nil)
@@ -888,11 +907,13 @@ point reaches the beginning or end of the buffer, stop there."
    `((".*" ,(locate-user-emacs-file ".local/backup/") t))))
 
 (use-package tramp-cache
+  :defer t
   :custom
   ;; Move tramp cache into cache dir.
   (tramp-persistency-file-name (locate-user-emacs-file ".local/cache/tramp")))
 
 (use-package uniquify
+  :defer t
   :custom
   (uniquify-buffer-name-style 'forward))
 
@@ -934,6 +955,7 @@ point reaches the beginning or end of the buffer, stop there."
   (display-fill-column-indicator-column 80))
 
 (use-package paren
+  :defer t
   :custom
   ;; Using `t` for this is confusing.
   (show-paren-when-point-inside-paren nil))
@@ -946,6 +968,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Always follow symlinks instead of asking, because the minibuffer prompt might
 ;; be covered by other messages.
 (use-package vc-hooks
+  :defer t
   :custom
   (vc-follow-symlinks t))
 
@@ -1039,12 +1062,14 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; I prefer Linux coding style for C, not GNU.
 (use-package cc-vars
+  :defer t
   :custom
   (c-default-style '((java-mode . "java")
                      (awk-mode . "awk")
                      (other . "linux"))))
 
 (use-package cc-mode
+  :defer t
   ;; I am a modern guy.
   :hook ((c-mode . (lambda () (setq comment-start "//"
                                     comment-end   "")))))
@@ -1603,7 +1628,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Dependency of `flycheck-posframe` and `lsp-bridge`.
 (use-package posframe
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package flycheck
   :ensure t
@@ -1674,6 +1700,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; Dependency of `lsp-bridge`.
 (use-package yasnippet
   :ensure t
+  :defer t
   :hook ((prog-mode . yas-minor-mode))
   :config
   ;; OK, I finally give up, maybe I need to sync snippets so don't exclude them.
@@ -1681,7 +1708,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Dependency of `lsp-bridge`.
 (use-package yasnippet-snippets
-  :ensure t)
+  :ensure t
+  :defer t)
 
 ;; Looks like that I need to alter JSON files under `langserver` to add
 ;; parameters to `clangd`, but I can also modify `~/.config/clangd/config.yaml`
@@ -1689,6 +1717,7 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package lsp-bridge
   ;; This is not in MELPA and installed as submodules.
   :load-path "site-lisp/lsp-bridge/"
+  :defer t
   :hook ((prog-mode . lsp-bridge-mode)
          (nxml-mode . lsp-bridge-mode)
          (yaml-ts-mode . lsp-bridge-mode))
