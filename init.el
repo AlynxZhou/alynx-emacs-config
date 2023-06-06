@@ -1457,12 +1457,18 @@ point reaches the beginning or end of the buffer, stop there."
                               "\\*Warnings\\*"
                               ;; This will shown when you click TAB on `M-:`.
                               "\\*Completions\\*"
+                              "\\*Compile-Log\\*"
                               "Output\\*$"
                               "\\*Async Shell Command\\*"
                               help-mode
                               compilation-mode))
   ;; Don't add extra segment because it does not follow my segments.
   (popper-mode-line ""))
+
+;; A sticky header, can stick function headers of different languages.
+(use-package topsy
+  :ensure t
+  :hook ((prog-mode . topsy-mode)))
 
 ;; Not sure why it does not work for me. It always set to English even I
 ;; manually switched to RIME. I also want to use Chinese for `find-file` or
