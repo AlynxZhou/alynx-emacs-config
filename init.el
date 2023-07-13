@@ -1633,9 +1633,9 @@ point reaches the beginning or end of the buffer, stop there."
 ;;    (locate-user-emacs-file ".local/treemacs-persist-at-last-error")))
 
 ;; Dependency of `flycheck-posframe` and `lsp-bridge`.
-(use-package posframe
-  :ensure t
-  :defer t)
+;; (use-package posframe
+;;   :ensure t
+;;   :defer t)
 
 (use-package flycheck
   :ensure t
@@ -1729,7 +1729,12 @@ point reaches the beginning or end of the buffer, stop there."
          (yaml-ts-mode . lsp-bridge-mode))
   :custom
   (lsp-bridge-enable-hover-diagnostic t)
-  (lsp-bridge-signature-show-function 'lsp-bridge-signature-posframe)
+  ;; See <https://github.com/manateelazycat/lsp-bridge/commit/46ff1693558901f7867d9e7ab7dba98efdecd21c>.
+  ;;
+  ;; lsp-bridge now use acm frame instead of posframe, which also fixed strange
+  ;; black rectangle in wrong place for me.
+  (lsp-bridge-signature-show-function 'lsp-bridge-signature-show-with-frame)
+  (lsp-bridge-signature-show-with-frame-position 'point)
   ;; It is fancy, but noisy.
   (acm-enable-doc nil)
   (acm-enable-tabnine nil))
