@@ -582,6 +582,51 @@ point reaches the beginning or end of the buffer, stop there."
 (global-set-key (kbd "C-o") 'open-next-line)
 (global-set-key (kbd "C-S-o") 'open-previous-line)
 
+;; Find sibling file, but do not select it. We need this because we want to show
+;; the result in other window. Just replace `find-file` with
+;; `find-file-noselect` in `find-sibling-file`.
+(defun find-sibling-file-noselect (file)
+  "Read a \"sibling\" file of FILE into a buffer and return the buffer."
+  (interactive (progn
+                 (unless buffer-file-name
+                   (user-error "Not visiting a file"))
+                 (list buffer-file-name)))
+  (unless find-sibling-rules
+    (user-error "The `find-sibling-rules' variable has not been configured"))
+  (let ((siblings (find-sibling-file-search (expand-file-name file)
+                                            find-sibling-rules)))
+    (cond
+     ((null siblings)
+      (user-error "Couldn't find any sibling files"))
+     ((length= siblings 1)
+      (find-file-noselect (car siblings)))
+     (t
+      (let ((relatives (mapcar (lambda (sibling)
+                                 (file-relative-name
+                                  sibling (file-name-directory file)))
+                               siblings)))
+        (find-file-noselect
+         (completing-read (format-prompt "Find file" (car relatives))
+                          relatives nil t nil nil (car relatives))))))))
+
+;; Like `find-file-other-window`, but use `find-sibling-file-noselect`.
+(defun find-sibling-file-other-window (file)
+  "Visit a \"sibling\" file of FILE, in another window."
+  (interactive (progn
+                 (unless buffer-file-name
+                   (user-error "Not visiting a file"))
+                 (list buffer-file-name)))
+  (let ((value (find-sibling-file-noselect file)))
+    (if (listp value)
+	(progn
+	  (setq value (nreverse value))
+	  (switch-to-buffer-other-window (car value))
+	  (mapc 'switch-to-buffer (cdr value))
+	  value)
+      (switch-to-buffer-other-window value))))
+
+(global-set-key (kbd "C-c M-f") 'find-sibling-file-other-window)
+
 (defun show-file-path ()
   "Show the full file path of current buffer in the minibuffer."
   (interactive)
@@ -816,10 +861,10 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package windmove
   :demand t
   :bind
-  (("C-c C-n" . windmove-down)
-   ("C-c C-p" . windmove-up)
-   ("C-c C-f" . windmove-right)
-   ("C-c C-b" . windmove-left))
+  (("C-c w C-n" . windmove-down)
+   ("C-c w C-p" . windmove-up)
+   ("C-c w C-f" . windmove-right)
+   ("C-c w C-b" . windmove-left))
   :config
   ;; `S-<arrow>` to move between windows (`S` means Shift).
   (windmove-default-keybindings))
@@ -887,6 +932,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package files
   :defer t
+  :bind (("C-x M-f" . find-sibling-file)
+         ("C-c C-f" . find-file-other-window))
   :custom
   (find-file-visit-truename t)
   (find-file-suppress-same-file-warnings nil)
