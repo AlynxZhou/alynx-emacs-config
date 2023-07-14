@@ -906,7 +906,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package window
   :bind (("C-c C-v" . scroll-other-window)
-         ("C-c M-v" . scroll-other-window-down)))
+         ("C-c M-v" . scroll-other-window-down)
+         ("C-c b" . switch-to-buffer-other-window)))
 
 ;; Display line number and column number of cursor in mode line.
 (use-package simple
