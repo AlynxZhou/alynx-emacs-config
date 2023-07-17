@@ -1243,7 +1243,14 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package alynx-one-light-theme
   ;; What we bind here is not from our theme, so the theme is loaded manually.
   :demand t
-  :bind (("C-c t t" . toggle-theme)))
+  :config
+  (defun alynx/toggle-theme ()
+    "Toggle between dark and light variant themes and redisplay everything."
+    (interactive)
+    (toggle-theme)
+    ;; Some modes like `svg-tag-mode` uses color from theme, reset them.
+    (font-lock-flush))
+  :bind (("C-c t t" . alynx/toggle-theme)))
 
 ;; Or if you like `nano-theme`.
 ;; (use-package nano-theme
@@ -1266,7 +1273,7 @@ point reaches the beginning or end of the buffer, stop there."
   :config
   (alynx-mode-line-mode 1)
   :custom
-  (alynx-mode-line-glyph-type 'fira-code))
+  (alynx-mode-line-glyph-type 'ascii))
 
 ;; (use-package nano-modeline
 ;;   :ensure t
@@ -1344,8 +1351,10 @@ point reaches the beginning or end of the buffer, stop there."
    'highlight-indent-guides--bitmap-line))
 
 ;; Highlight FIXME, TODO, NOTE or HACK.
+;; Now I use `svg-tag-mode` for this, it looks fancy.
 (use-package hl-todo
   :ensure t
+  :disabled t
   :defer t
   :hook ((prog-mode . hl-todo-mode)
          (nxml-mode . hl-todo-mode)
@@ -1408,14 +1417,30 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package svg-tag-mode
   :ensure t
+  :functions (global-svg-tag-mode svg-tag-mode)
   ;; Maybe use with hooks.
-  ;; :config
-  ;; (svg-tag-mode 1)
+  :config
+  ;; Make byte-compiler happy (for flycheck) until `:functions` really works.
+  (declare-function global-svg-tag-mode "svg-tag-mode" (&optional arg))
+  (declare-function svg-tag-mode "svg-tag-mode" (&optional arg))
+  (global-svg-tag-mode 1)
   :custom
   ;; See <https://github.com/rougier/svg-tag-mode#usage-example>.
   (svg-tag-tags
-      '(("\\(:[A-Z]+:\\)" . ((lambda (tag)
-                               (svg-tag-make tag :beg 1 :end -1)))))))
+   '(("\\(:[A-Z]+:\\)" . ((lambda (tag)
+                            (svg-tag-make tag :beg 1 :end -1))))
+     ("TODO:" . ((lambda (tag)
+                   (svg-tag-make tag
+                                 :beg 0 :end -1 :inverse t :face 'warning))))
+     ("FIXME:" . ((lambda (tag)
+                    (svg-tag-make tag :beg 0 :end -1 :inverse t :face 'error))))
+     ("NOTE:" . ((lambda (tag)
+                   (svg-tag-make tag :beg 0 :end -1 :inverse t))))
+     ("HACK:" . ((lambda (tag)
+                   (svg-tag-make tag
+                                 :beg 0 :end -1 :inverse t :face 'success))))
+     ("XXX:" . ((lambda (tag)
+                  (svg-tag-make tag :beg 0 :end -1)))))))
 
 (use-package which-key
   :ensure t
