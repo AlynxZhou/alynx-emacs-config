@@ -31,8 +31,8 @@
 (defconst alynx-mode-line-glyphs-ascii
   '((:checker-info . ?i)
     (:checker-issues . ?!)
-    (:checker-good . ?+)
-    (:checker-checking . ?-)
+    (:checker-good . ?-)
+    (:checker-checking . ?+)
     (:checker-errored . ?x)
     (:checker-interrupted . ?=)
 
