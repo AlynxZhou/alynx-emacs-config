@@ -1351,10 +1351,9 @@ point reaches the beginning or end of the buffer, stop there."
    'highlight-indent-guides--bitmap-line))
 
 ;; Highlight FIXME, TODO, NOTE or HACK.
-;; Now I use `svg-tag-mode` for this, it looks fancy.
+;; `svg-tag-mode` could also achieve this, it looks fancy, but has some bugs.
 (use-package hl-todo
   :ensure t
-  :disabled t
   :defer t
   :hook ((prog-mode . hl-todo-mode)
          (nxml-mode . hl-todo-mode)
@@ -1415,6 +1414,15 @@ point reaches the beginning or end of the buffer, stop there."
                                             type)))))
   (diff-hl-draw-borders nil))
 
+(use-package svg-lib
+  :ensure t
+  :custom
+  (svg-lib-icons-dir (locate-user-emacs-file ".local/svg-lib/")))
+
+;; I don't enable this, because it makes part of syntax highlighting disappears,
+;; and has bug with `emacsclient`.
+;;
+;; See <https://github.com/rougier/svg-lib/issues/18>.
 (use-package svg-tag-mode
   :ensure t
   :functions (global-svg-tag-mode svg-tag-mode)
@@ -1423,7 +1431,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Make byte-compiler happy (for flycheck) until `:functions` really works.
   (declare-function global-svg-tag-mode "svg-tag-mode" (&optional arg))
   (declare-function svg-tag-mode "svg-tag-mode" (&optional arg))
-  (global-svg-tag-mode 1)
+  ;; (global-svg-tag-mode 1)
   :custom
   ;; See <https://github.com/rougier/svg-tag-mode#usage-example>.
   (svg-tag-tags
