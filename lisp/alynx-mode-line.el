@@ -6,7 +6,7 @@
 
 ;;; Code:
 
-;; Keys are names for different mode line glyphs, values are characters for that
+;; Keys are names for different mode line glyphs, values are strings for that
 ;; glyph.  Glyphs used by alynx-mode-line include:
 ;;
 ;; `:checker-info`        | Syntax checker reports notes.
@@ -29,66 +29,66 @@
 ;; `:count-separator`     | Separates indicator names from numerical counts.
 
 (defconst alynx-mode-line-glyphs-ascii
-  '((:checker-info . ?i)
-    (:checker-issues . ?!)
-    (:checker-good . ?-)
-    (:checker-checking . ?+)
-    (:checker-errored . ?x)
-    (:checker-interrupted . ?=)
+  '((:checker-info . "!")
+    (:checker-issues . "?")
+    (:checker-good . "-")
+    (:checker-checking . "+")
+    (:checker-errored . "x")
+    (:checker-interrupted . "=")
 
-    (:vc-added . ?+)
-    (:vc-needs-merge . ?>)
-    (:vc-needs-update . ?v)
-    (:vc-conflict . ?x)
-    (:vc-good . ?-)
+    (:vc-added . "+")
+    (:vc-needs-merge . ">")
+    (:vc-needs-update . "v")
+    (:vc-conflict . "x")
+    (:vc-good . "-")
 
-    (:buffer-narrowed . ?v)
-    (:buffer-modified . ?*)
-    (:buffer-read-only . ?#)
+    (:buffer-narrowed . "v")
+    (:buffer-modified . "o")
+    (:buffer-read-only . "#")
 
-    (:count-separator . ?*))
+    (:count-separator . "*"))
   "Set of ASCII glyphs.")
 
 (defconst alynx-mode-line-glyphs-fira-code
-  '((:checker-info . ?↳)
-    (:checker-issues . ?→)
-    (:checker-good . ?✓)
-    (:checker-checking . ?⟳)
-    (:checker-errored . ?x)
-    (:checker-interrupted . ?=)
+  '((:checker-info . "↳")
+    (:checker-issues . "→")
+    (:checker-good . "✓")
+    (:checker-checking . "⟳")
+    (:checker-errored . "×")
+    (:checker-interrupted . "=")
 
-    (:vc-added . ?+)
-    (:vc-needs-merge . ?⟷)
-    (:vc-needs-update . ?↓)
-    (:vc-conflict . ?x)
-    (:vc-good . ?✓)
+    (:vc-added . "+")
+    (:vc-needs-merge . "⟷")
+    (:vc-needs-update . "↓")
+    (:vc-conflict . "×")
+    (:vc-good . "✓")
 
-    (:buffer-narrowed . ?◢)
-    (:buffer-modified . ?●)
-    (:buffer-read-only . ?■)
+    (:buffer-narrowed . "◢")
+    (:buffer-modified . "●")
+    (:buffer-read-only . "■")
 
-    (:count-separator . ?×))
+    (:count-separator . "×"))
   "Set of Fira Code-compatible glyphs.")
 
 (defconst alynx-mode-line-glyphs-unicode
-  '((:checker-info . ?🛈)
-    (:checker-issues . ?⚑)
-    (:checker-good . ?✔)
-    (:checker-checking . ?🗘)
-    (:checker-errored . ?✖)
-    (:checker-interrupted . ?⏸)
+  '((:checker-info . "🛈")
+    (:checker-issues . "⚑")
+    (:checker-good . "✔")
+    (:checker-checking . "🗘")
+    (:checker-errored . "✖")
+    (:checker-interrupted . "⏸")
 
-    (:vc-added . ?🞤)
-    (:vc-needs-merge . ?⟷)
-    (:vc-needs-update . ?↓)
-    (:vc-conflict . ?✖)
-    (:vc-good . ?✔)
+    (:vc-added . "🞤")
+    (:vc-needs-merge . "⟷")
+    (:vc-needs-update . "↓")
+    (:vc-conflict . "✖")
+    (:vc-good . "✔")
 
-    (:buffer-narrowed . ?▼)
-    (:buffer-modified . ?●)
-    (:buffer-read-only . ?■)
+    (:buffer-narrowed . "▼")
+    (:buffer-modified . "●")
+    (:buffer-read-only . "■")
 
-    (:count-separator . ?✕))
+    (:count-separator . "✕"))
   "Set of Unicode glyphs.")
 
 (defgroup alynx-mode-line nil
@@ -317,11 +317,11 @@ order provided)."
 
 If a character could not be found for the requested glyph, a fallback will be
 returned from `alynx-mode-line-glyphs-ascii'."
-  (char-to-string (or (alist-get glyph (pcase alynx-mode-line-glyph-type
-                                         ('ascii alynx-mode-line-glyphs-ascii)
-                                         ('unicode alynx-mode-line-glyphs-unicode)
-                                         ('fira-code alynx-mode-line-glyphs-fira-code)))
-                      (alist-get glyph alynx-mode-line-glyphs-ascii))))
+  (or (alist-get glyph (pcase alynx-mode-line-glyph-type
+                         ('ascii alynx-mode-line-glyphs-ascii)
+                         ('unicode alynx-mode-line-glyphs-unicode)
+                         ('fira-code alynx-mode-line-glyphs-fira-code)))
+      (alist-get glyph alynx-mode-line-glyphs-ascii)))
 
 (defmacro alynx-mode-line--concat-with-sperator (&rest sequences)
   "Concatenate speartor, SEQUENCES and sperator and make the result a string."
