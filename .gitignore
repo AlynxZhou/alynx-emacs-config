@@ -6,7 +6,7 @@ custom-file.el
 # we can't change this behavior, so prevent it from adding into git commit here.
 flycheck_*
 # Files about building Arch package.
-dists/arch/emacs-git/
+dists/arch/emacs/
 dists/arch/pkg/
 dists/arch/src/
 dists/arch/emacs-alynx-*.pkg.tar.zst

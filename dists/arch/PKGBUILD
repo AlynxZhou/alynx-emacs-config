@@ -18,7 +18,7 @@
 #   - Disable PGTK X warning, I hack GTK and I know what I am doing.
 
 pkgname=emacs-alynx
-pkgver=30.0.50.166839
+pkgver=30.0.50.168311
 pkgrel=1
 pkgdesc="GNU Emacs. Alynx's build."
 arch=("x86_64")
@@ -37,17 +37,17 @@ conflicts=("emacs")
 # the latest commit and test whether it works fine. I have to sync my tools
 # between different machines and this makes sure that I always get the same
 # working copy.
-_commit="40492581f96626e405e4b453456b8c9b83822c97"
-# source=("emacs-git::git+https://git.savannah.gnu.org/git/emacs.git#commit=${_commit}")
+_commit="02d96e39b2182660e61e85b7b07da14ba6d94210"
+# source=("git+https://git.savannah.gnu.org/git/emacs.git#commit=${_commit}")
 # GitHub mirror is easier to access.
-source=("emacs-git::git+https://github.com/emacs-mirror/emacs.git#commit=${_commit}"
+source=("git+https://github.com/emacs-mirror/emacs.git#commit=${_commit}"
         "emacs-disable-pgtk-x-warning.patch")
 options=(!strip)
 sha512sums=("SKIP"
             "9c74ff3cc7648b1f90d6d9705b3c3bf28eb724a5cb633edf362d10dfdb8db3917812e09fe474d26afae9aa6805fb872dfa12a24d740a0b22453c43507b4f984c")
 
 pkgver() {
-  cd emacs-git
+  cd emacs
 
   printf "%s.%s" \
     $(grep AC_INIT configure.ac | \
@@ -56,7 +56,7 @@ pkgver() {
 }
 
 prepare() {
-  cd emacs-git
+  cd emacs
 
   git apply -3 "${srcdir}/emacs-disable-pgtk-x-warning.patch"
 
@@ -65,7 +65,7 @@ prepare() {
 }
 
 build() {
-  cd emacs-git/build
+  cd emacs/build
 
   local _options=(
     --prefix=/usr
@@ -121,12 +121,12 @@ build() {
 
 # I am using unstable version and tests may be not updated.
 # check() {
-#   cd emacs-git/build
+#   cd emacs/build
 #   make check
 # }
 
 package() {
-  cd emacs-git/build
+  cd emacs/build
 
   make DESTDIR="${pkgdir}" install
 

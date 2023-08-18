@@ -1,3 +1,6 @@
 [submodule "site-lisp/lsp-bridge"]
 	path = site-lisp/lsp-bridge
 	url = https://github.com/manateelazycat/lsp-bridge.git
+[submodule "site-lisp/indent-bars"]
+	path = site-lisp/indent-bars
+	url = https://github.com/jdtsmith/indent-bars.git

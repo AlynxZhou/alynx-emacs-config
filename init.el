@@ -911,11 +911,11 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; Display line number and column number of cursor in mode line.
 (use-package simple
-  :defer t
   :config
   ;; This only affects the built-in mode line.
   ;; (line-number-mode 1)
   ;; (column-number-mode 1)
+  (kill-ring-deindent-mode 1)
   :custom
   ;; By default if you press backspace on indentations, Emacs will turn a tab
   ;; into spaces and delete one space, I think no one likes this.
@@ -1139,6 +1139,9 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package yaml-ts-mode
   :mode (("\\.yml\\'" . yaml-ts-mode) ("\\.yaml\\'" . yaml-ts-mode)))
 
+(use-package rust-ts-mode
+  :mode (("\\.rs\\'" . rust-ts-mode)))
+
 ;; External modes and tools for different languages.
 
 (use-package js2-mode
@@ -1350,6 +1353,45 @@ point reaches the beginning or end of the buffer, stop there."
   (highlight-indent-guides-bitmap-function
    'highlight-indent-guides--bitmap-line))
 
+;; Currently not working well with PGTK due to a bug. But this is a new thing,
+;; it uses stipple face properties and should be fast.
+;;
+;; See <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=64969>.
+;;
+;; The author says it does not support `indent-tabs-mode`, I feel depressed, why
+;; we cannot have a fast indent guide that supports tabs? Every editor has one,
+;; is it so hard???
+;;
+;; See <https://github.com/jdtsmith/indent-bars/commit/accb7d00d2dd86944909b81dc45391813106ca74>.
+(use-package indent-bars
+  :load-path "site-lisp/indent-bars"
+  :defer t
+  :disabled t
+  ;; I only use this in `prog-mode`.
+  :hook
+  ;; ((server-after-make-frame . (lambda ()
+  ;;                               (add-hook 'prog-mode-hook  'indent-bars-mode)
+  ;;                               (add-hook 'nxml-mode-hook  'indent-bars-mode)
+  ;;                               (add-hook 'rpm-spec-mode-hook  'indent-bars-mode)
+  ;;                               (add-hook 'yaml-ts-mode-hook  'indent-bars-mode))))
+  ;; See <https://github.com/jdtsmith/indent-bars/issues/6>.
+  ;;
+  ;; Currently hard to use with both daemon and normal Emacs.
+  ((prog-mode . indent-bars-mode)
+   (nxml-mode . indent-bars-mode)
+   (rpm-spec-mode . indent-bars-mode)
+   ;; `yaml-mode` should be `prog-mode`, anyway.
+   (yaml-ts-mode . indent-bars-mode))
+  :custom
+  (indent-bars-pattern ".")
+  ;; (indent-bars-color 'shadow)
+  (indent-bars-width-frac 0.2)
+  (indent-bars-pad-frac 0.1)
+  (indent-bars-display-on-blank-lines t)
+  (indent-bars-zigzag nil)
+  (indent-bars-color-by-depth nil)
+  (indent-bars-highlight-current-depth nil))
+
 ;; Highlight FIXME, TODO, NOTE or HACK.
 ;; `svg-tag-mode` could also achieve this, it looks fancy, but has some bugs.
 (use-package hl-todo
@@ -1426,6 +1468,15 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package svg-tag-mode
   :ensure t
   :functions (global-svg-tag-mode svg-tag-mode)
+  ;; A workaround to delay style calculating.
+  ;; :init
+  ;; (defun first-graphical-frame-hook-function ()
+  ;;   (remove-hook 'focus-in-hook #'first-graphical-frame-hook-function)
+  ;;   (provide 'my-gui))
+  ;; (add-hook 'focus-in-hook #'first-graphical-frame-hook-function)
+
+  ;; (with-eval-after-load 'my-gui
+  ;;   (setq svg-lib-style-default (svg-lib-style-compute-default)))
   ;; Maybe use with hooks.
   :config
   ;; Make byte-compiler happy (for flycheck) until `:functions` really works.
