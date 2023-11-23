@@ -1575,7 +1575,7 @@ point reaches the beginning or end of the buffer, stop there."
   :ensure t
   ;; Prevent lazy loading so it can manage popup since Emacs starts.
   :demand t
-  :bind (("C-'" . popper-toggle-latest)
+  :bind (("C-'" . popper-toggle)
          ("M-'" . popper-cycle)
          ("C-M-'" . popper-toggle-type))
   :config
