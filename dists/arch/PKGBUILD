@@ -58,7 +58,7 @@ depends=(
   "libsystemd.so"
   "libtiff.so"
   "libtree-sitter.so"
-  "libwebp.so"
+  "libwebpdecoder.so"
   "libwebpdemux.so"
   "libxfixes"
   "libxml2.so"
@@ -87,7 +87,7 @@ pkgver() {
 
   printf "%s.%s" \
     $(grep AC_INIT configure.ac | \
-    awk -F',' '{ gsub("[ \\[\\]]","",$2); print $2 }') \
+    awk -F ',' '{ gsub("[ \\[\\]]", "", $2); print $2 }') \
     $(git rev-list --count HEAD)
 }
 
@@ -97,14 +97,11 @@ prepare() {
   git apply -3 "${srcdir}/emacs-disable-pgtk-x-warning.patch"
 
   [[ -x configure ]] || ( ./autogen.sh git && ./autogen.sh autoconf )
-  # FIXME: Not sure why but it seems that building Emacs master out-of-tree
-  # breaks pdump loading on launch currently.
-  # mkdir -p build
+  mkdir -p build
 }
 
 build() {
-  # cd emacs/build
-  cd emacs
+  cd emacs/build
 
   local _options=(
     --prefix=/usr
@@ -143,21 +140,24 @@ build() {
     --program-transform-name="s/\([ec]tags\)/\1.emacs/"
   )
 
-  # FIXME: Out-of-tree build is currently broken.
-  # ../configure "${_options[@]}"
-  ./configure "${_options[@]}"
+  ../configure "${_options[@]}"
 
-  # You may need to run this if 'loaddefs.el' files become corrupt.
+  # You may need to run this if `loaddefs.el` files become corrupt.
   # cd ../lisp
   # make autoloads
   # cd ../build
 
-  # Using "make" instead of "make bootstrap" enables incremental compiling.
+  # Sometimes it is required to clean previous build files, for example commit
+  # `7f359d248874a6fc6a1472247d3982c85dc11544` will break pdump loading on
+  # launch if you don't run this.
+  # make distclean
+
+  # Using `make` instead of `make bootstrap` enables incremental compiling.
   # But you may need to use bootstrap sometimes to unbreak the build, then just
   # add it to the command line.
   #
   # Please note that incremental compilation implies that you are reusing your
-  # src directory!
+  # source directory!
   #
   # Don't set `-j$(nprocs)` here, I prefer set `MAKEFLAGS="-j$(nproc)"` in
   # `/etc/makepkg.conf`.
@@ -166,14 +166,12 @@ build() {
 
 # I am using unstable version and tests may be not updated.
 # check() {
-#   # cd emacs/build
-#   cd emacs
+#   cd emacs/build
 #   make check
 # }
 
 package() {
-  # cd emacs/build
-  cd emacs
+  cd emacs/build
 
   make DESTDIR="${pkgdir}" install
 
