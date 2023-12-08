@@ -1214,7 +1214,13 @@ point reaches the beginning or end of the buffer, stop there."
 
 (use-package meson-mode
   :ensure t
-  :mode (("meson\\.build\\'" . meson-mode)))
+  :mode (("meson\\.build\\'" . meson-mode)
+         ("meson\\.options\\'" . meson-mode)
+         ("meson_options\\.txt\\'" . meson-mode)))
+
+(use-package cmake-ts-mode
+  :mode (("CMakeLists\\.txt\\'" . cmake-ts-mode)
+         ("\\.cmake\\'" . cmake-ts-mode)))
 
 ;; See <https://github.com/stigbjorlykke/rpm-spec-mode/issues/16>.
 ;;
