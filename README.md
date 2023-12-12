@@ -47,7 +47,7 @@ $ npm install --global standardx
 
 And run Emacs.
 
-I am using Emacs master branch with pgtk, native-comp and tree-sitter, if you are not using the latest version, it may not work. You may read my [PKGBUILD](./dists/arch/PKGBUILD) for my Emacs building options, but it may be not OK for you.
+I am using Emacs master branch with pgtk, native-comp and tree-sitter, if you are not using the latest version, it may not work. You may read my [PKGBUILD](https://github.com/AlynxZhou/alynx-arch-packages/blob/master/packages/emacs-alynx/PKGBUILD) for my Emacs building options, but it may be not OK for you.
 
 To flush all installed packages and re-installed them, run the following command:
 
@@ -64,7 +64,7 @@ $ rm -rf ~/.emacs.d/{elpa,eln-cache} && rm ~/.emacs.d/.local/cache/package-quick
 
 If there are more dirs to sync, put them into project root, and if configurations are splitted into different files, just put them into project root (not in `lisp`), too.
 
-# Notice
+# Note
 
 ## Indentation Handling
 
