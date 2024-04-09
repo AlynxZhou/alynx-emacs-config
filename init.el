@@ -357,7 +357,8 @@ If NUM is negative, indent offset will be nil."
   (if (member major-mode alynx/skip-guess-indent-modes)
       (message (format "Skip guess-indent for %s." (symbol-name major-mode)))
     ;; Ideally we should iterate the whole buffer, but that's impossible for big
-    ;; files. Let's assume we always 1 level indented code in the first 200 lines.
+    ;; files. Let's assume we always have 1-level indented code in the first 200
+    ;; lines.
     (let* ((total-lines (count-lines (point-min) (point-max)))
            (detect-lines (min total-lines 200))
            (shortest-spaces 0)
@@ -371,9 +372,9 @@ If NUM is negative, indent offset will be nil."
               (goto-char (line-beginning-position))
               (setq current-char (char-after))
               (cond
-               ;; We assume no one uses indent offset that larger than tab width,
-               ;; so there won't be indent level like 1 tab and 2 spaces. We also
-               ;; assume there is no line only contains tabs.
+               ;; We assume no one uses indent offset which is larger than 1 tab
+               ;; width, so there won't be 1 tab plus 2 spaces as 1 level. We
+               ;; also assume there is no line that contains only tabs.
                ((= current-char ?\t) (setq has-tab t))
                ((= current-char ?\s)
                 ;; Calculate how many spaces in prefix.
@@ -385,6 +386,7 @@ If NUM is negative, indent offset will be nil."
                   ;; (message "Line %d has %d spaces." i spaces)
                   ;; You may have lines only contains spaces in a file that
                   ;; indented with tabs. Just ignore those lines.
+                  ;;
                   ;; Let's assume no one uses 1-char indent offset.
                   (when (and (/= current-char ?\n)
                              (/= current-char ?\r)
@@ -399,9 +401,10 @@ If NUM is negative, indent offset will be nil."
       ;; file is likely to only use tabs, and the indent offset is tab width,
       ;; otherwise the shortest spaces length is indent offset.
       ;; If we don't find tabs, just assume this file does not use tabs, this is
-      ;; not correct because we may just not have tabs in first 200 lines but that
-      ;; is the best we can do. And then if we cannot get shortest spaces, it
-      ;; means that there is no indent level in first 200 lines, so just skip it.
+      ;; not correct because we may just not have tabs in first 200 lines but
+      ;; that is the best effort we can do. And then if we cannot get shortest
+      ;; spaces, it means that there is no indent level in first 200 lines, so
+      ;; just skip it.
       (if has-tab
           (if (/= shortest-spaces 0)
               (indent-tabs shortest-spaces)
