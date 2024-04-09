@@ -795,7 +795,7 @@ point reaches the beginning or end of the buffer, stop there."
   ;; Disable startup buffer. It's OK but it's not beautiful and not helpful.
   (inhibit-startup-screen t)
   ;; (fancy-splash-image (locate-user-emacs-file "emacs-e.svg"))
-  (initial-scratch-message ";; Happy hacking here!\n\n")
+  (initial-scratch-message ";; -*- lexical-binding: t; -*-\n;; Happy hacking here!\n")
   ;; Disable annoying bell.
   (ring-bell-function 'ignore)
   ;; (visible-bell nil)
