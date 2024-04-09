@@ -346,8 +346,8 @@ If NUM is negative, indent offset will be nil."
 ;;
 ;; Here you use 5 spaces to align arguments, and this function will use 5 spaces
 ;; per indent level. A proper but impossible solution is ignore function header,
-;; but obviously editors cannot understand every languages. Maybe we can also
-;; record space or tab lines and do some comparation, but that's not exact.
+;; because obviously editors cannot understand every languages. We may also
+;; record space or tab lines and do some comparation, but that's not precious.
 ;;
 ;; Anyway, this function is just guessing indentation, so user should correct it
 ;; manually if it returns wrong value.
