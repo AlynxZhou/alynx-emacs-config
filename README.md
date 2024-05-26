@@ -39,6 +39,8 @@ Install dependencies and language servers for `lsp-bridge` (`clangd` is included
 $ paru -S python-epc python-sexpdata
 ```
 
+For macOS, check [lsp-bridge's doc](https://github.com/manateelazycat/lsp-bridge?tab=readme-ov-file#installation) for installing dependencies with `pip`.
+
 Because [`flycheck` currently cannot run locally installed `standardx`](https://github.com/flycheck/flycheck/issues/1428), you may need to install `standardx` globally:
 
 ```shell
@@ -63,6 +65,78 @@ $ rm -rf ~/.emacs.d/{elpa,eln-cache} && rm ~/.emacs.d/.local/cache/package-quick
 - `.local`: Files that won't sync, like backup and cache files.
 
 If there are more dirs to sync, put them into project root, and if configurations are splitted into different files, just put them into project root (not in `lisp`), too.
+
+# Build Emacs
+
+This configuration requires latest Emacs master, so building Emacs manually is required, here are compiling options I used to build my Emacs on different systems.
+
+## Arch Linux
+
+My own PKGBUILD can be found in my Arch Linux packages repo: <https://github.com/AlynxZhou/alynx-arch-packages/tree/master/packages/emacs-alynx/>. Just run `makepkg -sif` should be enough to build an `emacs-alynx` package.
+
+## macOS
+
+I install following dependencies with Homebrew (incomplete, I'll add more if I find something missing):
+
+```shell
+$ brew install autoconf automake pkg-config libtool libgccjit tree-sitter gmp gnutls texinfo mailutils sqlite3
+```
+
+If there is no `configure` script, run following command to generate it:
+
+```shell
+$ ./autogen.sh git && ./autogen.sh autoconf
+```
+
+Run `configure` with following options:
+
+```shell
+$ CFLAGS="-I/opt/homebrew/include -L/opt/homebrew/lib" ./configure \
+	--with-ns \
+	--without-x \
+	--without-xwidgets \
+	--without-xaw3d \
+	--without-dbus \
+	--without-gconf \
+	--without-gsettings \
+	--without-libotf \
+	--without-m17n-flt \
+	--without-compress-install \
+	--with-native-compilation=aot \
+	--with-tree-sitter \
+	--with-sqlite3 \
+	--with-libgmp \
+	--with-gnutls \
+	--with-xml2 \
+	--with-webp \
+	--with-mailutils
+```
+
+Because Homebrew installs packages to `/opt/homebrew` on Apple Silicon machines, `CFLAGS` is needed to find headers and libraries.
+
+And then compile all sources, and create a `Emacs.app` under `nextstep` dir so we can install it:
+
+```shell
+$ make -j 8
+$ make install
+```
+
+You may need to replace `make` with `make bootstrap` sometimes.
+
+Then you can use following script to run Emacs from shell:
+
+```bash
+#!/bin/bash
+
+/Applications/Emacs.app/Contents/MacOS/Emacs "${@}"
+```
+
+Or set following `PATH` to run `Emacs` and `emacsclient` binary:
+
+```bash
+# The actual binary is called `Emacs`, but macOS is not case sensitive.
+export PATH="/Applications/Emacs.app/Contents/MacOS:/Applications/Emacs.app/Contents/MacOS/bin:${PATH}"
+```
 
 # Note
 
