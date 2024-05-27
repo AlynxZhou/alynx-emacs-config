@@ -45,6 +45,10 @@
 ;; Backup dir which contains backup files and auto save lists.
 (make-directory (locate-user-emacs-file ".local/backup/") t)
 
+(defun alynx/macos-p ()
+  "Check whether current system is macOS."
+  (eq system-type 'darwin))
+
 ;; Fonts.
 
 ;; (setq font-use-system-font t)
@@ -65,8 +69,8 @@
                       ;; :slant 'normal
                       ;; :width 'normal
                       ;; :weight 'normal
-                      ;; 1 height is 1/10 pt.
-                      :height 140))
+                      ;; 1 height is 1/10 pt. 140 is too small on MacBook Air.
+                      :height (if (alynx/macos-p) 160 140)))
 
 ;; Set fallback fonts, like 中文 or 😸.
 ;;
@@ -96,11 +100,18 @@
     (set-fontset-font t charset nil)
     ;; Prepend to the beginning of charset font lists.
     (set-fontset-font t charset
-                      (font-spec :family "Noto Color Emoji") nil 'prepend)
+                      (font-spec :family (if (alynx/macos-p)
+                                             "Apple Color Emoji"
+                                           "Noto Color Emoji"))
+                      nil 'prepend)
     (set-fontset-font t charset
-                      (font-spec :family "Noto Sans Mono CJK SC") nil 'prepend)
+                      (font-spec :family (if (alynx/macos-p)
+                                             "PingFang SC"
+                                           "Noto Sans Mono CJK SC"))
+                      nil 'prepend)
     (set-fontset-font t charset
-                      (font-spec :family "Monaco") nil 'prepend)))
+                      (font-spec :family "Monaco")
+                      nil 'prepend)))
 
 ;; HACK: Set fallback fonts directly does not work for `emacsclient`. When
 ;; client starts a daemon, it firstly does not have GUI and those font related
@@ -114,19 +125,19 @@
                 (alynx/clear-and-set-fallback-fonts)))
   (alynx/clear-and-set-fallback-fonts))
 
-;; Noto Sans CJK fonts has larger ascent and descent, which make lines with CJK
-;; chars higher than others. So make Monaco and Noto Sans Mono CJK SC the same
-;; line height.
+;; CJK fonts may have larger ascent and descent, which make lines with CJK chars
+;; higher than others. So make Monaco and CJK fonts the same line height.
 ;;
-;; This is not perfect, since font size is always integer, after rounding it
-;; makes Noto Sans Mono CJK SC a little bit small.
+;; This is not perfect, since font size is always integer, after rounding it may
+;; make CJK fonts a little bit smaller than Monaco.
 ;;
 ;; Better way is to custom Monaco's ascent and descent in its OS/2 table to make
-;; it have the same ratio as Noto Sans Mono CJK SC. But it will break
-;; box-drawing characters, which needs to be stretched.
+;; it have the same ratio as Noto Sans Mono CJK SC or PingFang SC. But it will
+;; break box-drawing characters, which needs to be stretched.
 ;;
 ;; If Emacs allows user to set a custom min line height, this might be solved.
-(setq face-font-rescale-alist '(("Noto Sans Mono CJK SC" . 0.85)))
+(setq face-font-rescale-alist '(("Noto Sans Mono CJK SC" . 0.85)
+                                ("PingFang SC" . 0.9)))
 
 ;; Don't clean font-caches during GC.
 (setq inhibit-compacting-font-caches t)
