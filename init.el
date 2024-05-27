@@ -51,17 +51,22 @@
 
 ;; Set default font.
 ;;
+;; By default fixed pitch faces use monospace, but not all my systems use Monaco
+;; as monospace, for example macOS, so explicitly set Monaco here for them to
+;; solve this.
+;;
 ;; `fill-column-indicator` and `highlight-indent-guide` uses box-drawing
 ;; characters to draw bars, but the default characters in Monaco is not so good,
 ;; it has padding before and after it. To fix this I used my patched Monaco
 ;; which merges Menlo's box-drawing characters into it.
-(set-face-attribute 'default nil
-                    :family "Monaco"
-                    ;; :slant 'normal
-                    ;; :width 'normal
-                    ;; :weight 'normal
-                    ;; 1 height is 1/10 pt.
-                    :height 140)
+(dolist (face '(default fixed-pitch fixed-pitch-serif))
+  (set-face-attribute face nil
+                      :family "Monaco"
+                      ;; :slant 'normal
+                      ;; :width 'normal
+                      ;; :weight 'normal
+                      ;; 1 height is 1/10 pt.
+                      :height 140))
 
 ;; Set fallback fonts, like 中文 or 😸.
 ;;
