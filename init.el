@@ -1019,9 +1019,10 @@ point reaches the beginning or end of the buffer, stop there."
   (show-paren-when-point-inside-paren nil))
 
 ;; Enable `pixel-scroll-precision-mode` added in Emacs 29.
-(use-package pixel-scroll
-  :config
-  (pixel-scroll-precision-mode 1))
+;; FIXME: Leading into strange cursor position jumping with splited windows.
+;; (use-package pixel-scroll
+;;   :config
+;;   (pixel-scroll-precision-mode 1))
 
 ;; Always follow symlinks instead of asking, because the minibuffer prompt might
 ;; be covered by other messages.
