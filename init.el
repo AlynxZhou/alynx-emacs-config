@@ -864,7 +864,9 @@ point reaches the beginning or end of the buffer, stop there."
   ;; maximized frames and still show window decorations in maximized state, just
   ;; disable it as a workaround. (Emacs itself never raises its frame, only
   ;; Emacs server does this, so I don't think it's necessary.)
-  (server-raise-frame nil)
+  ;;
+  ;; macOS is not affected by this, so only set it to `nil` when using PGTK.
+  (server-raise-frame (alynx/macos-p))
   (server-log nil))
 
 ;; List dirs first in dired.
