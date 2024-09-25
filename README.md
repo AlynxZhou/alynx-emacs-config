@@ -91,7 +91,7 @@ $ ./autogen.sh git && ./autogen.sh autoconf
 Run `configure` with following options:
 
 ```shell
-$ CFLAGS="-I/opt/homebrew/include -L/opt/homebrew/lib" ./configure \
+$ CFLAGS="-march=native -O2 -I/opt/homebrew/include -L/opt/homebrew/lib" ./configure \
 	--with-ns \
 	--without-x \
 	--without-xwidgets \
