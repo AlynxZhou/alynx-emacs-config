@@ -29,7 +29,7 @@ To use tree-sitter, tree-sitter language modules are needed, manually building t
 ```shell
 $ git clone https://github.com/casouri/tree-sitter-module.git && cd tree-sitter-module/
 $ ./batch.sh
-$ mkdir -p ~/.emacs.d/.local/treesit/ && cp dists/* $_
+$ mkdir -p ~/.emacs.d/.local/treesit/ && cp dist/* $_
 ```
 
 Install dependencies and language servers for `lsp-bridge` (`clangd` is included by `clang` package):
