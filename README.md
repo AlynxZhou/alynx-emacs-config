@@ -112,7 +112,7 @@ $ CFLAGS="-march=native -O2 -I/opt/homebrew/include -L/opt/homebrew/lib" ./confi
 	--with-mailutils
 ```
 
-Because Homebrew installs packages to `/opt/homebrew` on Apple Silicon machines, `CFLAGS` is needed to find headers and libraries.
+Because Homebrew installs packages to `/opt/homebrew` on Apple Silicon machines, `CFLAGS` is needed to find headers and libraries. You may or may not add `CC="gcc-15"` to use the real GCC installed by Homebrew (Homebrew always install GCC binary with suffix, so you need to change this when GCC release new version), because using Clang is OK for building Emacs.
 
 And then compile all sources, and create a `Emacs.app` under `nextstep` dir so we can install it:
 
@@ -123,12 +123,20 @@ $ make install
 
 You may need to replace `make` with `make bootstrap` sometimes.
 
-Then you can use following script to run Emacs from shell:
+Then you can create a `emacs` script with following content to run Emacs from shell:
 
 ```bash
 #!/bin/bash
 
 /Applications/Emacs.app/Contents/MacOS/Emacs "${@}"
+```
+
+And you can create a `emacsclient` script with following content to run Emacs client from shell:
+
+```bash
+#!/bin/bash
+
+/Applications/Emacs.app/Contents/MacOS/bin/emacsclient "${@}"
 ```
 
 Or set following `PATH` to run `Emacs` and `emacsclient` binary:
@@ -137,6 +145,8 @@ Or set following `PATH` to run `Emacs` and `emacsclient` binary:
 # The actual binary is called `Emacs`, but macOS is not case sensitive.
 export PATH="/Applications/Emacs.app/Contents/MacOS:/Applications/Emacs.app/Contents/MacOS/bin:${PATH}"
 ```
+
+Native compilation may fail on macOS with `ld: library not found for emutls_w`, that is because the default `gcc` binary on macOS is Clang which is different from GCC for some behavior and libraries. The easiest way to fix that is run Emacs in shell with `CC="gcc-15"` environment variable to let it find the real GCC, you don't need to do this every time because native compilation only happens when the compiled cache is outdated or cleared.
 
 # Note
 
