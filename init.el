@@ -256,6 +256,7 @@
     (terra-mode terra-indent-level)
     (typescript-mode typescript-indent-level)
     (typescript-ts-base-mode typescript-ts-mode-indent-offset)
+    (typescript-ts-mode typescript-ts-mode-indent-offset)
     (verilog-mode verilog-indent-level
                   verilog-indent-level-behavioral
                   verilog-indent-level-declaration
@@ -444,6 +445,7 @@ If NUM is negative, indent offset will be nil."
                                        (js-mode space 2)
                                        (js2-mode space 2)
                                        (json-ts-mode space 2)
+                                       (typescript-ts-mode space 2)
                                        (css-mode space 2)
                                        (html-mode space 2)
                                        (nxml-mode space 2)
@@ -1160,6 +1162,9 @@ point reaches the beginning or end of the buffer, stop there."
          ("\\.json_schema\\'" . json-ts-mode)
          ("\\.json\\'" . json-ts-mode)))
 
+(use-package typescript-ts-mode
+  :mode (("\\.ts\\'" . typescript-ts-mode)))
+
 (use-package yaml-ts-mode
   :mode (("\\.yml\\'" . yaml-ts-mode) ("\\.yaml\\'" . yaml-ts-mode)))
 
@@ -1171,7 +1176,8 @@ point reaches the beginning or end of the buffer, stop there."
 (use-package js2-mode
   :ensure t
   :hook ((js2-mode . js2-imenu-extras-mode))
-  :mode (("\\.js\\'" . js2-mode)))
+  :mode (("\\.js\\'" . js2-mode)
+         ("\\.mjs\\'" . js2-mode)))
 
 (use-package js2-refactor
   :ensure t
