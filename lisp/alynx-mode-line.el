@@ -100,6 +100,13 @@
   :group 'alynx-mode-line
   :group 'faces)
 
+(defcustom alynx-mode-line-show-word-count nil
+  "When non-nil, show the number of words in text mode.
+
+If a region is active, count the region, otherwise the whole buffer."
+  :group 'alynx-mode-line
+  :type 'boolean)
+
 (defcustom alynx-mode-line-show-indentation-style t
   "When non-nil, show the indentation style of the current buffer."
   :group 'alynx-mode-line
@@ -238,6 +245,7 @@ may be found to be missing in selected type."
     (terra-mode terra-indent-level)
     (typescript-mode typescript-indent-level)
     (typescript-ts-base-mode typescript-ts-mode-indent-offset)
+    (typescript-ts-mode typescript-ts-mode-indent-offset)
     (verilog-mode verilog-indent-level
                   verilog-indent-level-behavioral
                   verilog-indent-level-declaration
@@ -397,6 +405,16 @@ The mode line should fit the `window-width' with space between."
   (when alynx-mode-line-show-cursor-position
     (alynx-mode-line--concat-with-sperator
      "%l:%c" " " (number-to-string (point)) " " "%p%%")))
+
+(defun alynx-mode-line--segment-word-count ()
+  "Display the number of words in the current buffer or region in text mode."
+  (when (and alynx-mode-line-show-word-count
+             (derived-mode-p 'text-mode))
+    (alynx-mode-line--concat-with-sperator
+     (number-to-string (if (region-active-p)
+                           (count-words (region-beginning) (region-end))
+                         (count-words (buffer-end -1) (buffer-end 1))))
+     " W")))
 
 (defun alynx-mode-line--segment-indentation-style ()
   "Display the indentation style of the current buffer."
@@ -716,7 +734,8 @@ Checkers checked, in order: `flycheck', `flymake'."
                        (:eval (alynx-mode-line--segment-buffer-name))
                        (:eval (alynx-mode-line--segment-cursor-position)))
                      ;; Right.
-                     '((:eval (alynx-mode-line--segment-indentation-style))
+                     '((:eval (alynx-mode-line--segment-word-count))
+                       (:eval (alynx-mode-line--segment-indentation-style))
                        (:eval (alynx-mode-line--segment-eol-style))
                        (:eval (alynx-mode-line--segment-encoding))
                        (:eval (alynx-mode-line--segment-major-mode))
