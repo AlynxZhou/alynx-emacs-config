@@ -79,7 +79,7 @@ My own PKGBUILD can be found in my Arch Linux packages repo: <https://github.com
 I install following dependencies with Homebrew (incomplete, I'll add more if I find something missing):
 
 ```shell
-$ brew install autoconf automake pkg-config libtool libgccjit tree-sitter gmp gnutls texinfo mailutils sqlite3
+$ brew install autoconf automake gcc pkg-config libtool libgccjit tree-sitter gmp gnutls texinfo mailutils sqlite3
 ```
 
 If there is no `configure` script, run following command to generate it:
