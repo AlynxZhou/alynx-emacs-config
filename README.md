@@ -39,7 +39,7 @@ Install dependencies and language servers for `lsp-bridge` (`clangd` is included
 $ paru -S python-epc python-sexpdata
 ```
 
-For macOS, check [lsp-bridge's doc](https://github.com/manateelazycat/lsp-bridge?tab=readme-ov-file#installation) for installing dependencies with `pip`.
+For macOS, check [lsp-bridge's doc](https://github.com/manateelazycat/lsp-bridge?tab=readme-ov-file#installation) for installing dependencies with `pip`, you may need to create a `venv` for them.
 
 Because [`flycheck` currently cannot run locally installed `standardx`](https://github.com/flycheck/flycheck/issues/1428), you may need to install `standardx` globally:
 
@@ -128,6 +128,10 @@ Then you can create a `emacs` script with following content to run Emacs from sh
 ```bash
 #!/bin/bash
 
+if [[ -f "${HOME}/.emacs.d/.local/venv-lsp-bridge/bin/activate" ]]; then
+	source "${HOME}/.emacs.d/.local/venv-lsp-bridge/bin/activate"
+fi
+
 /Applications/Emacs.app/Contents/MacOS/Emacs "${@}"
 ```
 
@@ -135,6 +139,10 @@ And you can create a `emacsclient` script with following content to run Emacs cl
 
 ```bash
 #!/bin/bash
+
+if [[ -f "${HOME}/.emacs.d/.local/venv-lsp-bridge/bin/activate" ]]; then
+	source "${HOME}/.emacs.d/.local/venv-lsp-bridge/bin/activate"
+fi
 
 /Applications/Emacs.app/Contents/MacOS/bin/emacsclient "${@}"
 ```
