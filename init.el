@@ -1889,6 +1889,8 @@ point reaches the beginning or end of the buffer, stop there."
 ;; parameters to `clangd`, but I can also modify `~/.config/clangd/config.yaml`
 ;; to let it find `compile_commands.json` under `build/`.
 (use-package lsp-bridge
+  ;; Disable on macOS to prevent crash.
+  :diabled (alynx/macos-p)
   ;; This is not in MELPA and installed as submodules.
   :load-path "site-lisp/lsp-bridge/"
   :defer t
