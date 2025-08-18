@@ -125,19 +125,18 @@
                 (alynx/clear-and-set-fallback-fonts)))
   (alynx/clear-and-set-fallback-fonts))
 
-;; CJK fonts may have larger ascent and descent, which make lines with CJK chars
-;; higher than others. So make Monaco and CJK fonts the same line height.
+;; Previously I use `("Noto Sans Mono CJK SC" . 0.85)`, because Noto Sans Mono
+;; CJK has a larger ascent and descent to contain some tall glphys, which makes
+;; it impossible to align it with Monaco and enlarges line height.
 ;;
-;; This is not perfect, since font size is always integer, after rounding it may
-;; make CJK fonts a little bit smaller than Monaco.
+;; However, it does have correct metrics in `OS/2` table, but it does not set
+;; `USE_TYPO_METRICS` bit of `fsSelection`, so harfbuzz won't use it, I finally
+;; patch those fonts to set that bit, then it will align with Monaco.
 ;;
-;; Better way is to custom Monaco's ascent and descent in its OS/2 table to make
-;; it have the same ratio as Noto Sans Mono CJK SC or PingFang SC. But it will
-;; break box-drawing characters, which needs to be stretched.
+;; See <https://github.com/AlynxZhou/alynx-arch-packages/tree/master/packages/noto-fonts-cjk-alynx>.
 ;;
-;; If Emacs allows user to set a custom min line height, this might be solved.
-(setq face-font-rescale-alist '(("Noto Sans Mono CJK SC" . 0.85)
-                                ("PingFang SC" . 0.9)))
+;; I have no idea on `PingFang SC`, so still use this way.
+(setq face-font-rescale-alist '(("PingFang SC" . 0.9)))
 
 ;; Don't clean font-caches during GC.
 (setq inhibit-compacting-font-caches t)
